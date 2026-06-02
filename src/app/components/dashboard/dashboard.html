@@ -1,0 +1,308 @@
+<div class="space-y-8 animate-fade-in">
+  <!-- Top Welcome Banner & Stats -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 text-white p-6 rounded-xl border border-slate-800 shadow-md relative overflow-hidden">
+    <div class="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-[#FF6C37] opacity-10 blur-xl"></div>
+    <div class="absolute right-12 bottom-0 w-32 h-32 rounded-full bg-orange-600 opacity-5 blur-2xl"></div>
+    
+    <div class="space-y-2 relative z-10">
+      <h1 class="text-2xl font-bold tracking-tight">Không gian học tập cá nhân</h1>
+      <p class="text-slate-400 text-sm font-light">Đánh giá và cải thiện kiến thức Cấu trúc dữ liệu & Giải thuật bằng bài làm tự luận.</p>
+      
+      <!-- Learning Trend Badge -->
+      <div class="flex items-center space-x-2 pt-1">
+        <span class="text-xs text-slate-400 font-mono">Xu hướng học tập:</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border font-mono uppercase" [ngClass]="{
+          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': overallExamTrend() === 'UPWARD',
+          'bg-rose-500/10 text-rose-400 border-rose-500/20': overallExamTrend() === 'DOWNWARD',
+          'bg-slate-500/10 text-slate-400 border-slate-500/20': overallExamTrend() === 'STABLE'
+        }">
+          @if (overallExamTrend() === 'UPWARD') {
+            <span>Tăng trưởng (+{{ overallExamSlope() }})</span>
+          } @else if (overallExamTrend() === 'DOWNWARD') {
+            <span>Suy giảm ({{ overallExamSlope() }})</span>
+          } @else {
+            <span>Ổn định ({{ overallExamSlope() }})</span>
+          }
+        </span>
+      </div>
+    </div>
+    
+    <!-- Quick Stats Summary Grid -->
+    <div class="grid grid-cols-3 gap-6 mt-6 md:mt-0 w-full md:w-auto relative z-10 border-t border-slate-800 pt-4 md:pt-0 md:border-t-0">
+      <div class="text-center px-2">
+        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">{{ solvedCount() }}</span>
+        <span class="text-xs text-slate-400 font-mono">Đã làm</span>
+      </div>
+      <div class="text-center px-4 border-x border-slate-800">
+        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">{{ totalSubmissions() }}</span>
+        <span class="text-xs text-slate-400 font-mono">Lượt nộp</span>
+      </div>
+      <div class="text-center px-2">
+        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">{{ averageScore() }}</span>
+        <span class="text-xs text-slate-400 font-mono">Điểm TB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Learning Recommendations (Option A) -->
+  @if (recommendations().length > 0) {
+    <div class="bg-orange-50/20 border border-orange-500/20 rounded-xl p-5 shadow-sm space-y-3 relative overflow-hidden">
+      <div class="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-[#FF6C37]/5 blur-lg"></div>
+      
+      <div class="flex items-center space-x-2 text-[#FF6C37]">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l8.982-8.982m-9 9l8.982-8.982M18 10.5h.008v.008H18V10.5zm-3.75 3h.008v.008h-.008v-.008zm-3 3h.008v.008h-.008v-.008zM14.25 9h.008v.008h-.008V9zm-3 3h.008v.008h-.008v-.008zm-3 3h.008v.008h-.008v-.008z" />
+        </svg>
+        <h3 class="font-bold text-slate-900 text-sm md:text-base">Gợi ý lộ trình & Khuyến nghị thông minh (AI Recommendations)</h3>
+      </div>
+      
+      <ul class="space-y-2 text-xs md:text-sm text-slate-700">
+        @for (rec of recommendations(); track rec) {
+          <li class="flex items-start space-x-2">
+            <span class="text-[#FF6C37] mt-0.5">•</span>
+            <span class="leading-relaxed font-light">{{ rec }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <!-- Visual Analytics Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Chart Slot 1 -->
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-[380px]">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="p-1.5 rounded-lg bg-orange-50 text-[#FF6C37]">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+            </svg>
+          </span>
+          <h2 class="font-bold text-slate-900 text-base">Khung Phân Tích 1</h2>
+        </div>
+        <select [ngModel]="slot1ChartType()" (ngModelChange)="onSlot1Change($event)" class="border border-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
+          <option value="growth_attempts">Biểu đồ tăng trưởng (theo lượt nộp)</option>
+          <option value="growth_time">Biểu đồ tăng trưởng (theo ngày)</option>
+          <option value="mastery_topics">Mức làm chủ theo Chủ đề (Topics)</option>
+          <option value="mastery_chapters">Mức làm chủ theo Chương (Chapters)</option>
+        </select>
+      </div>
+      <div class="relative flex-grow h-0 w-full">
+        <canvas #slot1Canvas></canvas>
+      </div>
+    </div>
+
+    <!-- Chart Slot 2 -->
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-[380px]">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="p-1.5 rounded-lg bg-orange-50 text-[#FF6C37]">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+            </svg>
+          </span>
+          <h2 class="font-bold text-slate-900 text-base">Khung Phân Tích 2</h2>
+        </div>
+        <select [ngModel]="slot2ChartType()" (ngModelChange)="onSlot2Change($event)" class="border border-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
+          <option value="growth_attempts">Biểu đồ tăng trưởng (theo lượt nộp)</option>
+          <option value="growth_time">Biểu đồ tăng trưởng (theo ngày)</option>
+          <option value="mastery_topics">Mức làm chủ theo Chủ đề (Topics)</option>
+          <option value="mastery_chapters">Mức làm chủ theo Chương (Chapters)</option>
+        </select>
+      </div>
+      <div class="relative flex-grow h-0 w-full">
+        <canvas #slot2Canvas></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Questions Space & History -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+    
+    <!-- Left: Questions Space (2/3 columns) -->
+    <div class="xl:col-span-2 space-y-6">
+      <!-- Filter Bar -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex flex-wrap gap-3 items-center">
+          <!-- Topic Selector -->
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Chủ đề</span>
+            <select [ngModel]="selectedTopic()" (ngModelChange)="selectedTopic.set($event); refreshDashboard()" class="text-sm border border-slate-200 rounded px-2.5 py-1.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-[#FF6C37] transition-colors cursor-pointer">
+              <option value="ALL">Tất cả chủ đề</option>
+              @for (topic of topics; track topic.id) {
+                <option [value]="topic.id">{{ topic.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Bloom Level Selector -->
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Thang Bloom</span>
+            <select [ngModel]="selectedBloom()" (ngModelChange)="selectedBloom.set($event); refreshDashboard()" class="text-sm border border-slate-200 rounded px-2.5 py-1.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-[#FF6C37] transition-colors cursor-pointer">
+              <option value="ALL">Tất cả cấp độ</option>
+              <option value="REMEMBERING">R - Nhận biết</option>
+              <option value="UNDERSTANDING">U - Thông hiểu</option>
+              <option value="APPLYING">AP - Vận dụng</option>
+            </select>
+          </div>
+
+          <!-- Difficulty Selector -->
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Độ khó</span>
+            <select [ngModel]="selectedDifficulty()" (ngModelChange)="selectedDifficulty.set($event); refreshDashboard()" class="text-sm border border-slate-200 rounded px-2.5 py-1.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-[#FF6C37] transition-colors cursor-pointer">
+              <option value="ALL">Tất cả độ khó</option>
+              <option value="EASY">Dễ</option>
+              <option value="MEDIUM">Trung bình</option>
+              <option value="HARD">Khó</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="text-xs font-mono text-slate-400 mt-2 sm:mt-0">
+          Tìm thấy {{ filteredQuestions().length }} câu hỏi
+        </div>
+      </div>
+
+      <!-- Questions List Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @for (q of filteredQuestions(); track q.id) {
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:border-[#FF6C37]/50 hover:shadow-md transition-all flex flex-col justify-between group">
+            
+            <div class="space-y-3">
+              <!-- Meta Badges -->
+              <div class="flex flex-wrap gap-2">
+                <!-- Bloom Badge -->
+                @if (q.bloom_level === 'REMEMBERING') {
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider">R - Nhận biết</span>
+                } @else if (q.bloom_level === 'UNDERSTANDING') {
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 uppercase tracking-wider">U - Thông hiểu</span>
+                } @else if (q.bloom_level === 'APPLYING') {
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">AP - Vận dụng</span>
+                }
+
+                <!-- Difficulty Badge -->
+                @if (q.difficulty === 'EASY') {
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">Dễ</span>
+                } @else if (q.difficulty === 'MEDIUM') {
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">Trung bình</span>
+                } @else if (q.difficulty === 'HARD') {
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">Khó</span>
+                }
+
+                <!-- Type Badge -->
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider font-mono">
+                  {{ q.type }}
+                </span>
+              </div>
+
+              <!-- Question Prompt -->
+              <h3 class="font-bold text-slate-900 group-hover:text-[#FF6C37] transition-colors leading-snug line-clamp-2">
+                {{ q.content }}
+              </h3>
+
+              <!-- Topic Label -->
+              <div class="flex items-center space-x-1.5 text-xs text-slate-500 font-mono">
+                <span>Chủ đề:</span>
+                <span class="text-slate-700 font-medium">{{ topics.find(t => t.id === q.topic_id)?.name }}</span>
+              </div>
+            </div>
+
+            <!-- Footer Action & Highest Score -->
+            <div class="flex items-center justify-between border-t border-slate-100 mt-4 pt-3.5">
+              <div>
+                @if (getLatestScoreForQuestion(q.id); as score) {
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs text-slate-400">Điểm gần nhất:</span>
+                    <span class="text-sm font-bold font-mono" [ngClass]="{
+                      'text-emerald-600': score >= 8.0,
+                      'text-amber-600': score >= 5.0 && score < 8.0,
+                      'text-rose-600': score < 5.0
+                    }">
+                      {{ score }}/10
+                    </span>
+                  </div>
+                } @else {
+                  <span class="text-xs text-slate-400 italic">Chưa làm bài</span>
+                }
+              </div>
+
+              <div class="flex space-x-2">
+                @if (getLatestSubmissionIdForQuestion(q.id); as subId) {
+                  <a [routerLink]="['/evaluation', subId]" class="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 hover:bg-slate-200 transition-colors">
+                    Xem nhận xét
+                  </a>
+                }
+                <a [routerLink]="['/assignment', q.id]" class="px-3.5 py-1.5 rounded-md text-xs font-semibold text-white bg-[#FF6C37] hover:bg-orange-600 shadow-sm shadow-orange-500/10 hover:shadow-orange-500/20 transition-all flex items-center space-x-1">
+                  <span>{{ getLatestScoreForQuestion(q.id) ? 'Làm lại' : 'Làm bài' }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        } @empty {
+          <div class="col-span-full bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto text-slate-300 mb-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <p>Không có câu hỏi nào khớp với bộ lọc của bạn.</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right: Recent Submissions History (1/3 column) -->
+    <div class="space-y-6">
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-[#FF6C37]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+          <span>Bài làm gần đây</span>
+        </h3>
+
+        <div class="space-y-3.5">
+          @for (log of latestSubmissions(); track log.id) {
+            <div class="border border-slate-100 bg-slate-50/50 rounded-lg p-3 hover:bg-slate-50 transition-colors flex flex-col justify-between space-y-2">
+              <div class="flex justify-between items-start">
+                <div class="space-y-1">
+                  <h4 class="text-xs font-bold text-slate-800 line-clamp-1" [title]="log.questionTitle">
+                    {{ log.questionTitle }}
+                  </h4>
+                  <span class="block text-[10px] text-slate-500 font-mono">
+                    {{ log.evaluatedAt | date:'dd/MM/yyyy HH:mm' }}
+                  </span>
+                </div>
+                <!-- Score badge -->
+                <span class="text-xs font-bold font-mono px-2 py-0.5 rounded" [ngClass]="{
+                  'bg-emerald-50 text-emerald-700 border border-emerald-200': log.score >= 8.0,
+                  'bg-amber-50 text-amber-700 border border-amber-200': log.score >= 5.0 && log.score < 8.0,
+                  'bg-rose-50 text-rose-700 border border-rose-200': log.score < 5.0
+                }">
+                  {{ log.score }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between border-t border-slate-100/70 pt-2 text-[10px]">
+                <span class="text-slate-500 uppercase tracking-wider font-semibold">
+                  {{ log.bloomLevel.substring(0, 3) }} / {{ log.difficulty }}
+                </span>
+                <a [routerLink]="['/evaluation', log.id]" class="text-[#FF6C37] hover:text-orange-700 font-bold flex items-center space-x-0.5">
+                  <span>Chi tiết</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <p class="text-sm text-slate-400 italic text-center py-6">Chưa có lịch sử làm bài nào.</p>
+          }
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
