@@ -1,283 +1,296 @@
-@if (question(); as q) {
+@if (exam(); as ex) {
   <div class="space-y-6 animate-fade-in">
-    <!-- Back Button & Breadcrumbs -->
-    <div class="flex items-center space-x-2">
-      <a routerLink="/" class="text-sm font-semibold text-slate-600 hover:text-[#FF6C37] transition-colors flex items-center space-x-1.5">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+    <!-- Top Header Banner -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 text-white p-5 rounded-xl border border-slate-800 shadow-md relative overflow-hidden">
+      <div class="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-[#FF6C37] opacity-10 blur-xl"></div>
+      
+      <div class="space-y-2 relative z-10">
+        <a routerLink="/" class="text-xs font-semibold text-slate-400 hover:text-[#FF6C37] transition-colors flex items-center space-x-1 mb-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          <span>Thoát và quay lại Dashboard</span>
+        </a>
+        <h1 class="text-xl font-bold tracking-tight">{{ ex.title }}</h1>
+        <div class="flex flex-wrap gap-3 text-xs text-slate-300 items-center">
+          <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono uppercase font-bold text-[10px] border border-slate-700">Độ khó: {{ ex.difficulty }}</span>
+          <span class="flex items-center space-x-1 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Thời gian: <strong>{{ ex.totalTime }} phút</strong></span>
+          </span>
+          <span class="flex items-center space-x-1 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499c-.194-.897-1.47-.897-1.665 0l-1.352 6.27-6.27 1.352c-.897.194-.897 1.47 0 1.665l6.27 1.352 1.352 6.27c.195.897 1.47.897 1.665 0l1.352-6.27 6.27-1.352c.897-.195.897-1.47 0-1.665l-6.27-1.352-1.352-6.27z" />
+            </svg>
+            <span>Tổng điểm: <strong class="text-emerald-400 font-mono">{{ ex.totalScore }}đ</strong></span>
+          </span>
+        </div>
+      </div>
+
+      <button (click)="onSubmit()" class="mt-4 md:mt-0 bg-[#FF6C37] hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-all relative z-10 shadow-md shadow-orange-500/10 hover:shadow-orange-500/20 cursor-pointer flex items-center space-x-1.5 shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
         </svg>
-        <span>Quay lại Dashboard</span>
-      </a>
+        <span>Nộp bài thi</span>
+      </button>
     </div>
 
-    <!-- Main Layout Split -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+    <!-- Main Exam Body Split -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
       
-      <!-- Left Column: Question Details & Rubric (2/5 columns) -->
-      <div class="lg:col-span-2 space-y-6">
-        
-        <!-- Question Prompt Card -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-          <div class="flex flex-wrap gap-2">
-            <!-- Bloom Badge -->
-            @if (q.bloom_level === 'REMEMBERING') {
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider">R - Nhận biết</span>
-            } @else if (q.bloom_level === 'UNDERSTANDING') {
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 uppercase tracking-wider">U - Thông hiểu</span>
-            } @else if (q.bloom_level === 'APPLYING') {
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">AP - Vận dụng</span>
-            }
-
-            <!-- Difficulty Badge -->
-            @if (q.difficulty === 'EASY') {
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">Dễ</span>
-            } @else if (q.difficulty === 'MEDIUM') {
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">Trung bình</span>
-            } @else if (q.difficulty === 'HARD') {
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">Khó</span>
-            }
-          </div>
-
-          <div class="space-y-1.5">
-            <span class="text-xs text-slate-400 font-mono">Chủ đề: {{ topicName() }}</span>
-            <h2 class="text-lg font-bold text-slate-900 leading-snug">
-              {{ q.content }}
-            </h2>
-          </div>
-        </div>
-
-        <!-- Rubric Evaluation Card -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-          <h3 class="font-bold text-slate-900 text-sm border-b border-slate-100 pb-2 flex items-center space-x-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-[#FF6C37]">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 2.24a4.5 4.5 0 1110.877 0M6.022 9.047a48.425 48.425 0 00-1.123-.08m0 0A2.25 2.25 0 002.25 11.218V18a2.25 2.25 0 002.25 2.25h9.75a2.25 2.25 0 002.25-2.25v-1.108m-11.75-7.85c.065-.21.1-.433.1-.664 0-.414-.336-.75-.75-.75h-4.5a.75.75 0 00-.75.75 2.25 2.25 0 00.1.664m11.75 0a2.251 2.251 0 01-2.166-1.638m0 0a4.5 4.5 0 01-10.877 0" />
-            </svg>
-            <span>Thang điểm đánh giá</span>
-          </h3>
-
-          <div class="space-y-3">
-            <div class="flex items-center justify-between text-xs border-b border-slate-50 pb-2">
-              <span class="text-slate-600 font-medium">Độ chính xác (Accuracy):</span>
-              <span class="font-bold font-mono text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">{{ q.rubric.acc_w * 100 }}%</span>
-            </div>
-            <div class="flex items-center justify-between text-xs border-b border-slate-50 pb-2">
-              <span class="text-slate-600 font-medium">Độ đầy đủ (Completeness):</span>
-              <span class="font-bold font-mono text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">{{ q.rubric.comp_w * 100 }}%</span>
-            </div>
-            <div class="flex items-center justify-between text-xs pb-1">
-              <span class="text-slate-600 font-medium">Tính logic (Logic):</span>
-              <span class="font-bold font-mono text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">{{ q.rubric.log_w * 100 }}%</span>
-            </div>
-            
-            <div class="bg-orange-50 border border-orange-100 rounded-lg p-3 text-xs text-orange-800 space-y-1 mt-2">
-              <p class="font-bold">Mẹo chấm bài:</p>
-              <ul class="list-disc pl-4 space-y-1">
-                <li>Đảm bảo nhắc đến các từ khoá cấu trúc dữ liệu chính xác.</li>
-                <li>Đối với thuật toán, hãy sắp xếp các bước logic đúng trình tự.</li>
-                <li>Nhận xét sẽ được chấm tự động ngay sau khi nộp.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Right Column: Submission Workspace (3/5 columns) -->
-      <div class="lg:col-span-3 space-y-6">
-        
-        <!-- Workspace Card -->
-        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <!-- Left Column: Navigation Sidebar (1/4 column) -->
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Danh mục câu hỏi</h3>
           
-          <!-- Workspace Header & Input Mode Toggle -->
-          <div class="bg-slate-50 border-b border-slate-200 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-[#FF6C37]"></span>
-              <span class="font-bold text-slate-900 text-sm tracking-wide uppercase">Workspace</span>
-            </div>
-
-            <!-- Input mode selector (only for APPLICATION) -->
-            @if (q.type === 'APPLICATION') {
-              <div class="flex bg-slate-200/80 p-0.5 rounded-lg border border-slate-300/40 text-xs">
-                <button 
-                  (click)="toggleInputMode('free')"
-                  [ngClass]="{
-                    'bg-white text-slate-900 shadow-sm font-bold': inputMode() === 'free',
-                    'text-slate-500 hover:text-slate-900': inputMode() !== 'free'
-                  }"
-                  class="px-3.5 py-1.5 rounded-md transition-all">
-                  Trình soạn thảo mã
-                </button>
-                <button 
-                  (click)="toggleInputMode('structured')"
-                  [ngClass]="{
-                    'bg-white text-slate-900 shadow-sm font-bold': inputMode() === 'structured',
-                    'text-slate-500 hover:text-slate-900': inputMode() !== 'structured'
-                  }"
-                  class="px-3.5 py-1.5 rounded-md transition-all">
-                  Quy trình các bước
-                </button>
-              </div>
-            }
-          </div>
-
-          <!-- Input Content Area -->
-          <div class="p-5">
-            
-            <!-- Mode A: Descriptive or Procedural (Free Textarea) -->
-            @if (q.type === 'DESCRIPTIVE' || q.type === 'PROCEDURE') {
-              <div class="space-y-2">
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  {{ q.type === 'PROCEDURE' ? 'Tóm tắt / Mô tả tự luận tự do' : 'Nội dung câu trả lời tự luận' }}
-                </label>
-                <textarea
-                  [ngModel]="submittedText()"
-                  (ngModelChange)="submittedText.set($event)"
-                  [rows]="q.type === 'PROCEDURE' ? 6 : 12"
-                  placeholder="Nhập nội dung mô tả chi tiết của bạn tại đây..."
-                  class="w-full text-sm border border-slate-200 rounded-lg p-3.5 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#FF6C37] focus:border-[#FF6C37] transition-all leading-relaxed"
-                ></textarea>
-                
-                @if (q.type === 'DESCRIPTIVE') {
-                  <div class="flex justify-between items-center text-xs text-slate-400 font-mono">
-                    <span>Mẹo: Sử dụng thuật ngữ đúng chuẩn kỹ thuật để đạt điểm tối đa.</span>
-                    <span>Ký tự: {{ submittedText().length }}</span>
-                  </div>
-                }
-              </div>
-            }
-
-            <!-- Mode B: Application (Simulated Monospace Editor with line numbers) -->
-            @if (q.type === 'APPLICATION' && inputMode() === 'free') {
-              <div class="space-y-2">
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Trình soạn thảo code / mã giả</label>
-                
-                <!-- Simulated Code Editor Wrapper -->
-                <div class="bg-[#1E1E1E] rounded-lg border border-slate-800 shadow-inner flex overflow-hidden min-h-[320px] max-h-[500px]">
-                  <!-- Gutter Line Numbers -->
-                  <div class="bg-[#181818] text-slate-500 px-3.5 py-3 border-r border-[#2C2C2C] text-right text-xs editor-line-numbers select-none flex flex-col font-mono">
-                    @for (num of lineNumbers(); track num) {
-                      <span class="block text-slate-600 pr-1 h-6">{{ num }}</span>
-                    }
-                  </div>
-                  
-                  <!-- Code input area -->
-                  <div class="flex-grow relative">
-                    <textarea
-                      [ngModel]="submittedText()"
-                      (ngModelChange)="submittedText.set($event)"
-                      (keydown)="handleEditorTab($event)"
-                      placeholder="// Viết mã giả (pseudo-code) hoặc code của bạn tại đây&#10;// Nhấn TAB để lùi dòng, phím ENTER để xuống dòng tự động tạo số dòng mới...&#10;function insertBST(root, x) {&#10;    ...&#10;}"
-                      class="w-full h-full bg-transparent text-[#D4D4D4] p-3 text-xs focus:outline-none editor-textarea font-mono h-full"
-                      spellcheck="false"
-                    ></textarea>
+          <div class="flex flex-col space-y-2">
+            @for (cq of ex.customQuestions; track $index; let idx = $index) {
+              <button 
+                (click)="selectQuestion(idx)"
+                [class]="activeQuestionIndex() === idx 
+                  ? 'w-full text-left p-3.5 rounded-xl border-2 border-[#FF6C37] bg-orange-50/10 transition-all cursor-pointer flex items-start justify-between gap-2 shadow-sm' 
+                  : 'w-full text-left p-3.5 rounded-xl border border-slate-200 hover:border-[#FF6C37]/50 bg-white transition-all cursor-pointer flex items-start justify-between gap-2 hover:shadow-sm'"
+              >
+                <div class="space-y-1">
+                  <span class="block text-xs font-bold" [class]="activeQuestionIndex() === idx ? 'text-[#FF6C37]' : 'text-slate-500'">Câu hỏi {{ idx + 1 }}</span>
+                  <span class="block text-[11px] text-slate-800 line-clamp-1 font-medium">{{ cq.question.content }}</span>
+                  <div class="flex gap-1.5 text-[8px] font-bold font-mono">
+                    <span class="px-1 py-0.2 rounded bg-slate-100 text-slate-600 uppercase font-mono">{{ cq.question.type.substring(0, 3) }}</span>
+                    <span class="text-slate-400 pt-0.2">{{ cq.maxScore }}đ</span>
                   </div>
                 </div>
 
-                <div class="flex justify-between items-center text-xs text-slate-400 font-mono pt-1">
-                  <span>Sử dụng phím <kbd class="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-600 font-sans text-[10px] shadow-sm">Tab</kbd> để lùi dòng thụt lề thụ động.</span>
-                  <span>Dòng: {{ lineNumbers().length }}</span>
-                </div>
-              </div>
-            }
-
-            <!-- Mode C: Structured Steps (Procedural / Application Steps) -->
-            @if (q.type === 'PROCEDURE' || (q.type === 'APPLICATION' && inputMode() === 'structured')) {
-              <div class="space-y-4" [ngClass]="{'mt-6 pt-6 border-t border-slate-100': q.type === 'PROCEDURE'}">
-                <div class="flex items-center justify-between">
-                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Khai báo các bước quy trình thực hiện</label>
-                  <span class="text-xs text-slate-400 italic">Kéo thả hoặc thay đổi thứ tự các bước</span>
-                </div>
-
-                <!-- Steps list -->
-                <div class="space-y-3">
-                  @for (step of steps(); track step.id; let i = $index) {
-                    <div class="flex items-start space-x-3 bg-slate-50 border border-slate-200 rounded-lg p-3 hover:border-slate-300 transition-colors animate-fade-in">
-                      <!-- Number label -->
-                      <div class="flex flex-col items-center">
-                        <span class="w-7 h-7 rounded-full bg-[#FF6C37]/10 text-[#FF6C37] font-bold text-xs flex items-center justify-center font-mono">
-                          {{ i + 1 }}
-                        </span>
-                      </div>
-
-                      <!-- Step Textarea -->
-                      <div class="flex-grow">
-                        <textarea
-                          [(ngModel)]="step.text"
-                          rows="2"
-                          placeholder="Mô tả công việc thực hiện trong bước này..."
-                          class="w-full text-xs border border-slate-200 rounded p-2 focus:outline-none focus:border-[#FF6C37] bg-white transition-colors leading-relaxed"
-                        ></textarea>
-                      </div>
-
-                      <!-- Controls (Up, Down, Delete) -->
-                      <div class="flex flex-col space-y-1">
-                        <!-- Move Up -->
-                        <button 
-                          (click)="moveStep(i, 'up')" 
-                          [disabled]="i === 0"
-                          class="p-1 rounded text-slate-400 hover:bg-slate-200 hover:text-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                          title="Di chuyển lên">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                          </svg>
-                        </button>
-                        <!-- Move Down -->
-                        <button 
-                          (click)="moveStep(i, 'down')" 
-                          [disabled]="i === steps().length - 1"
-                          class="p-1 rounded text-slate-400 hover:bg-slate-200 hover:text-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                          title="Di chuyển xuống">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                          </svg>
-                        </button>
-                        <!-- Delete -->
-                        <button 
-                          (click)="deleteStep(i)" 
-                          [disabled]="steps().length <= 1"
-                          class="p-1 rounded text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                          title="Xoá bước">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                <!-- Status Icon -->
+                <div class="shrink-0 pt-0.5">
+                  @if (answersDraft()[cq.question.id]?.trim()?.length) {
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-emerald-500">
+                      <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.74-5.24z" clip-rule="evenodd" />
+                    </svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-slate-300">
+                      <circle cx="12" cy="12" r="9" />
+                    </svg>
                   }
                 </div>
-
-                <!-- Add Step Button -->
-                <button 
-                  (click)="addStep()"
-                  class="w-full border border-dashed border-slate-300 rounded-lg py-2.5 text-xs font-semibold text-slate-500 hover:border-[#FF6C37] hover:text-[#FF6C37] hover:bg-orange-50/20 transition-all flex items-center justify-center space-x-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  <span>Thêm bước công việc mới</span>
-                </button>
-              </div>
+              </button>
             }
-
           </div>
-
-          <!-- Submit Footer Actions -->
-          <div class="bg-slate-50 border-t border-slate-200 px-5 py-4 flex justify-between items-center">
-            <span class="text-xs text-slate-400 font-mono">Bài nộp sẽ được lưu trữ vào bộ nhớ cục bộ.</span>
-            
-            <button 
-              (click)="onSubmit()"
-              class="px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-[#FF6C37] hover:bg-orange-600 shadow-md shadow-orange-500/10 hover:shadow-orange-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center space-x-1.5 cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-              </svg>
-              <span>Nộp bài & Đánh giá</span>
-            </button>
-          </div>
-
         </div>
-
       </div>
 
+      <!-- Right Column: Question Prompt & Workspace (3/4 column) -->
+      @if (activeQuestion(); as q) {
+        <div class="lg:col-span-3 space-y-6">
+          <!-- Active Question prompt -->
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-wrap gap-2">
+              <!-- Bloom Badge -->
+              @if (q.bloom_level === 'REMEMBERING') {
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider">R - Nhận biết</span>
+              } @else if (q.bloom_level === 'UNDERSTANDING') {
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 uppercase tracking-wider">U - Thông hiểu</span>
+              } @else if (q.bloom_level === 'APPLYING') {
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">AP - Vận dụng</span>
+              }
+
+              <!-- Difficulty Badge -->
+              @if (q.difficulty === 'EASY') {
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">Dễ</span>
+              } @else if (q.difficulty === 'MEDIUM') {
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">Trung bình</span>
+              } @else if (q.difficulty === 'HARD') {
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">Khó</span>
+              }
+
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase font-mono">{{ q.type }}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 font-mono">Điểm tối đa: {{ activeQuestionConfig()?.maxScore }}đ</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 font-mono">Gợi ý làm bài: {{ activeQuestionConfig()?.suggestedTime }} phút</span>
+            </div>
+
+            <div class="space-y-1">
+              <span class="text-xs text-slate-400 font-mono">Chủ đề: {{ topicName() }}</span>
+              <h2 class="text-base font-bold text-slate-900 leading-snug">
+                Câu {{ activeQuestionIndex() + 1 }}: {{ q.content }}
+              </h2>
+            </div>
+          </div>
+
+          <!-- Workspace Card -->
+          <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden space-y-0">
+            <!-- Workspace Header & Input Mode Toggle -->
+            <div class="bg-slate-50 border-b border-slate-200 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div class="flex items-center space-x-2">
+                <span class="w-3 h-3 rounded-full bg-[#FF6C37]"></span>
+                <span class="font-bold text-slate-900 text-sm tracking-wide uppercase">Không gian làm bài (Workspace)</span>
+              </div>
+
+              <!-- Input mode selector (only for APPLICATION) -->
+              @if (q.type === 'APPLICATION') {
+                <div class="flex bg-slate-200/80 p-0.5 rounded-lg border border-slate-300/40 text-xs">
+                  <button 
+                    (click)="toggleInputMode('free')"
+                    [ngClass]="{
+                      'bg-white text-slate-900 shadow-sm font-bold': inputMode() === 'free',
+                      'text-slate-500 hover:text-slate-900': inputMode() !== 'free'
+                    }"
+                    class="px-3.5 py-1.5 rounded-md transition-all cursor-pointer">
+                    Trình soạn thảo mã
+                  </button>
+                  <button 
+                    (click)="toggleInputMode('structured')"
+                    [ngClass]="{
+                      'bg-white text-slate-900 shadow-sm font-bold': inputMode() === 'structured',
+                      'text-slate-500 hover:text-slate-900': inputMode() !== 'structured'
+                    }"
+                    class="px-3.5 py-1.5 rounded-md transition-all cursor-pointer">
+                    Quy trình các bước
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- Input Content Area -->
+            <div class="p-5">
+              <!-- Mode A: Descriptive or Procedural (Free Textarea) -->
+              @if (q.type === 'DESCRIPTIVE' || q.type === 'PROCEDURE') {
+                <div class="space-y-2">
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    {{ q.type === 'PROCEDURE' ? 'Mô tả quy trình thuật toán tự luận tự do' : 'Nội dung câu trả lời tự luận' }}
+                  </label>
+                  <textarea
+                    [ngModel]="submittedText()"
+                    (ngModelChange)="submittedText.set($event)"
+                    rows="10"
+                    placeholder="Nhập nội dung câu trả lời của bạn tại đây..."
+                    class="w-full text-sm border border-slate-200 rounded-lg p-3.5 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#FF6C37] focus:border-[#FF6C37] transition-all leading-relaxed"
+                  ></textarea>
+                </div>
+              }
+
+              <!-- Mode B: Application (Simulated Monospace Editor with line numbers) -->
+              @if (q.type === 'APPLICATION' && inputMode() === 'free') {
+                <div class="space-y-2">
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Trình soạn thảo code / mã giả</label>
+                  
+                  <div class="bg-[#1E1E1E] rounded-lg border border-slate-800 shadow-inner flex overflow-hidden min-h-[280px] max-h-[450px]">
+                    <!-- Gutter Line Numbers -->
+                    <div class="bg-[#181818] text-slate-500 px-3.5 py-3 border-r border-[#2C2C2C] text-right text-xs editor-line-numbers select-none flex flex-col font-mono">
+                      @for (num of lineNumbers(); track num) {
+                        <span class="block text-slate-600 pr-1 h-6">{{ num }}</span>
+                      }
+                    </div>
+                    
+                    <!-- Code input area -->
+                    <div class="flex-grow relative">
+                      <textarea
+                        [ngModel]="submittedText()"
+                        (ngModelChange)="submittedText.set($event)"
+                        (keydown)="handleEditorTab($event)"
+                        placeholder="// Viết mã giả (pseudo-code) hoặc code của bạn tại đây...&#10;function searchBST(root, x) {&#10;    // Bắt đầu viết mã giả&#10;}"
+                        class="w-full h-full bg-transparent text-[#D4D4D4] p-3 text-xs focus:outline-none editor-textarea font-mono h-full"
+                        spellcheck="false"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Mode C: Structured Steps (Procedural / Application Steps) -->
+              @if (q.type === 'PROCEDURE' || (q.type === 'APPLICATION' && inputMode() === 'structured')) {
+                <div class="space-y-4">
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Khai báo các bước quy trình thực hiện</label>
+                  
+                  <div class="space-y-3">
+                    @for (step of steps(); track step.id; let i = $index) {
+                      <div class="flex items-start space-x-3 bg-slate-50 border border-slate-200 rounded-lg p-3 hover:border-slate-300 transition-colors animate-fade-in">
+                        <div class="flex flex-col items-center">
+                          <span class="w-7 h-7 rounded-full bg-[#FF6C37]/10 text-[#FF6C37] font-bold text-xs flex items-center justify-center font-mono">
+                            {{ i + 1 }}
+                          </span>
+                        </div>
+
+                        <div class="flex-grow">
+                          <textarea
+                            [(ngModel)]="step.text"
+                            rows="2"
+                            placeholder="Mô tả công việc thực hiện trong bước này..."
+                            class="w-full text-xs border border-slate-200 rounded p-2 focus:outline-none focus:border-[#FF6C37] bg-white transition-colors leading-relaxed"
+                          ></textarea>
+                        </div>
+
+                        <div class="flex flex-col space-y-1">
+                          <button (click)="moveStep(i, 'up')" [disabled]="i === 0" class="p-1 rounded text-slate-400 hover:bg-slate-200 hover:text-slate-800 disabled:opacity-30 transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                            </svg>
+                          </button>
+                          <button (click)="moveStep(i, 'down')" [disabled]="i === steps().length - 1" class="p-1 rounded text-slate-400 hover:bg-slate-200 hover:text-slate-800 disabled:opacity-30 transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            </svg>
+                          </button>
+                          <button (click)="deleteStep(i)" [disabled]="steps().length <= 1" class="p-1 rounded text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <button (click)="addStep()" class="w-full border border-dashed border-slate-300 rounded-lg py-2 text-xs font-semibold text-slate-500 hover:border-[#FF6C37] hover:text-[#FF6C37] hover:bg-orange-50/20 transition-all flex items-center justify-center space-x-1 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span>Thêm bước mới</span>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- Footer Question Navigation Actions -->
+            <div class="bg-slate-50 border-t border-slate-200 px-5 py-4 flex justify-between items-center">
+              <button 
+                [disabled]="activeQuestionIndex() === 0" 
+                (click)="selectQuestion(activeQuestionIndex() - 1)" 
+                class="px-4 py-2 border rounded-lg text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 cursor-pointer flex items-center space-x-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                <span>Câu trước</span>
+              </button>
+
+              <span class="text-xs font-bold text-slate-400">Câu {{ activeQuestionIndex() + 1 }} / {{ ex.customQuestions?.length }}</span>
+
+              @if (activeQuestionIndex() < ex.customQuestions.length - 1) {
+                <button 
+                  (click)="selectQuestion(activeQuestionIndex() + 1)" 
+                  class="px-4 py-2 border rounded-lg text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-800 cursor-pointer flex items-center space-x-1"
+                >
+                  <span>Câu tiếp theo</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              } @else {
+                <button 
+                  (click)="onSubmit()" 
+                  class="px-5 py-2 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm cursor-pointer flex items-center space-x-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  <span>Nộp toàn bộ bài thi</span>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </div>
 }

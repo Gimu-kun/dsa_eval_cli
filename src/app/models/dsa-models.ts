@@ -163,3 +163,37 @@ export interface UserSession {
   full_name: string;
   role: 'STUDENT' | 'ADMIN';
 }
+
+export interface ExamQuestion {
+  question: Question;
+  maxScore: number;
+  suggestedTime: number;
+  sequenceOrder?: number;
+}
+
+export interface Exam {
+  id?: string;
+  title: string;
+  difficulty: string;
+  status: 'DRAFT' | 'ACTIVE' | 'SUSPENDED';
+  totalTime: number;
+  totalScore: number;
+  questions?: Question[];
+  customQuestions?: ExamQuestion[];
+}
+
+export interface ExamSubmission {
+  id: string;
+  examId: string;
+  studentId: string;
+  score: number;
+  feedback: string;
+  submittedAt: string;
+}
+
+export interface ExamSubmitResponse {
+  examScore: number;
+  examFeedback: string;
+  questionResults: EvaluationResult[];
+  examSubmissionId: string | null;
+}

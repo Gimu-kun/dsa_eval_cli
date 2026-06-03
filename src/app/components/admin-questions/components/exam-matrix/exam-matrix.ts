@@ -22,6 +22,9 @@ export class ExamMatrixComponent implements OnInit {
   protected selectedTemplateId = '';
   protected newTemplateName = '';
   protected readonly matrixMode = signal<'custom' | 'auto'>('custom');
+  
+  protected readonly savedExams = signal<any[]>([]);
+  protected examTitle = 'Đề thi tự luận Cấu trúc dữ liệu';
 
   // Matrix Config State
   protected matrixDifficulty = 'EASY';
@@ -40,6 +43,7 @@ export class ExamMatrixComponent implements OnInit {
   ngOnInit(): void {
     this.initMatrixConfigs();
     this.loadSavedTemplates();
+    this.loadSavedExams();
   }
 
   protected initMatrixConfigs(): void {
@@ -66,16 +70,63 @@ export class ExamMatrixComponent implements OnInit {
   }
 
   protected loadSavedTemplates(): void {
+    const defaultTemplates = [
+      {
+        id: 'DEFAULT_BASIC',
+        name: 'Đề kiểm tra Cơ bản (3 câu - Dễ & Trung bình)',
+        questionCount: 3,
+        configs: [
+          { type: 'DESCRIPTIVE', bloomLevel: 'REMEMBERING', difficulty: 'EASY', suggestedTime: 10, maxScore: 3.0 },
+          { type: 'PROCEDURE', bloomLevel: 'UNDERSTANDING', difficulty: 'MEDIUM', suggestedTime: 15, maxScore: 3.5 },
+          { type: 'APPLICATION', bloomLevel: 'UNDERSTANDING', difficulty: 'MEDIUM', suggestedTime: 20, maxScore: 3.5 }
+        ]
+      },
+      {
+        id: 'DEFAULT_MID',
+        name: 'Đề thi Giữa kỳ (4 câu - Cân bằng)',
+        questionCount: 4,
+        configs: [
+          { type: 'DESCRIPTIVE', bloomLevel: 'UNDERSTANDING', difficulty: 'MEDIUM', suggestedTime: 12, maxScore: 2.0 },
+          { type: 'PROCEDURE', bloomLevel: 'APPLYING', difficulty: 'MEDIUM', suggestedTime: 18, maxScore: 3.0 },
+          { type: 'PROCEDURE', bloomLevel: 'UNDERSTANDING', difficulty: 'MEDIUM', suggestedTime: 15, maxScore: 2.5 },
+          { type: 'APPLICATION', bloomLevel: 'APPLYING', difficulty: 'HARD', suggestedTime: 25, maxScore: 2.5 }
+        ]
+      },
+      {
+        id: 'DEFAULT_CHALLENGE',
+        name: 'Đề thi Thử thách Nâng cao (5 câu - Khó)',
+        questionCount: 5,
+        configs: [
+          { type: 'DESCRIPTIVE', bloomLevel: 'UNDERSTANDING', difficulty: 'MEDIUM', suggestedTime: 15, maxScore: 2.0 },
+          { type: 'PROCEDURE', bloomLevel: 'APPLYING', difficulty: 'MEDIUM', suggestedTime: 20, maxScore: 2.0 },
+          { type: 'APPLICATION', bloomLevel: 'APPLYING', difficulty: 'MEDIUM', suggestedTime: 20, maxScore: 2.0 },
+          { type: 'APPLICATION', bloomLevel: 'APPLYING', difficulty: 'HARD', suggestedTime: 25, maxScore: 2.0 },
+          { type: 'PROCEDURE', bloomLevel: 'APPLYING', difficulty: 'HARD', suggestedTime: 25, maxScore: 2.0 }
+        ]
+      }
+    ];
+
     if (typeof localStorage !== 'undefined') {
       const saved = localStorage.getItem('dsa_matrix_templates');
       if (saved) {
         try {
-          this.savedTemplates.set(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.savedTemplates.set(parsed);
+            if (parsed.length > 0) {
+              this.selectedTemplateId = parsed[0].id;
+            }
+            return;
+          }
         } catch (e) {
           console.error('Lỗi khi parse templates:', e);
         }
       }
     }
+
+    this.savedTemplates.set(defaultTemplates);
+    this.saveTemplatesToStorage(defaultTemplates);
+    this.selectedTemplateId = defaultTemplates[0].id;
   }
 
   protected saveTemplatesToStorage(templates: any[]): void {
@@ -233,6 +284,103 @@ export class ExamMatrixComponent implements OnInit {
       exam.status = status;
       this.generatedExam.set({ ...exam });
     }
+  }
+
+  protected loadSavedExams(): void {
+    this.mockService.fetchExams().subscribe({
+      next: (res) => {
+        this.savedExams.set(res);
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách đề thi:', err);
+      }
+    });
+  }
+
+  protected onSaveExam(): void {
+    this.successMessage.set('');
+    this.errorMessage.set('');
+
+    const title = this.examTitle.trim();
+    if (!title) {
+      this.errorMessage.set('Vui lòng nhập tiêu đề cho đề thi.');
+      return;
+    }
+
+    const exam = this.generatedExam();
+    if (!exam) return;
+
+    const questionsPayload = exam.customQuestions.map((cq: any) => ({
+      questionId: cq.question?.id,
+      maxScore: cq.maxScore,
+      suggestedTime: cq.suggestedTime
+    }));
+
+    const payload = {
+      id: exam.id,
+      title: title,
+      difficulty: exam.difficulty,
+      status: exam.status || 'DRAFT',
+      questions: questionsPayload
+    };
+
+    this.mockService.saveExam(payload).subscribe({
+      next: (res) => {
+        this.successMessage.set(`Lưu đề thi "${title}" thành công!`);
+        this.generatedExam.set(null);
+        this.loadSavedExams();
+      },
+      error: (err) => {
+        this.errorMessage.set(err.error?.message || 'Lỗi khi lưu đề thi.');
+      }
+    });
+  }
+
+  protected updateSavedExamStatus(exam: any, newStatus: string): void {
+    this.successMessage.set('');
+    this.errorMessage.set('');
+
+    const questionsPayload = exam.customQuestions.map((cq: any) => ({
+      questionId: cq.question?.id,
+      maxScore: cq.maxScore,
+      suggestedTime: cq.suggestedTime
+    }));
+
+    const payload = {
+      id: exam.id,
+      title: exam.title,
+      difficulty: exam.difficulty,
+      status: newStatus,
+      questions: questionsPayload
+    };
+
+    this.mockService.saveExam(payload).subscribe({
+      next: (res) => {
+        this.successMessage.set(`Cập nhật trạng thái đề thi "${exam.title}" thành công!`);
+        this.loadSavedExams();
+      },
+      error: (err) => {
+        this.errorMessage.set(err.error?.message || 'Lỗi khi cập nhật trạng thái đề thi.');
+      }
+    });
+  }
+
+  protected onDeleteExam(id: string): void {
+    if (!confirm('Bạn có chắc chắn muốn xóa đề thi này không?')) {
+      return;
+    }
+    this.successMessage.set('');
+    this.errorMessage.set('');
+
+    this.mockService.deleteExam(id).subscribe({
+      next: (res) => {
+        this.successMessage.set('Xóa đề thi thành công!');
+        this.loadSavedExams();
+      },
+      error: (err) => {
+        this.errorMessage.set(err.error?.message || 'Lỗi khi xóa đề thi.');
+      }
+    });
   }
 
   protected onRemoveQuestion(index: number): void {

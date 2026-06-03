@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ElementRef, ViewChild, AfterViewInit, OnDestroy, PLATFORM_ID, effect } from '@angular/core';
+import { Component, inject, signal, computed, ElementRef, ViewChild, OnInit, AfterViewInit, OnDestroy, PLATFORM_ID, effect } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -15,10 +15,13 @@ Chart.register(...registerables);
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './dashboard.html'
 })
-export class DashboardComponent implements AfterViewInit, OnDestroy {
+export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly mockService = inject(MockDataService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
+
+  protected readonly activeExams = signal<any[]>([]);
+  protected readonly studentSubmissions = signal<any[]>([]);
 
   // Expose signals from MockDataService
   protected readonly overallExamSlope = this.mockService.overallExamSlope;
@@ -56,6 +59,49 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       }
     });
   }
+
+  ngOnInit(): void {
+    this.loadActiveExams();
+    this.loadStudentSubmissions();
+  }
+
+  protected loadActiveExams(): void {
+    this.mockService.fetchExams().subscribe({
+      next: (res) => {
+        this.activeExams.set(res);
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách đề thi:', err);
+      }
+    });
+  }
+
+  protected loadStudentSubmissions(): void {
+    const user = this.mockService.currentUser();
+    const userId = user ? user.id : 'STU_001';
+    this.mockService.fetchStudentExamSubmissions(userId).subscribe({
+      next: (res) => {
+        this.studentSubmissions.set(res);
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải lịch sử nộp bài thi:', err);
+      }
+    });
+  }
+
+  protected getLatestScoreForExam(examId: string): number | null {
+    const sub = this.studentSubmissions().find(s => s.examId === examId);
+    return sub ? sub.score : null;
+  }
+
+  protected getLatestSubmissionIdForExam(examId: string): string | null {
+    const sub = this.studentSubmissions().find(s => s.examId === examId);
+    return sub ? sub.id : null;
+  }
+
+  protected readonly latestExamSubmissions = computed(() => {
+    return this.studentSubmissions().slice(0, 5);
+  });
 
   // List of all questions
   protected readonly questions = computed(() => this.mockService.getQuestions());

@@ -333,4 +333,39 @@ export class MockDataService {
   public generateCustomExam(configs: any[]): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/exam/generate-custom`, { configs: configs });
   }
+
+  // Fetch all exams
+  public fetchExams(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/exam`);
+  }
+
+  // Fetch exam by id
+  public fetchExamById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/exam/${id}`);
+  }
+
+  // Save/update exam configuration
+  public saveExam(examData: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/exam/save`, examData);
+  }
+
+  // Delete an exam
+  public deleteExam(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/exam/${id}`);
+  }
+
+  // Submit all answers for an exam
+  public submitExam(submissionData: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/exam/submit`, submissionData);
+  }
+
+  // Fetch exam submission details
+  public fetchExamSubmission(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/exam/submission/${id}`);
+  }
+
+  // Fetch student exam submissions
+  public fetchStudentExamSubmissions(studentId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/exam/student/${studentId}/submissions`);
+  }
 }

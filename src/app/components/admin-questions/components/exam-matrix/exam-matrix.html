@@ -192,17 +192,30 @@
     @if (generatedExam()) {
       <div class="border border-slate-200 rounded-2xl p-5 md:p-6 bg-slate-50/20 space-y-6 animate-fade-in shadow-inner">
         <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-4 gap-4">
-          <div class="space-y-1">
+          <div class="space-y-1 flex-grow">
             <h3 class="text-base font-bold text-slate-800">Bản xem trước & Trình quản lý đề thi</h3>
-            <p class="text-xs text-slate-500">Xem trước, tinh chỉnh câu hỏi, điểm số và thời gian cho đề thi đã sinh.</p>
-          </div>
-          <div class="flex items-center space-x-3 shrink-0">
-            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Trạng thái đề:</span>
-            <select [ngModel]="generatedExam().status" (ngModelChange)="updateExamStatus($event)" class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:border-[#FF6C37] cursor-pointer font-bold text-slate-800 shadow-sm">
-              <option value="DRAFT">Nháp (Draft)</option>
-              <option value="ACTIVE">Hoạt động (Active)</option>
-              <option value="COMPLETED">Hoàn thành (Completed)</option>
-            </select>
+            <div class="flex flex-col sm:flex-row gap-3 pt-2 max-w-2xl">
+              <div class="flex-grow space-y-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tiêu đề đề thi:</label>
+                <input type="text" [(ngModel)]="examTitle" placeholder="Nhập tiêu đề đề thi..." class="block w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white font-bold text-slate-800 shadow-sm">
+              </div>
+              <div class="space-y-1 shrink-0">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái:</label>
+                <select [ngModel]="generatedExam().status" (ngModelChange)="updateExamStatus($event)" class="block border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#FF6C37] cursor-pointer font-bold text-slate-800 shadow-sm bg-white">
+                  <option value="DRAFT">Nháp (Draft)</option>
+                  <option value="ACTIVE">Hoạt động (Active)</option>
+                  <option value="SUSPENDED">Tạm ngưng (Suspended)</option>
+                </select>
+              </div>
+              <div class="flex items-end shrink-0">
+                <button (click)="onSaveExam()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow-md shadow-emerald-500/10 cursor-pointer flex items-center space-x-1.5 h-[34px]">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Lưu đề thi</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -376,5 +389,65 @@
         </div>
       </div>
     }
+
+    <!-- List of Saved Exams -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm space-y-4">
+      <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+        <span class="p-1.5 rounded bg-orange-50 text-[#FF6C37]">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.03 0 1.9.729 2.113 1.706" />
+          </svg>
+        </span>
+        <span>Danh sách Đề thi đã lưu (Saved Exams)</span>
+      </h2>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead>
+            <tr class="bg-slate-50 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <th class="px-4 py-3">Tiêu đề đề thi</th>
+              <th class="px-4 py-3">Độ khó</th>
+              <th class="px-4 py-3 text-center">Số câu hỏi</th>
+              <th class="px-4 py-3 text-center">Thời gian</th>
+              <th class="px-4 py-3 text-center">Tổng điểm</th>
+              <th class="px-4 py-3">Trạng thái</th>
+              <th class="px-4 py-3 text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-xs text-slate-700 bg-white">
+            @for (ex of savedExams(); track ex.id) {
+              <tr class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-4 py-3.5 font-bold text-slate-900">{{ ex.title }}</td>
+                <td class="px-4 py-3.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold border font-mono uppercase" [ngClass]="{
+                    'bg-emerald-50 text-emerald-700 border-emerald-250': ex.difficulty === 'EASY',
+                    'bg-amber-50 text-amber-700 border-amber-250': ex.difficulty === 'MEDIUM',
+                    'bg-rose-50 text-rose-700 border-rose-250': ex.difficulty === 'HARD',
+                    'bg-indigo-50 text-indigo-700 border-indigo-250': ex.difficulty === 'CUSTOM'
+                  }">{{ ex.difficulty }}</span>
+                </td>
+                <td class="px-4 py-3.5 text-center font-mono">{{ ex.customQuestions?.length || 0 }} câu</td>
+                <td class="px-4 py-3.5 text-center font-mono">{{ ex.totalTime }} phút</td>
+                <td class="px-4 py-3.5 text-center font-mono font-bold text-emerald-600">{{ ex.totalScore }}đ</td>
+                <td class="px-4 py-3.5">
+                  <select [ngModel]="ex.status" (ngModelChange)="updateSavedExamStatus(ex, $event)" class="text-[11px] border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
+                    <option value="DRAFT">Nháp (Draft)</option>
+                    <option value="ACTIVE">Hoạt động (Active)</option>
+                    <option value="SUSPENDED">Tạm ngưng (Suspended)</option>
+                  </select>
+                </td>
+                <td class="px-4 py-3.5 text-right">
+                  <button (click)="onDeleteExam(ex.id)" class="text-rose-600 hover:text-rose-800 font-bold hover:underline cursor-pointer">Xóa</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-slate-400 italic">Chưa có đề thi nào được tạo và lưu trong hệ thống.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
