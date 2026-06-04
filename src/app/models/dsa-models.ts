@@ -109,6 +109,10 @@ export interface RuleEvalResult {
   weight: number;
   synonym_evaluation: SynonymEval[] | null;
   error_message: string | null;
+  match_score?: number;
+  synonym_score?: number;
+  order_score?: number;
+  structure_score?: number;
 }
 
 export interface MatchedEvidence {

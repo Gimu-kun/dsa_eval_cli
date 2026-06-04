@@ -28,21 +28,61 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
   protected readonly selectedSubmission = signal<any>(null);
   protected readonly showSubmissionModal = signal<boolean>(false);
 
-  // References to Chart Canvas elements
+  // Overall statistics signals
+  protected readonly activeAnalysisView = signal<string>('overall'); // 'overall' (default) vs 'individual'
+  protected readonly overallStats = signal<any>(null);
+  protected readonly isLoadingOverall = signal<boolean>(false);
+
+  // References to Individual Chart Canvas elements
   @ViewChild('growthChart') private growthCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('masteryChart') private masteryCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('chapterChart') private chapterCanvas!: ElementRef<HTMLCanvasElement>;
 
+  // References to Overall Chart Canvas elements
+  @ViewChild('overallTopicChart') private overallTopicCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('overallChapterChart') private overallChapterCanvas!: ElementRef<HTMLCanvasElement>;
+
   private growthChartInstance: Chart | null = null;
   private masteryChartInstance: Chart | null = null;
   private chapterChartInstance: Chart | null = null;
+  
+  private overallTopicChartInstance: Chart | null = null;
+  private overallChapterChartInstance: Chart | null = null;
 
   ngOnInit(): void {
     this.loadStudents();
+    this.loadOverallStats();
   }
 
   ngOnDestroy(): void {
     this.destroyCharts();
+  }
+
+  protected switchView(view: string): void {
+    this.activeAnalysisView.set(view);
+    this.destroyCharts();
+    if (view === 'overall') {
+      this.loadOverallStats();
+    } else {
+      if (this.selectedStudentId) {
+        this.onStudentChange();
+      }
+    }
+  }
+
+  protected loadOverallStats(): void {
+    this.isLoadingOverall.set(true);
+    this.mockService.fetchOverallStats().subscribe({
+      next: (res) => {
+        this.overallStats.set(res);
+        this.isLoadingOverall.set(false);
+        setTimeout(() => this.renderOverallCharts(), 100);
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải thống kê tổng thể:', err);
+        this.isLoadingOverall.set(false);
+      }
+    });
   }
 
   protected loadStudents(): void {
@@ -51,7 +91,9 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
         this.studentsList.set(res);
         if (res.length > 0 && !this.selectedStudentId) {
           this.selectedStudentId = res[0].id;
-          this.onStudentChange();
+          if (this.activeAnalysisView() === 'individual') {
+            this.onStudentChange();
+          }
         }
       },
       error: (err) => console.error('Lỗi khi tải danh sách học viên:', err)
@@ -162,6 +204,136 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
     if (this.chapterChartInstance) {
       this.chapterChartInstance.destroy();
       this.chapterChartInstance = null;
+    }
+    if (this.overallTopicChartInstance) {
+      this.overallTopicChartInstance.destroy();
+      this.overallTopicChartInstance = null;
+    }
+    if (this.overallChapterChartInstance) {
+      this.overallChapterChartInstance.destroy();
+      this.overallChapterChartInstance = null;
+    }
+  }
+
+  private renderOverallCharts(): void {
+    if (!this.isBrowser) return;
+
+    const stats = this.overallStats();
+    if (!stats) return;
+
+    if (this.overallTopicChartInstance) {
+      this.overallTopicChartInstance.destroy();
+      this.overallTopicChartInstance = null;
+    }
+    if (this.overallChapterChartInstance) {
+      this.overallChapterChartInstance.destroy();
+      this.overallChapterChartInstance = null;
+    }
+
+    // 1. Topic mastery averages
+    if (this.overallTopicCanvas) {
+      const topicAverages = stats.topic_mastery_averages || {};
+      const topicLabels = this.mockService.topics.map(t => t.name);
+      const topicVals = this.mockService.topics.map(t => topicAverages[t.id] || 0.0);
+
+      this.overallTopicChartInstance = new Chart(this.overallTopicCanvas.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: topicLabels.map(label => label.length > 25 ? label.substring(0, 22) + '...' : label),
+          datasets: [{
+            label: 'Mức làm chủ trung bình',
+            data: topicVals,
+            backgroundColor: 'rgba(255, 108, 55, 0.85)',
+            hoverBackgroundColor: '#FF6C37',
+            borderColor: '#FF6C37',
+            borderWidth: 1,
+            borderRadius: 6,
+            barThickness: 32
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              callbacks: {
+                label: (context) => ` Mức làm chủ TB: ${context.parsed.y} / 10`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 } }
+            },
+            y: {
+              min: 0,
+              max: 10,
+              ticks: { stepSize: 2, font: { size: 11, family: 'monospace' } },
+              grid: { color: '#f1f5f9' }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Chapter mastery averages
+    if (this.overallChapterCanvas) {
+      const chapterAverages = stats.chapter_mastery_averages || {};
+      const chaptersList = [
+        { id: 'CHAP_C1', name: 'C1: Tổng quan' },
+        { id: 'CHAP_C2', name: 'C2: Tìm/Sắp xếp' },
+        { id: 'CHAP_C3', name: 'C3: DSKL đơn' },
+        { id: 'CHAP_C4', name: 'C4: Stack/Queue' },
+        { id: 'CHAP_C5', name: 'C5: Cây BST' }
+      ];
+
+      const chapterLabels = chaptersList.map(c => c.name);
+      const chapterVals = chaptersList.map(c => chapterAverages[c.id] || 0.0);
+
+      this.overallChapterChartInstance = new Chart(this.overallChapterCanvas.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: chapterLabels,
+          datasets: [{
+            label: 'Mức làm chủ trung bình',
+            data: chapterVals,
+            backgroundColor: 'rgba(79, 70, 229, 0.85)',
+            hoverBackgroundColor: '#4f46e5',
+            borderColor: '#4f46e5',
+            borderWidth: 1,
+            borderRadius: 6,
+            barThickness: 32
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              callbacks: {
+                label: (context) => ` Mức làm chủ TB: ${context.parsed.y} / 10`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 } }
+            },
+            y: {
+              min: 0,
+              max: 10,
+              ticks: { stepSize: 2, font: { size: 11, family: 'monospace' } },
+              grid: { color: '#f1f5f9' }
+            }
+          }
+        }
+      });
     }
   }
 

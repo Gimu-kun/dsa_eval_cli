@@ -1,90 +1,200 @@
 <div class="space-y-8 animate-fade-in">
   <!-- Top Welcome Banner & Stats -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 text-white p-6 rounded-xl border border-slate-800 shadow-md relative overflow-hidden">
+  <div
+    class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 text-white p-6 rounded-xl border border-slate-800 shadow-md relative overflow-hidden">
     <div class="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-[#FF6C37] opacity-10 blur-xl"></div>
     <div class="absolute right-12 bottom-0 w-32 h-32 rounded-full bg-orange-600 opacity-5 blur-2xl"></div>
-    
+
     <div class="space-y-2 relative z-10">
-      <h1 class="text-2xl font-bold tracking-tight">Không gian học tập cá nhân</h1>
-      <p class="text-slate-400 text-sm font-light">Đánh giá và cải thiện kiến thức Cấu trúc dữ liệu & Giải thuật bằng bài làm tự luận.</p>
-      
+      <h1 class="text-2xl font-bold tracking-tight">Hệ thống Đánh giá Tự luận DSA</h1>
+      <p class="text-slate-400 text-sm font-light">Kiểm tra, phân tích độ phức tạp thuật toán và đối chiếu cấu trúc
+        logic với mô hình Ontology.</p>
+
       <!-- Learning Trend Badge -->
+      @if (activeTab() === 'progress') {
       <div class="flex items-center space-x-2 pt-1">
         <span class="text-xs text-slate-400 font-mono">Xu hướng học tập:</span>
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border font-mono uppercase" [ngClass]="{
-          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': overallExamTrend() === 'UPWARD',
-          'bg-rose-500/10 text-rose-400 border-rose-500/20': overallExamTrend() === 'DOWNWARD',
-          'bg-slate-500/10 text-slate-400 border-slate-500/20': overallExamTrend() === 'STABLE'
-        }">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border font-mono uppercase"
+          [ngClass]="{
+            'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': overallExamTrend() === 'UPWARD',
+            'bg-rose-500/10 text-rose-400 border-rose-500/20': overallExamTrend() === 'DOWNWARD',
+            'bg-slate-500/10 text-slate-400 border-slate-500/20': overallExamTrend() === 'STABLE'
+          }">
           @if (overallExamTrend() === 'UPWARD') {
-            <span>Tăng trưởng (+{{ overallExamSlope() }})</span>
+          <span>Tăng trưởng (+{{ overallExamSlope() }})</span>
           } @else if (overallExamTrend() === 'DOWNWARD') {
-            <span>Suy giảm ({{ overallExamSlope() }})</span>
+          <span>Suy giảm ({{ overallExamSlope() }})</span>
           } @else {
-            <span>Ổn định ({{ overallExamSlope() }})</span>
+          <span>Ổn định ({{ overallExamSlope() }})</span>
           }
         </span>
       </div>
+      }
     </div>
-    
+
     <!-- Quick Stats Summary Grid -->
-    <div class="grid grid-cols-3 gap-6 mt-6 md:mt-0 w-full md:w-auto relative z-10 border-t border-slate-800 pt-4 md:pt-0 md:border-t-0">
+    <div
+      class="grid grid-cols-3 gap-6 mt-6 md:mt-0 w-full md:w-auto relative z-10 border-t border-slate-800 pt-4 md:pt-0 md:border-t-0">
       <div class="text-center px-2">
-        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">{{ solvedCount() }}</span>
-        <span class="text-xs text-slate-400 font-mono">Đã làm</span>
+        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">
+          {{ activeTab() === 'progress' ? solvedCount() : 20 }}
+        </span>
+        <span class="text-xs text-slate-400 font-mono">
+          {{ activeTab() === 'progress' ? 'Đã làm' : 'Sinh viên TN' }}
+        </span>
       </div>
       <div class="text-center px-4 border-x border-slate-800">
-        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">{{ totalSubmissions() }}</span>
-        <span class="text-xs text-slate-400 font-mono">Lượt nộp</span>
+        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">
+          {{ activeTab() === 'progress' ? totalSubmissions() : 80 }}
+        </span>
+        <span class="text-xs text-slate-400 font-mono">
+          {{ activeTab() === 'progress' ? 'Lượt nộp' : 'Tổng bài chấm' }}
+        </span>
       </div>
       <div class="text-center px-2">
-        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">{{ averageScore() }}</span>
-        <span class="text-xs text-slate-400 font-mono">Điểm TB</span>
+        <span class="block text-2xl font-extrabold text-[#FF6C37] font-mono">
+          {{ activeTab() === 'progress' ? averageScore() : 7.07 }}
+        </span>
+        <span class="text-xs text-slate-400 font-mono">
+          {{ activeTab() === 'progress' ? 'Điểm TB' : 'Điểm TB Hệ thống' }}
+        </span>
       </div>
     </div>
   </div>
 
-  <!-- AI Learning Recommendations (Option A) -->
-  @if (recommendations().length > 0) {
-    <div class="bg-orange-50/20 border border-orange-500/20 rounded-xl p-5 shadow-sm space-y-3 relative overflow-hidden">
-      <div class="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-[#FF6C37]/5 blur-lg"></div>
-      
-      <div class="flex items-center space-x-2 text-[#FF6C37]">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l8.982-8.982m-9 9l8.982-8.982M18 10.5h.008v.008H18V10.5zm-3.75 3h.008v.008h-.008v-.008zm-3 3h.008v.008h-.008v-.008zM14.25 9h.008v.008h-.008V9zm-3 3h.008v.008h-.008v-.008zm-3 3h.008v.008h-.008v-.008z" />
+  <!-- Role Tab Switcher (Only visible to Admin) -->
+  @if (currentUser()?.role === 'ADMIN') {
+  <div class="flex border-b border-slate-200">
+    <button (click)="changeTab('progress')"
+      class="py-2.5 px-6 font-bold text-sm border-b-2 transition-all focus:outline-none" [ngClass]="{
+          'border-[#FF6C37] text-[#FF6C37]': activeTab() === 'progress',
+          'border-transparent text-slate-500 hover:text-slate-700': activeTab() !== 'progress'
+        }">
+      Báo cáo tiến trình học tập
+    </button>
+    <button (click)="changeTab('experimental')"
+      class="py-2.5 px-6 font-bold text-sm border-b-2 transition-all focus:outline-none flex items-center space-x-1.5"
+      [ngClass]="{
+          'border-[#FF6C37] text-[#FF6C37]': activeTab() === 'experimental',
+          'border-transparent text-slate-500 hover:text-slate-700': activeTab() !== 'experimental'
+        }">
+      <span class="w-2 h-2 rounded-full bg-[#FF6C37]"></span>
+      <span>Thống kê thực nghiệm (80 bài)</span>
+    </button>
+  </div>
+  }
+
+  <!-- TAB 1: INDIVIDUAL PROGRESS TRACKING -->
+  @if (activeTab() === 'progress') {
+  <!-- Lecturer Student Selector Dropdown -->
+  @if (currentUser()?.role === 'ADMIN' && studentsList().length > 0) {
+  <div
+    class="bg-gradient-to-r from-orange-50/30 to-indigo-50/30 border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div class="space-y-1">
+      <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center space-x-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+          class="w-4 h-4 text-[#FF6C37]">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0110.089 20M3 11.627a1.125 1.125 0 01.483-.875 11.97 11.97 0 012.23-1.04c.225-.078.47-.035.66.117a3.909 3.909 0 005.254 0c.19-.152.435-.195.66-.117a11.97 11.97 0 012.23 1.04 1.125 1.125 0 01.483.875V12c0 .621-.504 1.125-1.125 1.125h-9.75A1.125 1.125 0 013 12v-.373z" />
         </svg>
-        <h3 class="font-bold text-slate-900 text-sm md:text-base">Gợi ý lộ trình & Khuyến nghị thông minh (AI Recommendations)</h3>
-      </div>
-      
-      <ul class="space-y-2 text-xs md:text-sm text-slate-700">
-        @for (rec of recommendations(); track rec) {
+        <span>Góc nhìn Giảng viên: Chọn tài khoản theo dõi</span>
+      </h3>
+      <p class="text-xs text-slate-500 font-light">Chọn một sinh viên (bao gồm các sinh viên thực nghiệm) để kiểm tra
+        biểu đồ và lịch sử bài làm.</p>
+    </div>
+
+    <select [ngModel]="selectedStudentId()" (ngModelChange)="onStudentChange($event)"
+      class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-semibold text-slate-700 min-w-[280px]">
+      @for (student of studentsList(); track student.id) {
+      <option [value]="student.id">
+        {{ student.full_name }} ({{ student.username }})
+      </option>
+      }
+    </select>
+  </div>
+  }
+
+  <!-- AI Learning Recommendations -->
+  @if (recommendations().length > 0) {
+  <div class="bg-[#FF6C37]/5 border border-[#FF6C37]/15 rounded-xl p-5 shadow-sm space-y-4 relative overflow-hidden">
+    <div class="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-[#FF6C37]/5 blur-lg"></div>
+
+    <div class="flex items-center space-x-2 text-[#FF6C37]">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
+        class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M9.813 15.904L9 21l8.982-8.982m-9 9l8.982-8.982M18 10.5h.008v.008H18V10.5zm-3.75 3h.008v.008h-.008v-.008zm-3 3h.008v.008h-.008v-.008zM14.25 9h.008v.008h-.008V9zm-3 3h.008v.008h-.008v-.008zm-3 3h.008v.008h-.008v-.008z" />
+      </svg>
+      <h3 class="font-extrabold text-slate-900 text-sm md:text-base">Gợi ý lộ trình & Khuyến nghị thông minh (AI
+        Recommendations)</h3>
+    </div>
+
+    <ul class="space-y-3">
+      @for (rec of recommendations(); track rec) {
+        @if (rec && rec.type === 'ACHIEVEMENT') {
+          <li class="flex items-start space-x-3 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-950 shadow-sm transition-all hover:bg-emerald-500/15">
+            <span class="flex-shrink-0 p-1.5 bg-emerald-500/20 rounded-lg text-emerald-600 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.321 21.18c-1.006.608-2.237-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" />
+              </svg>
+            </span>
+            <div class="flex-1 space-y-1">
+              <div class="flex items-center">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-700 uppercase tracking-wider shadow-sm">Thành tích</span>
+              </div>
+              <p class="leading-relaxed text-slate-800 text-xs md:text-sm font-semibold">{{ rec.text }}</p>
+            </div>
+          </li>
+        } @else if (rec && rec.type === 'RECOMMENDATION') {
+          <li class="flex items-start space-x-3 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-950 shadow-sm transition-all hover:bg-amber-500/15">
+            <span class="flex-shrink-0 p-1.5 bg-amber-500/20 rounded-lg text-amber-600 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                <path d="M12 18a.75.75 0 00.75-.75V10.5a.75.75 0 00-1.5 0v6.75c0 .414.336.75.75.75z" />
+                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM3.5 12a8.5 8.5 0 1117 0 8.5 8.5 0 01-17 0z" clip-rule="evenodd" />
+                <path d="M12 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+              </svg>
+            </span>
+            <div class="flex-1 space-y-1">
+              <div class="flex items-center">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-700 uppercase tracking-wider shadow-sm">Khuyến nghị</span>
+              </div>
+              <p class="leading-relaxed text-slate-800 text-xs md:text-sm font-semibold">{{ rec.text }}</p>
+            </div>
+          </li>
+        } @else {
           <li class="flex items-start space-x-2">
             <span class="text-[#FF6C37] mt-0.5">•</span>
-            <span class="leading-relaxed font-light">{{ rec }}</span>
+            <span class="leading-relaxed font-light text-slate-700">{{ rec }}</span>
           </li>
         }
-      </ul>
-    </div>
+      }
+    </ul>
+  </div>
   }
 
   <!-- Visual Analytics Section -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Chart Slot 1 -->
-    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-[380px]">
+    <div
+      class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-[380px]">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 shrink-0">
         <div class="flex items-center space-x-2">
           <span class="p-1.5 rounded-lg bg-orange-50 text-[#FF6C37]">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+              stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
             </svg>
           </span>
-          <h2 class="font-bold text-slate-900 text-base">Khung Phân Tích 1</h2>
+          <h2 class="font-bold text-slate-900 text-base">Biểu đồ phân tích 1</h2>
         </div>
-        <select [ngModel]="slot1ChartType()" (ngModelChange)="onSlot1Change($event)" class="border border-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
+        <select [ngModel]="slot1ChartType()" (ngModelChange)="onSlot1Change($event)"
+          class="border border-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
           <option value="growth_attempts">Biểu đồ tăng trưởng (theo lượt nộp)</option>
           <option value="growth_time">Biểu đồ tăng trưởng (theo ngày)</option>
           <option value="mastery_topics">Mức làm chủ theo Chủ đề (Topics)</option>
           <option value="mastery_chapters">Mức làm chủ theo Chương (Chapters)</option>
+          <option value="mastery_clos">Mức làm chủ Chuẩn đầu ra (CLOs)</option>
         </select>
       </div>
       <div class="relative flex-grow h-0 w-full">
@@ -93,23 +203,28 @@
     </div>
 
     <!-- Chart Slot 2 -->
-    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-[380px]">
+    <div
+      class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-[380px]">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 shrink-0">
         <div class="flex items-center space-x-2">
           <span class="p-1.5 rounded-lg bg-orange-50 text-[#FF6C37]">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+              stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
             </svg>
           </span>
-          <h2 class="font-bold text-slate-900 text-base">Khung Phân Tích 2</h2>
+          <h2 class="font-bold text-slate-900 text-base">Biểu đồ phân tích 2</h2>
+        </div>
+        <select [ngModel]="slot2ChartType()" (ngModelChange)="onSlot2Change($event)"
+          class="border border-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
+          <option value="growth_attempts">Biểu đồ tăng trưởng (theo lượt nộp)</option>
+          <option value="growth_time">Biểu đồ tăng trưởng (theo ngày)</option>
+          <option value="mastery_topics">Mức làm chủ theo Chủ đề (Topics)</option>
+          <option value="mastery_chapters">Mức làm chủ theo Chương (Chapters)</option>
+          <option value="mastery_clos">Mức làm chủ Chuẩn đầu ra (CLOs)</option>
+        </select>
       </div>
-      <select [ngModel]="slot2ChartType()" (ngModelChange)="onSlot2Change($event)" class="border border-slate-200 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
-        <option value="growth_attempts">Biểu đồ tăng trưởng (theo lượt nộp)</option>
-        <option value="growth_time">Biểu đồ tăng trưởng (theo ngày)</option>
-        <option value="mastery_topics">Mức làm chủ theo Chủ đề (Topics)</option>
-        <option value="mastery_chapters">Mức làm chủ theo Chương (Chapters)</option>
-      </select>
-    </div>
       <div class="relative flex-grow h-0 w-full">
         <canvas #slot2Canvas></canvas>
       </div>
@@ -118,7 +233,6 @@
 
   <!-- Main Exams Space & History -->
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-    
     <!-- Left: Exams Space (2/3 columns) -->
     <div class="xl:col-span-2 space-y-6">
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
@@ -131,77 +245,89 @@
       <!-- Exams List Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @for (ex of activeExams(); track ex.id) {
-          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:border-[#FF6C37]/50 hover:shadow-md transition-all flex flex-col justify-between group">
-            
-            <div class="space-y-3">
-              <!-- Meta Badges -->
-              <div class="flex flex-wrap gap-2">
-                <!-- Difficulty Badge -->
-                @if (ex.difficulty === 'EASY') {
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">Dễ</span>
-                } @else if (ex.difficulty === 'MEDIUM') {
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">Trung bình</span>
-                } @else if (ex.difficulty === 'HARD') {
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">Khó</span>
-                } @else {
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider font-mono">{{ ex.difficulty }}</span>
-                }
+        <div
+          class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:border-[#FF6C37]/50 hover:shadow-md transition-all flex flex-col justify-between group">
+          <div class="space-y-3">
+            <!-- Meta Badges -->
+            <div class="flex flex-wrap gap-2">
+              <!-- Difficulty Badge -->
+              @if (ex.difficulty === 'EASY') {
+              <span
+                class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">Dễ</span>
+              } @else if (ex.difficulty === 'MEDIUM') {
+              <span
+                class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">Trung
+                bình</span>
+              } @else if (ex.difficulty === 'HARD') {
+              <span
+                class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">Khó</span>
+              } @else {
+              <span
+                class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider font-mono">{{
+                ex.difficulty }}</span>
+              }
 
-                <!-- Question Count Badge -->
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider font-mono">
-                  {{ ex.customQuestions?.length || 0 }} Câu hỏi
-                </span>
+              <!-- Question Count Badge -->
+              <span
+                class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider font-mono">
+                {{ ex.customQuestions?.length || 0 }} Câu hỏi
+              </span>
 
-                <!-- Time Badge -->
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider font-mono">
-                  {{ ex.totalTime }} phút
-                </span>
-              </div>
-
-              <!-- Exam Title -->
-              <h3 class="font-bold text-slate-900 group-hover:text-[#FF6C37] transition-colors leading-snug line-clamp-2">
-                {{ ex.title }}
-              </h3>
+              <!-- Time Badge -->
+              <span
+                class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider font-mono">
+                {{ ex.totalTime }} phút
+              </span>
             </div>
 
-            <!-- Footer Action & Score -->
-            <div class="flex items-center justify-between border-t border-slate-100 mt-4 pt-3.5">
-              <div>
-                @if (getLatestScoreForExam(ex.id); as score) {
-                  <div class="flex items-center space-x-2">
-                    <span class="text-xs text-slate-400">Điểm gần nhất:</span>
-                    <span class="text-sm font-bold font-mono text-emerald-600">
-                      {{ score }}/{{ ex.totalScore }}
-                    </span>
-                  </div>
-                } @else {
-                  <span class="text-xs text-slate-400 italic">Chưa làm bài</span>
-                }
-              </div>
-
-              <div class="flex space-x-2">
-                @if (getLatestSubmissionIdForExam(ex.id); as subId) {
-                  <a [routerLink]="['/evaluation', subId]" class="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 hover:bg-slate-200 transition-colors">
-                    Xem nhận xét
-                  </a>
-                }
-                <a [routerLink]="['/assignment', ex.id]" class="px-3.5 py-1.5 rounded-md text-xs font-semibold text-white bg-[#FF6C37] hover:bg-orange-600 shadow-sm shadow-orange-500/10 hover:shadow-orange-500/20 transition-all flex items-center space-x-1">
-                  <span>{{ getLatestScoreForExam(ex.id) !== null ? 'Làm lại' : 'Làm bài' }}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-
+            <!-- Exam Title -->
+            <h3 class="font-bold text-slate-900 group-hover:text-[#FF6C37] transition-colors leading-snug line-clamp-2">
+              {{ ex.title }}
+            </h3>
           </div>
+
+          <!-- Footer Action & Score -->
+          <div class="flex items-center justify-between border-t border-slate-100 mt-4 pt-3.5">
+            <div>
+              @if (getLatestScoreForExam(ex.id); as score) {
+              <div class="flex items-center space-x-2">
+                <span class="text-xs text-slate-400">Điểm gần nhất:</span>
+                <span class="text-sm font-bold font-mono text-emerald-600">
+                  {{ score }}/{{ ex.totalScore }}
+                </span>
+              </div>
+              } @else {
+              <span class="text-xs text-slate-400 italic">Chưa làm bài</span>
+              }
+            </div>
+
+            <div class="flex space-x-2">
+              @if (getLatestSubmissionIdForExam(ex.id); as subId) {
+              <a [routerLink]="['/evaluation', subId]"
+                class="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 hover:bg-slate-200 transition-colors">
+                Xem nhận xét
+              </a>
+              }
+              <a [routerLink]="['/assignment', ex.id]"
+                class="px-3.5 py-1.5 rounded-md text-xs font-semibold text-white bg-[#FF6C37] hover:bg-orange-600 shadow-sm shadow-orange-500/10 hover:shadow-orange-500/20 transition-all flex items-center space-x-1">
+                <span>{{ getLatestScoreForExam(ex.id) !== null ? 'Làm lại' : 'Làm bài' }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                  stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
         } @empty {
-          <div class="col-span-full bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto text-slate-300 mb-2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-            <p>Hiện không có đề thi nào được kích hoạt.</p>
-          </div>
+        <div class="col-span-full bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="w-12 h-12 mx-auto text-slate-300 mb-2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <p>Hiện không có đề thi nào được kích hoạt.</p>
+        </div>
         }
       </div>
     </div>
@@ -210,44 +336,213 @@
     <div class="space-y-6">
       <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
         <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-[#FF6C37]">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            class="w-5 h-5 text-[#FF6C37]">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
           <span>Bài làm gần đây</span>
         </h3>
 
         <div class="space-y-3.5">
           @for (log of latestExamSubmissions(); track log.id) {
-            <div class="border border-slate-100 bg-slate-50/50 rounded-lg p-3 hover:bg-slate-50 transition-colors flex flex-col justify-between space-y-2">
-              <div class="flex justify-between items-start">
-                <div class="space-y-1">
-                  <h4 class="text-xs font-bold text-slate-800 line-clamp-1" [title]="log.examTitle">
-                    {{ log.examTitle }}
-                  </h4>
-                  <span class="block text-[10px] text-slate-500 font-mono">
-                    {{ log.submittedAt | date:'dd/MM/yyyy HH:mm' }}
-                  </span>
-                </div>
-                <!-- Score badge -->
-                <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-250">
-                  {{ log.score }}đ
+          <div
+            class="border border-slate-100 bg-slate-50/50 rounded-lg p-3 hover:bg-slate-50 transition-colors flex flex-col justify-between space-y-2">
+            <div class="flex justify-between items-start">
+              <div class="space-y-1">
+                <h4 class="text-xs font-bold text-slate-800 line-clamp-1" [title]="log.examTitle">
+                  {{ log.examTitle }}
+                </h4>
+                <span class="block text-[10px] text-slate-500 font-mono">
+                  {{ log.submittedAt | date:'dd/MM/yyyy HH:mm' }}
                 </span>
               </div>
-
-              <div class="flex items-center justify-end border-t border-slate-100/70 pt-2 text-[10px]">
-                <a [routerLink]="['/evaluation', log.id]" class="text-[#FF6C37] hover:text-orange-700 font-bold flex items-center space-x-0.5">
-                  <span>Chi tiết</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                  </svg>
-                </a>
-              </div>
+              <!-- Score badge -->
+              <span
+                class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-250">
+                {{ log.score }}đ
+              </span>
             </div>
+
+            <div class="flex items-center justify-end border-t border-slate-100/70 pt-2 text-[10px]">
+              <a [routerLink]="['/evaluation', log.id]"
+                class="text-[#FF6C37] hover:text-orange-700 font-bold flex items-center space-x-0.5">
+                <span>Chi tiết</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                  stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </a>
+            </div>
+          </div>
           } @empty {
-            <p class="text-sm text-slate-400 italic text-center py-6">Chưa có lịch sử làm bài nào.</p>
+          <p class="text-sm text-slate-400 italic text-center py-6">Chưa có lịch sử làm bài nào.</p>
           }
         </div>
       </div>
     </div>
   </div>
+  }
+
+  <!-- TAB 2: EXPERIMENTAL STATISTICS (80 SUBMISSIONS REPORT) -->
+  @if (activeTab() === 'experimental') {
+  <div class="space-y-6">
+
+    <!-- Summary metrics cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <!-- MAE Card -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+        <div
+          class="absolute right-3 top-3 w-8 h-8 rounded-full bg-orange-50 text-[#FF6C37] flex items-center justify-center text-xs font-mono font-bold">
+          MAE</div>
+        <span class="text-xs text-slate-400 font-medium block">Sai số Tuyệt đối Trung bình</span>
+        <span class="text-3xl font-extrabold text-[#FF6C37] font-mono block">0.83 <span
+            class="text-xs font-light text-slate-500 font-sans">điểm</span></span>
+        <p class="text-[10px] text-slate-500 leading-tight">Mức chênh lệch trung bình giữa điểm tự động chấm và giảng
+          viên.</p>
+      </div>
+
+      <!-- Correlation Card -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+        <div
+          class="absolute right-3 top-3 w-8 h-8 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-xs font-mono font-bold">
+          r</div>
+        <span class="text-xs text-slate-400 font-medium block">Hệ số Tương quan Pearson</span>
+        <span class="text-3xl font-extrabold text-indigo-600 font-mono block">0.76 <span
+            class="text-[10px] text-indigo-500 font-bold font-mono block">(p < 0.001)</span></span>
+          <p class="text-[10px] text-slate-500 leading-tight">Mức độ tương quan rất mạnh về độ nhất quán giữa 2 phương
+            pháp chấm.</p>
+      </div>
+
+      <!-- Basic Accuracy Card -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+        <div
+          class="absolute right-3 top-3 w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-mono font-bold">
+          %</div>
+        <span class="text-xs text-slate-400 font-medium block">Độ chính xác Cơ bản</span>
+        <span class="text-3xl font-extrabold text-emerald-600 font-mono block">91.7%</span>
+        <p class="text-[10px] text-slate-500 leading-tight">Tỉ lệ phản hồi tương đồng của thuật toán đạt chuẩn Bloom và
+          Ontology.</p>
+      </div>
+
+      <!-- Total Submissions Card -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+        <div
+          class="absolute right-3 top-3 w-8 h-8 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center text-xs font-mono font-bold">
+          N</div>
+        <span class="text-xs text-slate-400 font-medium block">Mẫu Thử nghiệm</span>
+        <span class="text-3xl font-extrabold text-slate-800 font-mono block">80 <span
+            class="text-xs font-light text-slate-500 font-sans">bài làm</span></span>
+        <p class="text-[10px] text-slate-500 leading-tight">Thực nghiệm trên 20 sinh viên năm 3 & năm 4 với 4 đề thi có
+          độ khó tăng dần.</p>
+      </div>
+    </div>
+
+    <!-- Research Methodology / Details -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3.5">
+      <h3 class="font-bold text-slate-900 text-sm border-b border-slate-100 pb-2.5 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+          class="w-5 h-5 text-[#FF6C37]">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        <span>Thiết kế thực nghiệm & Kiểm chứng mô hình</span>
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-600 leading-relaxed font-light">
+        <div class="space-y-2">
+          <span class="font-bold text-slate-800 block text-xs uppercase tracking-wider">Cơ cấu bài làm thực
+            nghiệm</span>
+          <p>Mỗi sinh viên trong số 20 sinh viên thực nghiệm hoàn thành 4 bài kiểm tra tự luận:</p>
+          <ul class="list-disc pl-4 space-y-1 mt-1">
+            <li><strong>Bài 1 (Dễ - 30p):</strong> Đề kiểm tra thường kỳ lần 1 (2 câu)</li>
+            <li><strong>Bài 2 (Dễ - 30p):</strong> Đề kiểm tra thường kỳ lần 2 (2 câu)</li>
+            <li><strong>Bài 3 (TB - 60p):</strong> Đề kiểm tra giữa kỳ (4 câu)</li>
+            <li><strong>Bài 4 (Khó - 90p):</strong> Đề kiểm tra cuối kỳ (6 câu)</li>
+          </ul>
+        </div>
+
+        <div class="space-y-2 border-l border-slate-100 pl-6">
+          <span class="font-bold text-slate-800 block text-xs uppercase tracking-wider">Kết quả đối chiếu Rubric</span>
+          <p>Các bài làm tự do được hệ thống trích xuất và so khớp tự động với mô hình đáp án (expected answer) lưu trữ
+            trong cơ sở tri thức:</p>
+          <p class="mt-1.5">Kết quả cho thấy sự tương đồng cao với MAE đạt 0.83 điểm, phản ánh sự nhất quán và tin cậy
+            của thuật toán chấm điểm tự động.</p>
+        </div>
+
+        <div class="space-y-2 border-l border-slate-100 pl-6">
+          <span class="font-bold text-slate-800 block text-xs uppercase tracking-wider">Phân tích Trọng số Luật
+            (Rules)</span>
+          <p>Hệ thống phân loại các luật chấm điểm thành 3 nhóm độ khó và áp dụng hệ số trọng số:</p>
+          <ul class="list-disc pl-4 space-y-1 mt-1">
+            <li><strong>Luật đơn giản (concepts/relations):</strong> Trọng số 1.0</li>
+            <li><strong>Luật trung bình (order/sequence):</strong> Trọng số 1.5</li>
+            <li><strong>Luật phức tạp (code structure/AST):</strong> Trọng số 2.0</li>
+          </ul>
+          <p class="mt-1.5">Độ chính xác trung bình của các luật đạt <strong>86%</strong>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table of 80 submissions -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-5 py-4 flex justify-between items-center">
+        <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Chi tiết 80 bài làm tự luận thực nghiệm
+        </h3>
+        <span class="text-xs text-slate-400 font-mono">Dữ liệu từ Du_lieu_cham_diem_tu_luan_80_bai.csv</span>
+      </div>
+
+      <div class="overflow-x-auto max-h-[420px] scrollbar-thin">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr
+              class="bg-slate-100/60 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+              <th class="p-3 text-center">STT</th>
+              <th class="p-3">Sinh viên thực nghiệm</th>
+              <th class="p-3">Bài kiểm tra</th>
+              <th class="p-3 text-center">Điểm Giảng viên</th>
+              <th class="p-3 text-center">Điểm Hệ thống</th>
+              <th class="p-3 text-center">Sai số tuyệt đối</th>
+              <th class="p-3 text-center">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
+            @for (row of experimentalData; track row.stt) {
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="p-3 text-center font-mono font-bold text-slate-400">{{ row.stt }}</td>
+              <td class="p-3 font-semibold text-slate-900">
+                Sinh viên thực nghiệm {{ ((row.stt - 1) / 4 | number:'1.0-0') }}
+              </td>
+              <td class="p-3 font-light">
+                @if (row.stt % 4 === 1) {
+                <span>Thường kỳ 1 (EXAM_001)</span>
+                } @else if (row.stt % 4 === 2) {
+                <span>Thường kỳ 2 (EXAM_002)</span>
+                } @else if (row.stt % 4 === 3) {
+                <span>Giữa kỳ (EXAM_003)</span>
+                } @else {
+                <span>Cuối kỳ (EXAM_005)</span>
+                }
+              </td>
+              <td class="p-3 text-center font-mono font-bold text-slate-800">{{ row.gv | number:'1.1-2' }}đ</td>
+              <td class="p-3 text-center font-mono font-bold text-emerald-600">{{ row.ht | number:'1.1-2' }}đ</td>
+              <td class="p-3 text-center font-mono font-bold text-rose-500 bg-rose-50/10">{{ row.se | number:'1.1-2' }}đ
+              </td>
+              <td class="p-3 text-center">
+                <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold" [ngClass]="{
+                      'bg-emerald-50 text-emerald-700': row.se <= 0.5,
+                      'bg-amber-50 text-amber-700': row.se > 0.5 && row.se <= 1.2,
+                      'bg-rose-50 text-rose-700': row.se > 1.2
+                    }">
+                  {{ row.se <= 0.5 ? 'Chính xác cao' : (row.se <=1.2 ? 'Chấp nhận được' : 'Sai lệch lớn' ) }} </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  }
 </div>

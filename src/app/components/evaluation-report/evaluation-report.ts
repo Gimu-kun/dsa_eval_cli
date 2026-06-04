@@ -16,6 +16,37 @@ export class EvaluationReportComponent implements OnInit {
   protected readonly examSubmission = signal<any | undefined>(undefined);
   protected readonly activeQuestionIndex = signal<number>(0);
 
+  protected readonly activeExplanation = signal<boolean>(false);
+  protected readonly explanationTitle = signal<string>('');
+  protected readonly explanationText = signal<string>('');
+
+  protected showDetailedExplanation(qRes: any): void {
+    this.explanationTitle.set("Giải thích chi tiết về kết quả đánh giá");
+    let text = `Bộ đối sánh đã phân tích bài làm của bạn dựa trên 3 tiêu chí chính:\n\n`;
+    text += `1. Khái niệm (Concepts): Các từ khóa cốt lõi liên quan đến chủ đề được so khớp mờ. Hệ thống kiểm tra xem bài làm của bạn có chứa các thuật ngữ và các từ đồng nghĩa được định nghĩa trong Ontology hay không.\n\n`;
+    text += `2. Mối quan hệ ngữ nghĩa (Semantic Relations): Kiểm tra xem các khái niệm có liên kết logic với nhau thông qua các mẫu câu được định nghĩa hay không.\n\n`;
+    text += `3. Các quy tắc (Rules): Đánh giá trình tự giải thuật và cấu trúc mã giả bằng đối sánh cây cú pháp trừu tượng (AST). Các cấu trúc điều khiển (if, else, while, for) được dựng thành cây và tính độ tương đồng cấu trúc.\n\n`;
+    text += `Điểm số hiện tại phản ánh chính xác cấu trúc bài giải của bạn so với mô hình mong đợi.`;
+    
+    this.explanationText.set(text);
+    this.activeExplanation.set(true);
+  }
+
+  protected showLearningRecommendations(qRes: any): void {
+    this.explanationTitle.set("Gợi ý học tập từ hệ thống");
+    let text = `Để nâng cao mức độ hiểu biết về chủ đề này, hệ thống gợi ý bạn:\n\n`;
+    text += `- Xem lại tài liệu học tập của bài học liên quan.\n`;
+    text += `- Luyện tập viết lại thuật toán và chú ý đầy đủ các bước đặc trưng (ví dụ: các biến con trỏ, điều kiện dừng vòng lặp, cập nhật vị trí).\n`;
+    text += `- Thử sức với các câu hỏi ứng dụng có độ khó tương tự trong ngân hàng đề thi.\n`;
+    
+    this.explanationText.set(text);
+    this.activeExplanation.set(true);
+  }
+
+  protected closeInfoBox(): void {
+    this.activeExplanation.set(false);
+  }
+
   protected readonly activeQuestionResult = computed(() => {
     const sub = this.examSubmission();
     if (!sub || !sub.questionResults) return undefined;
@@ -122,6 +153,7 @@ export class EvaluationReportComponent implements OnInit {
 
   protected selectQuestion(index: number): void {
     this.activeQuestionIndex.set(index);
+    this.activeExplanation.set(false);
   }
 
   // Compile list of action items based on missed evaluations

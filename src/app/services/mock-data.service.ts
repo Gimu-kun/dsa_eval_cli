@@ -45,7 +45,7 @@ export class MockDataService {
   public readonly currentMasteryLevels = signal<{ [key: string]: number }>({});
   public readonly chapterMasteryLevels = signal<{ [key: string]: number }>({});
   public readonly topicTrends = signal<{ [key: string]: string }>({});
-  public readonly recommendations = signal<string[]>([]);
+  public readonly recommendations = signal<any[]>([]);
 
   constructor() {
     this.initializeData();
@@ -112,7 +112,7 @@ export class MockDataService {
     );
   }
 
-  public refreshProgress(): void {
+  public refreshProgress(studentId?: string): void {
     const user = this.currentUser();
     if (!user) {
       // Clear all progress metrics when logged out
@@ -129,7 +129,8 @@ export class MockDataService {
     // Refresh questions so they are fetched with the authenticated token
     this.refreshQuestions();
 
-    this.http.get<any>(`${this.apiUrl}/student/${user.id}/progress`).subscribe({
+    const targetId = studentId || user.id;
+    this.http.get<any>(`${this.apiUrl}/student/${targetId}/progress`).subscribe({
       next: (res) => {
         // Map snake_case or camelCase history items to correct camelCase interface properties
         if (res.history) {
@@ -322,6 +323,11 @@ export class MockDataService {
   // Admin method to fetch a student's progress
   public fetchStudentProgress(studentId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/student/${studentId}/progress`);
+  }
+
+  // Admin method to fetch overall stats
+  public fetchOverallStats(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/student/overall-stats`);
   }
 
   // Admin method to generate exam paper (matrix)
