@@ -13,11 +13,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/auth/auth').then(m => m.AuthComponent)
     },
 
-    /*
     // ── Admin: Câu hỏi & Đánh giá ───────────────────────────────────────────
     {
         path: 'admin/questions',
-        loadComponent: () => import('./components/admin/question-bank-page/question-bank-page').then(m => m.QuestionBankPageComponent),
+        loadComponent: () => import('./components/admin-questions/admin-questions').then(m => m.AdminQuestionsComponent),
         canActivate: [authGuard, adminGuard]
     },
     {
@@ -62,7 +61,6 @@ export const routes: Routes = [
         loadComponent: () => import('./components/admin/func-management/func-management').then(m => m.FuncManagementComponent),
         canActivate: [authGuard, adminGuard]
     },
-    */
     {
         path: 'evaluation/:submissionId',
         loadComponent: () => import('./components/evaluation-report/evaluation-report').then(m => m.EvaluationReportComponent),

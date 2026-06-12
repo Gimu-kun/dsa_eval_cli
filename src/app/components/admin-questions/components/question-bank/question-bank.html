@@ -1,0 +1,197 @@
+<div class="space-y-6">
+  <!-- Messages Alert -->
+  @if (successMessage()) {
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm flex items-start space-x-2 animate-fade-in shrink-0 shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0 text-emerald-600">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+  @if (errorMessage()) {
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex items-start space-x-2 animate-fade-in shrink-0 shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0 text-rose-600">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
+    <!-- Left Column: Add Question Form -->
+    <div class="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm space-y-6 self-start">
+      <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center space-x-2">
+        <span class="p-1.5 rounded bg-orange-50 text-[#FF6C37]">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </span>
+        <span>Thêm câu hỏi tự luận mới</span>
+      </h2>
+
+      <form (submit)="onSubmit()" class="space-y-4">
+        <!-- Question content -->
+        <div class="space-y-1">
+          <label for="content" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Nội dung câu hỏi</label>
+          <textarea id="content" name="content" [(ngModel)]="content" required rows="3" class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] focus:ring-1 focus:ring-[#FF6C37] bg-slate-50 focus:bg-white resize-none" placeholder="Ví dụ: Giải giải thích thuộc tính BST?"></textarea>
+        </div>
+
+        <!-- Topic selection -->
+        <div class="space-y-1">
+          <label for="topic" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Chủ đề (Topic)</label>
+          <select id="topic" name="selectedTopicId" [(ngModel)]="selectedTopicId" required class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-slate-50 focus:bg-white cursor-pointer">
+            @for (t of topics; track t.id) {
+              <option [value]="t.id">{{ t.name }} ({{ t.id }})</option>
+            }
+          </select>
+          <p class="text-[10px] text-slate-400 font-mono">Bắt buộc ID chủ đề phải có độ dài đúng 23 ký tự theo quy định database.</p>
+        </div>
+
+        <!-- Question meta tags -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="space-y-1">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Dạng</label>
+            <select name="selectedType" [(ngModel)]="selectedType" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
+              <option value="DESCRIPTIVE">Descriptive</option>
+              <option value="PROCEDURE">Procedural</option>
+              <option value="APPLICATION">Application</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Thang Bloom</label>
+            <select name="selectedBloom" [(ngModel)]="selectedBloom" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
+              <option value="REMEMBERING">Nhận biết</option>
+              <option value="UNDERSTANDING">Thông hiểu</option>
+              <option value="APPLYING">Vận dụng</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Độ khó</label>
+            <select name="selectedDifficulty" [(ngModel)]="selectedDifficulty" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
+              <option value="EASY">Dễ</option>
+              <option value="MEDIUM">Trung bình</option>
+              <option value="HARD">Khó</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Rubric configuration -->
+        <div class="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-3">
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-1">
+            <span>Thiết lập Trọng số Rubric</span>
+          </h3>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="space-y-1">
+              <label class="block text-[10px] font-semibold text-slate-500 uppercase">Chính xác (acc)</label>
+              <input type="number" step="0.05" name="accW" [(ngModel)]="accW" class="block w-full border border-slate-200 rounded p-1.5 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white">
+            </div>
+            <div class="space-y-1">
+              <label class="block text-[10px] font-semibold text-slate-500 uppercase">Hoàn thiện (comp)</label>
+              <input type="number" step="0.05" name="compW" [(ngModel)]="compW" class="block w-full border border-slate-200 rounded p-1.5 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white">
+            </div>
+            <div class="space-y-1">
+              <label class="block text-[10px] font-semibold text-slate-500 uppercase">Logic (log)</label>
+              <input type="number" step="0.05" name="logW" [(ngModel)]="logW" class="block w-full border border-slate-200 rounded p-1.5 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white">
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-400 italic text-center">Tổng trọng số (acc + comp + log) phải bằng 1.0</p>
+
+          <div class="space-y-1">
+            <label class="block text-[10px] font-semibold text-slate-500 uppercase">Mô tả tiêu chí</label>
+            <input type="text" name="rubricDesc" [(ngModel)]="rubricDesc" class="block w-full border border-slate-200 rounded p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" placeholder="Mô tả tiêu chí chấm bài...">
+          </div>
+        </div>
+
+        <!-- Expected Answer Rule Mapping -->
+        <div class="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-3">
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Mô hình chấm bài mong đợi (Expected Answer)</h3>
+          
+          <div class="space-y-2">
+            <div class="space-y-1">
+              <label class="block text-[10px] font-semibold text-slate-500 uppercase">Mã Khái niệm (Concepts IDs)</label>
+              <input type="text" name="conceptsInput" [(ngModel)]="conceptsInput" class="block w-full border border-slate-200 rounded p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" placeholder="Ví dụ: SET_CPT_..., SET_CPT_... (Cách nhau bằng dấu phẩy)">
+            </div>
+            
+            <div class="space-y-1">
+              <label class="block text-[10px] font-semibold text-slate-500 uppercase">Mã Quan hệ ngữ nghĩa (Semantic Relations IDs)</label>
+              <input type="text" name="relationsInput" [(ngModel)]="relationsInput" class="block w-full border border-slate-200 rounded p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" placeholder="Ví dụ: REL_..., REL_... (Cách nhau bằng dấu phẩy)">
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-[10px] font-semibold text-slate-500 uppercase">Mã Quy tắc Logic (Logical Rules IDs)</label>
+              <input type="text" name="rulesInput" [(ngModel)]="rulesInput" class="block w-full border border-slate-200 rounded p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" placeholder="Ví dụ: RULE_..., RULE_... (Cách nhau bằng dấu phẩy)">
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-[10px] font-semibold text-slate-500 uppercase">Mã Hàm Logic (Logical Functions IDs)</label>
+              <input type="text" name="functionsInput" [(ngModel)]="functionsInput" class="block w-full border border-slate-200 rounded p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" placeholder="Ví dụ: FUNC_..., FUNC_... (Cách nhau bằng dấu phẩy)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" [disabled]="isSubmitting()" class="w-full bg-[#FF6C37] hover:bg-orange-600 text-white py-2.5 rounded-lg text-sm font-bold shadow-md shadow-orange-500/10 hover:shadow-orange-500/20 focus:outline-none transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50">
+          @if (isSubmitting()) {
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Đang gửi...</span>
+          } @else {
+            <span>Tạo câu hỏi</span>
+          }
+        </button>
+      </form>
+    </div>
+
+    <!-- Right Column: Questions List -->
+    <div class="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm flex flex-col h-[85vh]">
+      <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center space-x-2 shrink-0">
+        <span class="p-1.5 rounded bg-orange-50 text-[#FF6C37]">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+        </span>
+        <span>Ngân hàng câu hỏi hiện có ({{ getQuestionsList().length }})</span>
+      </h2>
+
+      <!-- Scrollable Questions Container -->
+      <div class="flex-grow overflow-y-auto space-y-4 pr-1">
+        @for (q of getQuestionsList(); track q.id) {
+          <div class="border border-slate-100 hover:border-slate-200 rounded-xl p-4 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col justify-between space-y-3 relative group">
+            <!-- Delete button absolute positioned on hover -->
+            <button (click)="onDeleteQuestion(q.id)" class="absolute top-4 right-4 p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-sm border border-rose-100" title="Xóa câu hỏi">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+
+            <div class="space-y-2 pr-8">
+              <div class="flex flex-wrap gap-2">
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase font-mono">{{ q.bloom_level }}</span>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase font-mono">{{ q.difficulty }}</span>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-mono">{{ q.type }}</span>
+              </div>
+              <h3 class="text-sm font-bold text-slate-800 leading-snug">{{ q.content }}</h3>
+            </div>
+            
+            <div class="border-t border-slate-100/70 pt-2 flex items-center justify-between text-xs text-slate-500 font-mono flex-wrap gap-2">
+              <span>Chủ đề: <strong class="text-slate-700">{{ getTopicName(q.topic_id) }}</strong></span>
+              <span class="text-[10px] text-slate-400">ID: {{ q.id }}</span>
+            </div>
+          </div>
+        } @empty {
+          <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-slate-300 mb-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <p class="text-sm">Chưa có câu hỏi nào trong hệ thống.</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,284 @@
+<div class="space-y-6">
+  <!-- Messages Alert -->
+  @if (successMessage()) {
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm flex items-start space-x-2 animate-fade-in shrink-0 shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0 text-emerald-600">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+  @if (errorMessage()) {
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex items-start space-x-2 animate-fade-in shrink-0 shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0 text-rose-600">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <div class="space-y-8 animate-fade-in">
+    <!-- Info Box -->
+    <div class="p-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl text-xs leading-relaxed">
+      <strong class="font-bold text-blue-900 block mb-1">Hướng dẫn Cấu hình Chấm điểm:</strong>
+      Định nghĩa các thành phần chấm điểm như Khái niệm (Concepts), Quan hệ ngữ nghĩa (Semantic Relations), Quy tắc logic (Rules), và Hàm logic (Functions) trước.
+      Sao chép các mã ID tương ứng và dán vào mục <strong>Expected Answer</strong> khi tạo câu hỏi mới ở Tab 1 để hệ thống tự động ánh xạ cấu trúc chấm bài mong đợi.
+    </div>
+
+    <!-- Evaluation Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      
+      <!-- Box 1: Concepts -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm flex flex-col h-[550px]">
+        <h3 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center justify-between shrink-0">
+          <span>1. Định nghĩa Khái niệm (Concepts)</span>
+          <span class="text-xs font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">PREFIX: SET_CPT</span>
+        </h3>
+
+        <form (submit)="onCreateConcept()" class="space-y-3 shrink-0 mb-4 bg-slate-50/50 border border-slate-100 p-3 rounded-lg">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input type="text" name="cptDesc" [(ngModel)]="cptDesc" placeholder="Mô tả khái niệm (vd: BST Node)" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+            <input type="text" name="cptTerms" [(ngModel)]="cptTerms" placeholder="Tập từ đồng nghĩa (vd: node, nút, phần tử)" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" name="cptErr" [(ngModel)]="cptErr" placeholder="Phản hồi sai lỗi mặc định (Tùy chọn)" class="block flex-grow border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white">
+            <button type="submit" class="bg-[#FF6C37] hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-all shrink-0 cursor-pointer">Thêm</button>
+          </div>
+        </form>
+
+        <div class="flex-grow overflow-y-auto space-y-2.5 pr-1">
+          @for (c of conceptsList(); track c.id) {
+            @if (editingConceptId() === c.id) {
+              <!-- Edit mode form -->
+              <div class="border border-[#FF6C37]/30 rounded-lg p-3.5 bg-orange-50/10 space-y-3 animate-fade-in w-full">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <span class="font-mono font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">{{ c.id }} (Đang cập nhật)</span>
+                  <div class="flex items-center space-x-2">
+                    <button type="button" (click)="onCancelEditConcept()" class="px-2 py-1 rounded bg-slate-100 border text-slate-600 hover:bg-slate-200 transition-colors text-[10px] font-bold cursor-pointer">Hủy</button>
+                    <button type="button" (click)="onSaveConcept(c.id)" class="px-2 py-1 rounded bg-[#FF6C37] text-white hover:bg-orange-600 transition-colors text-[10px] font-bold cursor-pointer">Lưu</button>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div class="space-y-0.5">
+                      <label class="text-[9px] font-bold text-slate-400 uppercase">Mô tả khái niệm</label>
+                      <input type="text" [(ngModel)]="editCptDesc" name="editCptDesc" class="w-full text-xs border border-slate-200 rounded p-1.5 focus:outline-none focus:border-[#FF6C37] bg-white">
+                    </div>
+                    <div class="space-y-0.5">
+                      <label class="text-[9px] font-bold text-slate-400 uppercase">Phản hồi lỗi mặc định</label>
+                      <input type="text" [(ngModel)]="editCptErr" name="editCptErr" class="w-full text-xs border border-slate-200 rounded p-1.5 focus:outline-none focus:border-[#FF6C37] bg-white">
+                    </div>
+                  </div>
+                  <div class="space-y-0.5">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase">Tập từ khóa (Định dạng mảng JSON)</label>
+                    <textarea [(ngModel)]="editCptTerms" name="editCptTerms" rows="3" class="w-full text-xs font-mono border border-slate-200 rounded p-1.5 focus:outline-none focus:border-[#FF6C37] bg-white resize-none" placeholder='[ "keyword1", "keyword2" ]'></textarea>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <!-- Display mode -->
+              <div class="border border-slate-100 rounded-lg p-3 bg-slate-50/30 hover:bg-slate-50 transition-colors flex items-start justify-between gap-4 w-full">
+                <div class="space-y-1.5 text-xs flex-grow">
+                  <div class="flex items-center space-x-2">
+                    <span class="font-mono font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded select-all">{{ c.id }}</span>
+                    <span class="font-semibold text-slate-900">— {{ c.description }}</span>
+                  </div>
+                  
+                  <!-- Tag pills for terms -->
+                  <div class="flex items-center flex-wrap gap-1.5">
+                    <span class="text-slate-400 font-light mr-1">Từ khóa:</span>
+                    @for (t of c.terms; track t.id) {
+                      <span class="px-2 py-0.5 rounded-full bg-orange-50 text-[#FF6C37] border border-orange-100 text-[10px] font-semibold">
+                        {{ t.value }}
+                      </span>
+                    } @empty {
+                      <span class="text-slate-400 italic text-[10px]">Không có từ khóa nào</span>
+                    }
+                  </div>
+
+                  @if (c.errMessage) {
+                    <div class="text-rose-600 italic text-[10px]">Lỗi: {{ c.errMessage }}</div>
+                  }
+                </div>
+                
+                <div class="flex items-center space-x-2 shrink-0">
+                  <button (click)="onStartEditConcept(c)" class="p-1 rounded text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors cursor-pointer" title="Cập nhật khái niệm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  </button>
+                  <button (click)="onDeleteConcept(c.id)" class="p-1 rounded text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer" title="Xóa khái niệm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            }
+          } @empty {
+            <p class="text-xs text-slate-400 text-center py-8">Chưa cấu hình khái niệm nào.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Box 2: Semantic Relations -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm flex flex-col h-[550px]">
+        <h3 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center justify-between shrink-0">
+          <span>2. Quan hệ ngữ nghĩa (Semantic Relations)</span>
+          <span class="text-xs font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">PREFIX: REL</span>
+        </h3>
+
+        <form (submit)="onCreateRelation()" class="space-y-3 shrink-0 mb-4 bg-slate-50/50 border border-slate-100 p-3 rounded-lg">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input type="text" name="srDesc" [(ngModel)]="srDesc" placeholder="Mô tả quan hệ (vd: Node chứa dữ liệu)" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+            <input type="text" name="srPattern" [(ngModel)]="srPattern" placeholder="Regex Pattern (vd: (node|nút)\\s*(chứa|lưu))" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <input type="text" name="srSrcId" [(ngModel)]="srSrcId" placeholder="ID Cpt Nguồn" class="block border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+            <input type="text" name="srRelationId" [(ngModel)]="srRelationId" placeholder="ID Cpt Quan hệ" class="block border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+            <input type="text" name="srTargetId" [(ngModel)]="srTargetId" placeholder="ID Cpt Đích (Tùy chọn)" class="block border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white">
+          </div>
+          <div class="flex gap-2">
+            <input type="text" name="srErr" [(ngModel)]="srErr" placeholder="Phản hồi sai lỗi (vd: Thiếu liên kết giữa Node và Dữ liệu)" class="block flex-grow border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white">
+            <button type="submit" class="bg-[#FF6C37] hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-all shrink-0 cursor-pointer">Thêm</button>
+          </div>
+        </form>
+
+        <div class="flex-grow overflow-y-auto space-y-2.5 pr-1">
+          @for (r of relationsList(); track r.id) {
+            <div class="border border-slate-100 rounded-lg p-3 bg-slate-50/30 hover:bg-slate-50 transition-colors flex items-start justify-between gap-4">
+              <div class="space-y-1 text-xs">
+                <div class="flex items-center space-x-2">
+                  <span class="font-mono font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded select-all">{{ r.id }}</span>
+                  <span class="font-semibold text-slate-900">— {{ r.description }}</span>
+                </div>
+                <div class="text-[10px] text-slate-500 font-mono bg-white border border-slate-100 px-2 py-0.5 rounded inline-block">Regex: {{ r.regexPattern }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">Nguồn: {{ r.srcConceptId?.id }} | Quan hệ: {{ r.relationConceptId?.id }} | Đích: {{ r.targetConceptId?.id || 'Không' }}</div>
+                <div class="text-rose-600 italic text-[10px]">Phản hồi lỗi: {{ r.errMessage }}</div>
+              </div>
+              <button (click)="onDeleteRelation(r.id)" class="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          } @empty {
+            <p class="text-xs text-slate-400 text-center py-8">Chưa cấu hình quan hệ ngữ nghĩa nào.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Box 3: Logical Rules -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm flex flex-col h-[650px] xl:col-span-2">
+        <h3 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center justify-between shrink-0">
+          <span>3. Quy tắc Logic (Logical Rules)</span>
+          <span class="text-xs font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">PREFIX: RULE</span>
+        </h3>
+
+        <form (submit)="onCreateRule()" class="space-y-3 shrink-0 mb-4 bg-slate-50/50 border border-slate-100 p-3 rounded-lg">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input type="text" name="lrDesc" [(ngModel)]="lrDesc" placeholder="Mô tả quy tắc (vd: Tính chất cây BST)" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white col-span-1 md:col-span-2" required>
+            <select name="lrType" [(ngModel)]="lrType" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer">
+              <option value="AND">AND (Bắt buộc khớp tất cả)</option>
+              <option value="OR">OR (Khớp một trong các biểu thức)</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input type="text" name="lrPattern" [(ngModel)]="lrPattern" placeholder="Biểu thức Regex áp dụng quy tắc logic" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white col-span-1 md:col-span-2" required>
+            <input type="number" step="0.1" name="lrWeight" [(ngModel)]="lrWeight" placeholder="Trọng số quy tắc" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <input type="text" name="lrConceptIds" [(ngModel)]="lrConceptIds" placeholder="Tập ID Khái niệm tham chiếu (phân tách bởi dấu phẩy)" class="block border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white">
+            <input type="text" name="lrExpectedSteps" [(ngModel)]="lrExpectedSteps" placeholder="Các bước suy luận mong đợi (vd: Step1 -> Step2)" class="block border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white">
+            <input type="text" name="lrAstStructure" [(ngModel)]="lrAstStructure" placeholder="Cấu trúc cây cú pháp (AST) mẫu" class="block border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white">
+          </div>
+          <div class="flex gap-2">
+            <input type="text" name="lrErr" [(ngModel)]="lrErr" placeholder="Phản hồi sai lỗi quy tắc này" class="block flex-grow border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+            <button type="submit" class="bg-[#FF6C37] hover:bg-orange-600 text-white px-6 py-2 rounded-lg text-xs font-bold shadow-sm transition-all shrink-0 cursor-pointer">Thêm quy tắc</button>
+          </div>
+        </form>
+
+        <div class="flex-grow overflow-y-auto space-y-2.5 pr-1">
+          @for (r of rulesList(); track r.id) {
+            <div class="border border-slate-100 rounded-lg p-3 bg-slate-50/30 hover:bg-slate-50 transition-colors flex items-start justify-between gap-4">
+              <div class="space-y-1 text-xs">
+                <div class="flex items-center space-x-2">
+                  <span class="font-mono font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded select-all">{{ r.id }}</span>
+                  <span class="font-semibold text-slate-900">— {{ r.description }}</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono">{{ r.logicalType }}</span>
+                </div>
+                <div class="text-[10px] text-slate-500 font-mono bg-white border border-slate-100 px-2 py-0.5 rounded inline-block">Regex: {{ r.regexPattern }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">Concepts mapping: {{ r.conceptsId ? (r.conceptsId | json) : 'Trống' }} | Trọng số: {{ r.weight }}</div>
+                @if (r.expectedSteps) {
+                  <div class="text-[10px] text-slate-600 italic">Luồng mong đợi: {{ r.expectedSteps }}</div>
+                }
+                <div class="text-rose-600 italic text-[10px]">Phản hồi lỗi: {{ r.errMessage }}</div>
+              </div>
+              <button (click)="onDeleteRule(r.id)" class="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          } @empty {
+            <p class="text-xs text-slate-400 text-center py-8">Chưa cấu hình quy tắc logic nào.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Box 4: Logical Functions -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm flex flex-col h-[550px] xl:col-span-2">
+        <h3 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center justify-between shrink-0">
+          <span>4. Hàm logic đánh giá chương trình (Logical Functions)</span>
+          <span class="text-xs font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">PREFIX: FUNC</span>
+        </h3>
+
+        <form (submit)="onCreateFunction()" class="space-y-3 shrink-0 mb-4 bg-slate-50/50 border border-slate-100 p-3 rounded-lg">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input type="text" name="lfDesc" [(ngModel)]="lfDesc" placeholder="Mô tả kiểm định (vd: Kiểm tra đệ quy của hàm)" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white col-span-1 md:col-span-2" required>
+            <select name="lfType" [(ngModel)]="lfType" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer">
+              <option value="AND">AND (Bắt buộc khớp tất cả)</option>
+              <option value="OR">OR (Khớp một trong các regex)</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <input type="text" name="lfPatterns" [(ngModel)]="lfPatterns" placeholder="Danh sách các Regex cần khớp (Phân tách bởi dấu phẩy, vd: find\\(.*\\), recursion)" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" name="lfErr" [(ngModel)]="lfErr" placeholder="Phản hồi sai lỗi kiểm định hàm" class="block flex-grow border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white" required>
+            <button type="submit" class="bg-[#FF6C37] hover:bg-orange-600 text-white px-6 py-2 rounded-lg text-xs font-bold shadow-sm transition-all shrink-0 cursor-pointer">Thêm hàm logic</button>
+          </div>
+        </form>
+
+        <div class="flex-grow overflow-y-auto space-y-2.5 pr-1">
+          @for (f of functionsList(); track f.id) {
+            <div class="border border-slate-100 rounded-lg p-3 bg-slate-50/30 hover:bg-slate-50 transition-colors flex items-start justify-between gap-4">
+              <div class="space-y-1 text-xs">
+                <div class="flex items-center space-x-2">
+                  <span class="font-mono font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded select-all">{{ f.id }}</span>
+                  <span class="font-semibold text-slate-900">— {{ f.description }}</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono">{{ f.logicalType }}</span>
+                </div>
+                <div class="text-[10px] text-slate-500 font-light">Danh sách regex patterns:</div>
+                <div class="flex flex-wrap gap-1.5 mt-1">
+                  @for (pat of f.regexPattern; track pat) {
+                    <span class="text-[9px] font-mono bg-white border border-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ pat }}</span>
+                  }
+                </div>
+                <div class="text-rose-600 italic text-[10px] mt-1">Phản hồi lỗi: {{ f.errMessage }}</div>
+              </div>
+              <button (click)="onDeleteFunction(f.id)" class="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          } @empty {
+            <p class="text-xs text-slate-400 text-center py-8">Chưa cấu hình hàm logic nào.</p>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
