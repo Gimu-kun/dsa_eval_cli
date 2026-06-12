@@ -1,7 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MockDataService } from '../../services/mock-data.service';
 
 @Component({
   selector: 'app-evaluation-report',
@@ -11,7 +10,6 @@ import { MockDataService } from '../../services/mock-data.service';
 export class EvaluationReportComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly mockService = inject(MockDataService);
 
   protected readonly examSubmission = signal<any | undefined>(undefined);
   protected readonly activeQuestionIndex = signal<number>(0);
@@ -135,20 +133,6 @@ export class EvaluationReportComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const subId = this.route.snapshot.paramMap.get('submissionId');
-    if (subId) {
-      this.mockService.fetchExamSubmission(subId).subscribe({
-        next: (res) => {
-          this.examSubmission.set(res);
-        },
-        error: (err) => {
-          console.error('Lỗi khi tải kết quả bài thi:', err);
-          this.router.navigate(['/']);
-        }
-      });
-    } else {
-      this.router.navigate(['/']);
-    }
   }
 
   protected selectQuestion(index: number): void {
@@ -167,8 +151,8 @@ export class EvaluationReportComponent implements OnInit {
     // Check concepts
     if (evidence.concepts_evaluated) {
       evidence.concepts_evaluated.concept_evaluation_results.forEach((res: any) => {
-        if (res.status === 'MISSED' && res.error_message) {
-          advice.push(`Thực hành định nghĩa lại thuật ngữ: "${res.concept}". ${res.error_message}`);
+        if (res.status === 'MISSED') {
+          advice.push(`Cần ôn tập khái niệm cốt lõi: "${res.concept}".`);
         }
       });
     }
@@ -176,8 +160,8 @@ export class EvaluationReportComponent implements OnInit {
     // Check relationships
     if (evidence.relationships_evaluated) {
       evidence.relationships_evaluated.relation_evaluation_results.forEach((res: any) => {
-        if (res.status === 'MISSED' && res.error_message) {
-          advice.push(`Làm rõ mối quan hệ: "${res.relation_type}". ${res.error_message}`);
+        if (res.status === 'MISSED') {
+          advice.push(`Làm rõ mối liên hệ ngữ nghĩa trong quan hệ: "${res.relation_type}".`);
         }
       });
     }
@@ -185,8 +169,8 @@ export class EvaluationReportComponent implements OnInit {
     // Check rules
     if (evidence.rules_evaluated) {
       evidence.rules_evaluated.rule_evaluation_results.forEach((res: any) => {
-        if (res.score < res.weight && res.error_message) {
-          advice.push(`Xem xét lại quy tắc: "${res.rule_name}". ${res.error_message}`);
+        if (res.score < res.weight) {
+          advice.push(`Thực hành và chuẩn hóa logic thuật toán cho quy tắc: "${res.rule_name}".`);
         }
       });
     }

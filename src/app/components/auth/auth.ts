@@ -2,7 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService } from '../../services/mock-data.service';
+import { AuthApiService } from '../../services/auth-api.service';
+import { TokenService } from '../../services/token.service';
 
 @Component({
   selector: 'app-auth',
@@ -10,7 +11,8 @@ import { MockDataService } from '../../services/mock-data.service';
   templateUrl: './auth.html'
 })
 export class AuthComponent {
-  private readonly mockService = inject(MockDataService);
+  private readonly authService = inject(AuthApiService);
+  private readonly tokenService = inject(TokenService);
   private readonly router = inject(Router);
 
   // Toggle mode: login vs register
@@ -20,7 +22,7 @@ export class AuthComponent {
 
   // Form Fields
   protected username = '';
-  protected password = '';
+  protected pw = '';
   protected fullName = '';
   protected selectedRole = 'STUDENT'; // STUDENT or ADMIN
 
@@ -34,7 +36,7 @@ export class AuthComponent {
   }
 
   protected onSubmit(): void {
-    if (!this.username.trim() || !this.password) {
+    if (!this.username.trim() || !this.pw) {
       this.errorMessage.set('Vui lòng điền đầy đủ tên đăng nhập và mật khẩu.');
       return;
     }
@@ -44,7 +46,7 @@ export class AuthComponent {
       return;
     }
 
-    if (this.password.length < 8) {
+    if (this.pw.length < 8) {
       this.errorMessage.set('Mật khẩu phải có ít nhất 8 ký tự.');
       return;
     }
@@ -54,9 +56,10 @@ export class AuthComponent {
 
     if (this.isLoginMode()) {
       // Login flow
-      this.mockService.login({ username: this.username.trim(), password: this.password }).subscribe({
+      this.authService.login({ username: this.username.trim(), pw: this.pw }).subscribe({
         next: (res) => {
           this.isLoading.set(false);
+          this.tokenService.setSession(res);
           this.router.navigate(['/']);
         },
         error: (err) => {
@@ -72,9 +75,9 @@ export class AuthComponent {
         return;
       }
 
-      this.mockService.register({
+      this.authService.register({
         username: this.username.trim(),
-        password: this.password,
+        pw: this.pw,
         full_name: this.fullName.trim(),
         role: this.selectedRole
       }).subscribe({

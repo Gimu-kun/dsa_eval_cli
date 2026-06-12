@@ -1,0 +1,747 @@
+@if (examSubmission(); as sub) {
+<div class="animate-fade-in pb-8 text-sm">
+  <!-- Top Compact Header Bar -->
+  <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm mb-4">
+    <div class="flex items-center space-x-3">
+      <a routerLink="/"
+        class="font-bold text-slate-600 hover:text-[#FF6C37] flex items-center space-x-1 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
+          class="w-3.5 h-3.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      <span class="text-slate-300">|</span>
+      <span class="font-extrabold text-slate-900 truncate max-w-md">{{ sub.examTitle }}</span>
+    </div>
+    <div class="flex items-center space-x-3 text-xs text-slate-400 font-mono">
+      <span>Thí sinh: {{ sub.studentName }}</span>
+      <span>•</span>
+      <span>Thời gian: {{ sub.timeSpent }} / {{ sub.timeLimit }} phút</span>
+      <span>•</span>
+      <span>Nộp: {{ sub.submittedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+  </div>
+
+  <!-- PHẦN I: BÁO CÁO & THỐNG KÊ TỔNG QUAN BÀI THI -->
+  <div
+    class="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 space-y-4">
+    <div class="border-b border-slate-150 pb-3 flex items-center justify-between">
+      <h3 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"
+          class="w-4 h-4 text-[#FF6C37]">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+        </svg>
+        <span>Số liệu thống kê bài kiểm tra (Đánh giá tổng quát)</span>
+      </h3>
+      <span class="text-xs text-slate-400 font-mono font-bold">Thang điểm: 10</span>
+    </div>
+
+    <!-- 4-Column Grid for overall stats -->
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
+      <!-- 1. Score Card -->
+      <div
+        class="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden">
+        <div class="absolute -right-8 -top-8 w-20 h-20 rounded-full bg-slate-50"></div>
+        <div class="relative w-24 h-24 flex items-center justify-center shrink-0 mb-3 z-10">
+          <svg class="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+            <circle class="text-slate-100" stroke-width="6.5" stroke="currentColor" fill="transparent" r="34" cx="40"
+              cy="40"></circle>
+            <circle [ngClass]="{
+                  'text-emerald-500': sub.score / sub.maxScore >= 0.85,
+                  'text-teal-500': sub.score / sub.maxScore >= 0.70 && sub.score / sub.maxScore < 0.85,
+                  'text-amber-500': sub.score / sub.maxScore >= 0.50 && sub.score / sub.maxScore < 0.70,
+                  'text-rose-500': sub.score / sub.maxScore < 0.50
+                }" stroke-width="6.5" stroke-linecap="round" [attr.stroke-dasharray]="213.6"
+              [attr.stroke-dashoffset]="213.6 - (sub.score / sub.maxScore) * 213.6" stroke="currentColor"
+              fill="transparent" r="34" cx="40" cy="40" class="transition-all duration-1000 ease-out"></circle>
+          </svg>
+          <div class="absolute flex flex-col items-center justify-center">
+            <span class="text-2xl font-extrabold font-mono text-slate-800 leading-none">{{ sub.score.toFixed(1)
+              }}</span>
+            <span class="text-[11px] text-slate-400 mt-0.5">/ {{ sub.maxScore }}</span>
+          </div>
+        </div>
+        <div class="space-y-0.5 relative z-10">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Điểm tổng kết</div>
+          <div class="text-base font-extrabold text-[#FF6C37]">({{ sub.score.toFixed(1) }} / 10)</div>
+          <div class="text-xs text-slate-500">Hoàn thành: {{ (sub.score / sub.maxScore * 100).toFixed(0) }}%</div>
+        </div>
+      </div>
+
+      <!-- 2. CLOs Progress Card (Dual-Colored) -->
+      <div
+        class="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col justify-between">
+        <h4
+          class="font-bold text-slate-700 text-[11px] uppercase tracking-wider mb-3 border-b border-slate-100 pb-1.5 flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+            stroke="currentColor" class="w-3.5 h-3.5 text-[#FF6C37]">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Chuẩn đầu ra (CLOs)</span>
+        </h4>
+        <div class="space-y-2.5 max-h-[170px] overflow-y-auto pr-1">
+          @for (item of cloStats; track item.name) {
+          <div class="p-2 rounded border border-slate-100 bg-slate-50/50 space-y-1">
+            <div class="flex justify-between items-center text-[10.5px]">
+              <span class="font-bold text-slate-800 truncate max-w-[150px]" [title]="item.name">{{ item.name }}</span>
+            </div>
+            <div class="flex items-center justify-between space-x-1.5">
+              <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex shrink">
+                <!-- Previous score (Indigo) -->
+                @if (item.prevScore > 0) {
+                <div class="h-full bg-indigo-500 transition-all duration-500 shrink-0"
+                  [style.width]="(item.prevScore * 10) + '%'" title="Điểm trước: {{ item.prevScore.toFixed(2) }}/10">
+                </div>
+                }
+                <!-- Accumulation (Emerald) -->
+                @if (item.increment > 0) {
+                <div class="h-full bg-emerald-500 transition-all duration-500 shrink-0"
+                  [style.width]="(item.increment * 10) + '%'"
+                  [ngClass]="{'rounded-r': item.currentScore >= 9.9, 'rounded-l': item.prevScore === 0}"
+                  title="Tích lũy bài này: +{{ item.increment.toFixed(2) }}"></div>
+                }
+              </div>
+              <span class="text-[9.5px] font-mono font-bold text-slate-500 shrink-0 w-[72px] text-right">
+                {{ item.prevScore.toFixed(1) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
+              </span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- 3. Chapters Progress Card (Dual-Colored) -->
+      <div
+        class="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col justify-between">
+        <h4
+          class="font-bold text-slate-700 text-[11px] uppercase tracking-wider mb-3 border-b border-slate-100 pb-1.5 flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+            stroke="currentColor" class="w-3.5 h-3.5 text-indigo-500">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+          <span>Theo Chương học</span>
+        </h4>
+        <div class="space-y-2.5 max-h-[170px] overflow-y-auto pr-1">
+          @for (item of chapterStats; track item.name) {
+          <div class="p-2 rounded border border-slate-100 bg-slate-50/50 space-y-1">
+            <div class="flex justify-between items-center text-[10.5px]">
+              <span class="font-bold text-slate-800 truncate max-w-[150px]" [title]="item.name">{{ item.name }}</span>
+            </div>
+            <div class="flex items-center justify-between space-x-1.5">
+              <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex shrink">
+                <!-- Previous score (Indigo) -->
+                @if (item.prevScore > 0) {
+                <div class="h-full bg-indigo-500 transition-all duration-500 shrink-0"
+                  [style.width]="(item.prevScore * 10) + '%'" title="Điểm trước: {{ item.prevScore.toFixed(2) }}/10">
+                </div>
+                }
+                <!-- Accumulation (Emerald) -->
+                @if (item.increment > 0) {
+                <div class="h-full bg-emerald-500 transition-all duration-500 shrink-0"
+                  [style.width]="(item.increment * 10) + '%'"
+                  [ngClass]="{'rounded-r': item.currentScore >= 9.9, 'rounded-l': item.prevScore === 0}"
+                  title="Tích lũy bài này: +{{ item.increment.toFixed(2) }}"></div>
+                }
+              </div>
+              <span class="text-[9.5px] font-mono font-bold text-slate-500 shrink-0 w-[72px] text-right">
+                {{ item.prevScore.toFixed(1) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
+              </span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- 4. Concepts Progress Card (Dual-Colored) -->
+      <div
+        class="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col justify-between">
+        <h4
+          class="font-bold text-slate-700 text-[11px] uppercase tracking-wider mb-3 border-b border-slate-100 pb-1.5 flex items-center space-x-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+            stroke="currentColor" class="w-3.5 h-3.5 text-teal-500">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.53 16.122A3 3 0 0 0 12 17.75a3 3 0 0 0 2.47-1.628M9.53 16.122a3 3 0 0 1-1.86-4.417M12 17.75a3 3 0 0 1-2.47-1.628M12 17.75a3 3 0 0 0 2.47-1.628M14.47 16.122a3 3 0 0 0 1.86-4.417M9.53 16.122h4.94M16.33 11.705a3 3 0 0 0-4.94-4.41M16.33 11.705a3 3 0 0 1-4.94-4.41M16.33 11.705v-.008M11.39 7.295a3 3 0 0 0-3.72 4.41M11.39 7.295a3 3 0 0 1-3.72 4.41" />
+          </svg>
+          <span>Khái niệm cốt lõi</span>
+        </h4>
+        <div class="space-y-2.5 max-h-[170px] overflow-y-auto pr-1">
+          @for (item of conceptStats; track item.name) {
+          <div class="p-2 rounded border border-slate-100 bg-slate-50/50 space-y-1">
+            <div class="flex justify-between items-center text-[10.5px]">
+              <span class="font-bold text-slate-800 truncate max-w-[150px]" [title]="item.name">{{ item.name }}</span>
+            </div>
+            <div class="flex items-center justify-between space-x-1.5">
+              <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex shrink">
+                <!-- Previous score (Indigo) -->
+                @if (item.prevScore > 0) {
+                <div class="h-full bg-indigo-500 transition-all duration-500 shrink-0"
+                  [style.width]="(item.prevScore * 10) + '%'" title="Điểm trước: {{ item.prevScore.toFixed(2) }}/10">
+                </div>
+                }
+                <!-- Accumulation (Emerald) -->
+                @if (item.increment > 0) {
+                <div class="h-full bg-emerald-500 transition-all duration-500 shrink-0"
+                  [style.width]="(item.increment * 10) + '%'"
+                  [ngClass]="{'rounded-r': item.currentScore >= 9.9, 'rounded-l': item.prevScore === 0}"
+                  title="Tích lũy bài này: +{{ item.increment.toFixed(2) }}"></div>
+                }
+              </div>
+              <span class="text-[9.5px] font-mono font-bold text-slate-500 shrink-0 w-[72px] text-right">
+                {{ item.prevScore.toFixed(1) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
+              </span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Divider heading to separate sections -->
+  <div class="flex items-center space-x-3 my-5">
+    <div class="flex-grow border-t border-slate-200"></div>
+    <span
+      class="text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-4 py-1.5 rounded border border-slate-200 shadow-sm">
+      Chẩn đoán & Đánh giá chi tiết từng câu hỏi
+    </span>
+    <div class="flex-grow border-t border-slate-200"></div>
+  </div>
+
+  <!-- PHẦN II: CHẨN ĐOÁN & PHÂN TÍCH CHI TIẾT TỪNG CÂU HỎI -->
+  <div class="space-y-4">
+    <!-- Horizontal Question Navigation -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4.5 shadow-sm">
+      <h3
+        class="font-bold text-slate-900 text-xs uppercase tracking-wider border-b border-slate-150 pb-3 flex items-center space-x-1.5 mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
+          class="w-4 h-4 text-[#FF6C37]">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.007 5.25H3.75v.008h.008V12Zm0 5.25H3.75v.008h.008v-.008Z" />
+        </svg>
+        <span>Danh sách câu hỏi</span>
+      </h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        @for (qRes of sub.questionResults; track qRes.questionId; let idx = $index) {
+        <button (click)="selectQuestion(idx)"
+          class="w-full text-left p-3.5 rounded-xl border transition-all duration-200 hover:shadow-md flex flex-col space-y-2.5 relative overflow-hidden"
+          [ngClass]="{
+                'border-[#FF6C37] bg-orange-50/20 ring-1 ring-[#FF6C37]/20 shadow-sm': activeQuestionIndex() === idx,
+                'border-slate-200 bg-white hover:bg-slate-50': activeQuestionIndex() !== idx
+              }">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <span
+                class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-extrabold font-mono border shrink-0 transition-all"
+                [ngClass]="{
+                    'bg-[#FF6C37] text-white border-[#FF6C37]': activeQuestionIndex() === idx,
+                    'bg-slate-100 text-slate-600 border-slate-200': activeQuestionIndex() !== idx
+                  }">{{ idx + 1 }}</span>
+              <span class="text-xs font-bold text-slate-800">Câu {{ idx + 1 }}</span>
+            </div>
+
+            <!-- Indicator dot and achievement tag -->
+            <div class="flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full shrink-0" [ngClass]="{
+                    'bg-emerald-500 shadow-lg shadow-emerald-500/30': qRes.scoreEarned >= 8.5,
+                    'bg-amber-500 shadow-lg shadow-amber-500/30': qRes.scoreEarned >= 5.0 && qRes.scoreEarned < 8.5,
+                    'bg-rose-500 shadow-lg shadow-rose-500/30': qRes.scoreEarned < 5.0
+                  }"></span>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider shrink-0" [ngClass]="{
+                      'bg-emerald-50 text-emerald-700 border border-emerald-100': qRes.scoreEarned >= 8.5,
+                      'bg-amber-50 text-amber-700 border border-amber-100': qRes.scoreEarned >= 5.0 && qRes.scoreEarned < 8.5,
+                      'bg-rose-50 text-rose-700 border border-rose-100': qRes.scoreEarned < 5.0
+                    }">
+                {{ qRes.scoreEarned >= 8.5 ? 'Đạt' : qRes.scoreEarned >= 5.0 ? 'Hoàn thành' : 'Không đạt' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Question metadata -->
+          <div class="grid grid-cols-2 gap-2 text-[10.5px] border-t border-slate-100/70 pt-2 font-mono">
+            <div>
+              <span class="text-slate-400 block">Dạng bài:</span>
+              <span class="text-slate-700 font-bold font-sans">{{ qRes.questionType === 'DESCRIPTIVE' ? 'Tự luận' :
+                qRes.questionType === 'PROCEDURE' ? 'Quy trình' : 'Ứng dụng' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Mức Bloom:</span>
+              <span class="text-slate-700 font-bold font-sans">{{ qRes.bloomLevel }}</span>
+            </div>
+          </div>
+
+          <!-- Score badge -->
+          <div class="flex justify-between items-center text-[11px] pt-2 border-t border-slate-100/50">
+            <span class="text-slate-400 font-medium">Điểm câu hỏi:</span>
+            <span
+              class="font-mono font-bold text-slate-800 bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200/60">
+              {{ qRes.weightedScore.toFixed(2) }} / {{ qRes.maxScoreInExam }}
+            </span>
+          </div>
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Active Question Detail Diagnostics -->
+    @if (activeQuestionResult(); as qRes) {
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <!-- Diagnostic details body -->
+      <div class="p-4.5 space-y-4">
+        <!-- Active Question Content Card -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-150 pb-2">
+            <span
+              class="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-50 text-[#FF6C37] border border-orange-100 uppercase tracking-wider font-mono">
+              Đề bài câu {{ activeQuestionIndex() + 1 }}
+            </span>
+            <span class="text-xs text-slate-400 font-mono">Khảo sát: {{ qRes.questionType === 'DESCRIPTIVE' ? 'Tự luận
+              mô tả' : qRes.questionType === 'PROCEDURE' ? 'Mô tả quy trình' : 'Viết mã nguồn/mã giả' }}</span>
+          </div>
+          <h2 class="text-[13px] font-semibold text-slate-800 leading-relaxed">
+            {{ qRes.questionContent }}
+          </h2>
+        </div>
+
+        <!-- Comparison with Expected Answer Model -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                stroke="currentColor" class="w-3.5 h-3.5 text-blue-500">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+              <span>So sánh trực quan bài giải</span>
+            </h3>
+            <span class="text-[10.5px] text-emerald-600 font-mono font-bold">✓ Đã phân tích AST</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1.5">
+            <div>
+              <div class="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Bài làm của sinh viên
+              </div>
+              <div
+                class="bg-slate-950 text-slate-200 rounded-xl p-3 text-[11.5px] font-mono leading-relaxed border border-slate-800"
+                [innerHTML]="qRes.submittedAnswerHtml">
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Đáp án đối chiếu (Model)
+              </div>
+              <div
+                class="bg-slate-950 text-slate-200 rounded-xl p-3 text-[11.5px] font-mono leading-relaxed whitespace-pre-wrap border border-slate-800"
+                [innerHTML]="qRes.expectedAnswerHtml">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score & Nhận xét Card (Simplified) -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Kết quả điểm số câu hỏi</span>
+            </h3>
+            <span
+              class="font-extrabold text-slate-800 text-[11.5px] font-mono bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 flex items-center space-x-1.5">
+              <span>Điểm câu {{ activeQuestionIndex() + 1 }}:</span>
+              <span class="text-[#FF6C37]">{{ qRes.scoreEarned.toFixed(1) }} / 10</span>
+              <span class="text-slate-400 font-normal">(Trọng số quy đổi: {{ qRes.weightedScore.toFixed(2) }} / {{
+                qRes.maxScoreInExam }}đ)</span>
+            </span>
+          </div>
+          <!-- Overall Rubrics Card (Accuracy, Completeness, Logic) -->
+          <div
+            class="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col justify-between">
+            <h4
+              class="font-bold text-slate-700 text-[11px] uppercase tracking-wider mb-2 border-b border-slate-100 pb-1.5 flex items-center space-x-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
+              </svg>
+              <span>Tiêu chí chấm điểm (Rubrics)</span>
+            </h4>
+            <div class="space-y-2 flex-grow flex flex-col justify-center">
+              <!-- Accuracy -->
+              <div class="p-2 rounded border border-slate-100 bg-slate-50/50 space-y-1">
+                <div class="flex justify-between items-center text-[10.5px]">
+                  <span class="font-bold text-slate-800">Độ chính xác (Accuracy)</span>
+                  <span class="text-slate-500 font-mono font-bold">{{ sub.accScore.toFixed(2) *10 }} %</span>
+                </div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                    [style.width]="(sub.accScore * 10) + '%'"></div>
+                </div>
+              </div>
+              <!-- Completeness -->
+              <div class="p-2 rounded border border-slate-100 bg-slate-50/50 space-y-1">
+                <div class="flex justify-between items-center text-[10.5px]">
+                  <span class="font-bold text-slate-800">Độ đầy đủ (Completeness)</span>
+                  <span class="text-slate-500 font-mono font-bold">{{ sub.compScore.toFixed(2)*10 }} %</span>
+                </div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                    [style.width]="(sub.compScore * 10) + '%'"></div>
+                </div>
+              </div>
+              <!-- Logic -->
+              <div class="p-2 rounded border border-slate-100 bg-slate-50/50 space-y-1">
+                <div class="flex justify-between items-center text-[10.5px]">
+                  <span class="font-bold text-slate-800">Tính logic (Logical Order)</span>
+                  <span class="text-slate-500 font-mono font-bold">{{ sub.logScore.toFixed(2)*10 }} %</span>
+                </div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full bg-amber-500 rounded-full transition-all duration-1000"
+                    [style.width]="(sub.logScore * 10) + '%'"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Rubric feedback comment -->
+          @if (qRes.feedbackText) {
+          <div
+            class="bg-orange-50/20 border border-orange-100/70 rounded-xl p-3.5 text-slate-700 leading-normal text-xs">
+            <p class="font-bold text-slate-800 flex items-center space-x-1.5 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                stroke="currentColor" class="w-3.5 h-3.5 text-[#FF6C37]">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              </svg>
+              <span>Nhận xét chẩn đoán câu hỏi:</span>
+            </p>
+            <p>{{ qRes.feedbackText }}</p>
+          </div>
+          }
+        </div>
+
+        <!-- Evaluation Analytics details -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden space-y-2">
+          <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex justify-between items-center">
+            <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                stroke="currentColor" class="w-4 h-4 text-[#FF6C37]">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+              </svg>
+              <span>Kết quả đối sánh chi tiết</span>
+            </h3>
+          </div>
+
+          <div class="px-4 pb-4 space-y-3">
+            <!-- 1. Concepts evaluated -->
+            @if (qRes.matchedEvidence?.concepts_evaluated; as concepts) {
+            <div class="space-y-1.5">
+              <button type="button" (click)="toggleConcepts()"
+                class="w-full flex justify-between items-center text-xs font-bold text-slate-700 hover:text-[#FF6C37] transition-colors py-1.5">
+                <div class="flex items-center space-x-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                    stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"
+                    [ngClass]="{'rotate-90': isConceptsExpanded()}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span>Khái niệm cốt lõi</span>
+                </div>
+                <span class="text-emerald-600 font-mono">Khớp: {{ (concepts.match_percent * 100).toFixed(0) }}%</span>
+              </button>
+
+              @if (isConceptsExpanded()) {
+              <div class="grid grid-cols-2 gap-2 transition-all duration-300">
+                @for (res of concepts.concept_evaluation_results; track res.concept) {
+                <div class="p-2 rounded-lg border text-xs flex flex-col justify-center space-y-1" [ngClass]="{
+                            'bg-emerald-50/50 border-emerald-100 text-emerald-900': res.status === 'MATCHED',
+                            'bg-rose-50/30 border-rose-100 text-rose-900': res.status === 'MISSED'
+                          }">
+                  <div class="flex items-center space-x-1.5 truncate">
+                    <span class="w-2 h-2 rounded-full shrink-0"
+                      [ngClass]="{'bg-emerald-500': res.status === 'MATCHED', 'bg-rose-500': res.status === 'MISSED'}"></span>
+                    <span class="font-semibold truncate">{{ res.concept }}</span>
+                  </div>
+                  @if (res.status === 'MATCHED' && res.lexeme_found) {
+                  <span class="pl-3.5 text-[10px] text-slate-500 font-mono truncate leading-none">➔ Tìm thấy: "{{
+                    res.lexeme_found }}"</span>
+                  }
+                  @if (res.status === 'MISSED' && res.error_message) {
+                  <span class="pl-3.5 text-[10px] text-rose-600 font-mono truncate leading-none">{{ res.error_message
+                    }}</span>
+                  }
+                </div>
+                }
+              </div>
+              }
+            </div>
+            }
+
+            <!-- 2. Relationships evaluated -->
+            @if (qRes.matchedEvidence?.relationships_evaluated; as rels) {
+            <div class="space-y-1.5 pt-2 border-t border-slate-100">
+              <button type="button" (click)="toggleRelations()"
+                class="w-full flex justify-between items-center text-xs font-bold text-slate-700 hover:text-[#FF6C37] transition-colors py-1.5">
+                <div class="flex items-center space-x-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                    stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"
+                    [ngClass]="{'rotate-90': isRelationsExpanded()}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span>Mối quan hệ ngữ nghĩa</span>
+                </div>
+                <span class="text-emerald-600 font-mono">Đạt: {{ (rels.pass_percent * 100).toFixed(0) }}%</span>
+              </button>
+
+              @if (isRelationsExpanded()) {
+              <div class="space-y-1.5">
+                @for (rel of rels.relation_evaluation_results; track rel.relation_type) {
+                <div class="p-2 rounded-lg border text-xs space-y-1.5" [ngClass]="{
+                            'bg-emerald-50/50 border-emerald-100 text-emerald-900': rel.status === 'MATCHED',
+                            'bg-rose-50/30 border-rose-100 text-rose-900': rel.status === 'MISSED'
+                          }">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2 h-2 rounded-full shrink-0"
+                      [ngClass]="{'bg-emerald-500': rel.status === 'MATCHED', 'bg-rose-500': rel.status === 'MISSED'}"></span>
+                    <span class="font-semibold text-slate-800">Liên kết logic:</span>
+                  </div>
+                  <div
+                    class="pl-3.5 font-mono text-[10.5px] flex items-center flex-wrap gap-1 text-slate-700 bg-white/70 p-1.5 rounded-lg border border-slate-100">
+                    <span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded truncate max-w-[120px]">{{
+                      rel.source_concept?.description || 'N/A' }}</span>
+                    <span class="text-slate-400 font-bold">➔</span>
+                    <span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold">{{ rel.relation_type
+                      }}</span>
+                    <span class="text-slate-400 font-bold">➔</span>
+                    <span class="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded truncate max-w-[120px]">{{
+                      rel.target_concept?.description || 'N/A' }}</span>
+                  </div>
+                  @if (rel.status !== 'MATCHED' && rel.error_message) {
+                  <div class="pl-3.5 text-[10.5px] text-rose-600 italic leading-snug">{{ rel.error_message }}</div>
+                  }
+                </div>
+                }
+              </div>
+              }
+            </div>
+            }
+
+            <!-- 3. Rules evaluated -->
+            @if (qRes.matchedEvidence?.rules_evaluated; as rules) {
+            <div class="space-y-1.5 pt-2 border-t border-slate-100">
+              <button type="button" (click)="toggleRules()"
+                class="w-full flex justify-between items-center text-xs font-bold text-slate-700 hover:text-[#FF6C37] transition-colors py-1.5">
+                <div class="flex items-center space-x-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                    stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"
+                    [ngClass]="{'rotate-90': isRulesExpanded()}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span>Quy tắc đánh giá</span>
+                </div>
+                <span class="text-emerald-600 font-mono">Đạt: {{ rules.total_score*100 }}%</span>
+              </button>
+
+              @if (isRulesExpanded()) {
+              <div class="space-y-2.5">
+                @for (rule of rules.rule_evaluation_results; track rule.rule_name) {
+                <div class="border border-slate-200 rounded-xl p-3 space-y-2.5 bg-white">
+                  <div class="flex justify-between items-center text-xs font-bold text-slate-800">
+                    <span>{{ rule.rule_name }}</span>
+                    <span class="font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{{ rule.score }}/{{
+                      rule.weight }}</span>
+                  </div>
+                  @if (rule.score < rule.weight && rule.error_message) { <p
+                    class="text-rose-600 text-[10.5px] leading-relaxed bg-rose-50/50 p-2 rounded-lg border border-rose-100/50">
+                    {{ rule.error_message }}</p>
+                    }
+
+                    <!-- Rule Sub-Metrics -->
+                    <div
+                      class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-100">
+                      <div class="flex justify-between">
+                        <span>Match (Khớp nội dung):</span>
+                        <span class="font-bold text-slate-700">{{ (rule.matchScore * 10).toFixed(1) }}/10</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Synonym (Đồng nghĩa):</span>
+                        <span class="font-bold text-slate-700">{{ (rule.synonymScore * 10).toFixed(1) }}/10</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Order (Thứ tự bước):</span>
+                        <span class="font-bold text-slate-700">{{ (rule.orderScore * 10).toFixed(1) }}/10</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Structure (Cấu trúc mã):</span>
+                        <span class="font-bold text-slate-700">{{ rule.structureScore !== undefined ?
+                          (rule.structureScore * 10).toFixed(1) + '/10' : 'N/A' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Rule strengths, weaknesses, advice -->
+                    <div class="bg-slate-50 p-2.5 rounded-lg space-y-1.5 text-[10.5px] border border-slate-100">
+                      @if (rule.strength) {
+                      <div class="flex items-start space-x-1.5">
+                        <span class="text-emerald-600 shrink-0 font-bold">✓ Điểm mạnh:</span>
+                        <span class="text-slate-700 leading-normal">{{ rule.strength }}</span>
+                      </div>
+                      }
+                      @if (rule.weakness) {
+                      <div class="flex items-start space-x-1.5">
+                        <span class="text-rose-600 shrink-0 font-bold">✗ Điểm yếu:</span>
+                        <span class="text-slate-700 leading-normal">{{ rule.weakness }}</span>
+                      </div>
+                      }
+                      @if (rule.advice) {
+                      <div class="flex items-start space-x-1.5">
+                        <span class="text-amber-600 shrink-0 font-bold">💡 Gợi ý cải thiện:</span>
+                        <span class="text-slate-700 font-semibold leading-normal">{{ rule.advice }}</span>
+                      </div>
+                      }
+                    </div>
+
+                    <!-- Synonym / AST breakdown -->
+
+
+                </div>
+                }
+              </div>
+              }
+            </div>
+            }
+
+            <!-- 4. Functions evaluated -->
+            @if (qRes.matchedEvidence?.functions_evaluated; as functions) {
+            <div class="space-y-1.5 pt-2 border-t border-slate-100">
+              <button type="button" (click)="toggleFunctions()"
+                class="w-full flex justify-between items-center text-xs font-bold text-slate-700 hover:text-[#FF6C37] transition-colors py-1.5">
+                <div class="flex items-center space-x-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                    stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"
+                    [ngClass]="{'rotate-90': isFunctionsExpanded()}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span>Mẫu phân tích AST</span>
+                </div>
+                <span class="text-emerald-600 font-mono">Khớp:100%</span>
+              </button>
+
+              @if (isFunctionsExpanded()) {
+              <div class="space-y-1.5">
+                @for (fn of functions; track fn.description) {
+                <div class="p-2 rounded-lg border text-xs flex flex-col space-y-1" [ngClass]="{
+                            'bg-emerald-50/50 border-emerald-100 text-emerald-900': fn.status === 'MATCHED',
+                            'bg-rose-50/30 border-rose-100 text-rose-900': fn.status === 'MISSED'
+                          }">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2 h-2 rounded-full shrink-0"
+                      [ngClass]="{'bg-emerald-500': fn.status === 'MATCHED', 'bg-rose-500': fn.status === 'MISSED'}"></span>
+                    <span class="font-semibold text-slate-800 leading-snug">{{ fn.description }}</span>
+                  </div>
+                  @if (fn.status === 'MATCHED' && fn.lexeme_found) {
+                  <span class="pl-3.5 text-[10px] text-slate-500 font-mono truncate leading-none">➔ Tìm thấy: "{{
+                    fn.lexeme_found }}"</span>
+                  }
+                  @if (fn.status === 'MISSED' && fn.error_message) {
+                  <span class="pl-3.5 text-[10px] text-rose-600 font-mono italic leading-none">{{ fn.error_message
+                    }}</span>
+                  }
+                </div>
+                }
+              </div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Actionable Improvement Checklist -->
+        @if (improvementAdvice().length > 0) {
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
+          <h4
+            class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-100 pb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+              stroke="currentColor" class="w-4 h-4 text-amber-500">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Khuyến nghị cải thiện điểm số (Câu {{ activeQuestionIndex() + 1 }})</span>
+          </h4>
+          <ul class="space-y-2 text-xs text-slate-700 leading-relaxed pl-1.5">
+            @for (advice of improvementAdvice(); track advice) {
+            <li class="flex items-start space-x-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#FF6C37] shrink-0 mt-1.5"></span>
+              <span>{{ advice }}</span>
+            </li>
+            }
+          </ul>
+        </div>
+        }
+
+        <!-- Educational Support Tools Card -->
+        <div
+          class="bg-gradient-to-r from-orange-50/50 to-indigo-50/50 border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          <h3
+            class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-100 pb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+              stroke="currentColor" class="w-4 h-4 text-indigo-500">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            <span>Công cụ học tập & Giải thích chi tiết</span>
+          </h3>
+          <div class="flex flex-wrap gap-2.5">
+            <button (click)="showDetailedExplanation(qRes)"
+              class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-1">
+              <span>Xem giải thích chi tiết</span>
+            </button>
+            <button (click)="showLearningRecommendations(qRes)"
+              class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-1">
+              <span>Gợi ý học tập</span>
+            </button>
+          </div>
+
+          @if (activeExplanation()) {
+          <div
+            class="bg-white border border-slate-200 rounded-lg p-4 text-xs space-y-2 mt-2 animate-fade-in shadow-inner relative">
+            <div
+              class="font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5">
+              <span>{{ explanationTitle() }}</span>
+              <button (click)="closeInfoBox()"
+                class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+            </div>
+            <p class="text-slate-600 whitespace-pre-line leading-relaxed">{{ explanationText() }}</p>
+          </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- Fixed Footer with Action Buttons -->
+      <div
+        class="shrink-0 px-4.5 py-3 bg-slate-50/50 border-t border-slate-200 flex justify-end space-x-2 rounded-b-2xl">
+        <a routerLink="/"
+          class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm animate-none">
+          Về Dashboard
+        </a>
+        <a [routerLink]="['/assignment', sub.examId]"
+          class="px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#FF6C37] hover:bg-orange-600 shadow-sm transition-all flex items-center space-x-1 animate-none">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            class="w-3.5 h-3.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <span>Làm lại đề</span>
+        </a>
+      </div>
+
+    </div>
+    }
+  </div>
+</div>
+}
