@@ -9,6 +9,7 @@ interface ProceduralStepInput {
   stepOrder: number;
   description: string;
   ruleIds: string[];
+  ruleSearchQuery?: string;
 }
 
 @Component({
@@ -37,6 +38,19 @@ export class QuestionBankComponent implements OnInit {
   protected readonly successMessage = signal<string>('');
   protected readonly errorMessage = signal<string>('');
 
+  // Dialog visibility state
+  protected readonly showQuestionModal = signal<boolean>(false);
+
+  // Search filter query
+  protected ruleSearchQuery = '';
+
+  // Custom Rubric Mode & inputs
+  protected newRubricMode = false;
+  protected newRubricDescription = '';
+  protected newRubricAccW = 0.4;
+  protected newRubricCompW = 0.3;
+  protected newRubricLogW = 0.3;
+
   // Editing state
   protected readonly editingQuestionId = signal<string | null>(null);
 
@@ -58,7 +72,7 @@ export class QuestionBankComponent implements OnInit {
 
   // Expected Answer steps for PROCEDURAL
   protected proceduralSteps: ProceduralStepInput[] = [
-    { stepOrder: 1, description: '', ruleIds: [] }
+    { stepOrder: 1, description: '', ruleIds: [], ruleSearchQuery: '' }
   ];
 
   ngOnInit(): void {
@@ -202,6 +216,24 @@ export class QuestionBankComponent implements OnInit {
   }
 
   // --- Edit Mode ---
+  protected openAddQuestionModal(): void {
+    this.editingQuestionId.set(null);
+    this.resetForm();
+    this.showQuestionModal.set(true);
+  }
+
+  protected getFilteredRules(query: string): RuleResponse[] {
+    const q = query.trim().toLowerCase();
+    if (!q) return this.rules();
+    return this.rules().filter(r => {
+      const nameMatch = (r.name || '').toLowerCase().includes(q);
+      const typeMatch = (r.type || '').toLowerCase().includes(q);
+      const conceptMatch = r.concept_ids?.some(cId => this.getConceptSynonyms(cId).toLowerCase().includes(q));
+      const relationMatch = r.relation_ids?.some(rId => this.getRelationConnectionText(rId).toLowerCase().includes(q));
+      return nameMatch || typeMatch || conceptMatch || relationMatch;
+    });
+  }
+
   protected onEditQuestion(q: Question): void {
     this.successMessage.set('');
     this.errorMessage.set('');
@@ -219,7 +251,8 @@ export class QuestionBankComponent implements OnInit {
     this.applicationAnswer = '';
     this.selectedRuleIds = [];
     this.selectedFunctionIds = [];
-    this.proceduralSteps = [{ stepOrder: 1, description: '', ruleIds: [] }];
+    this.proceduralSteps = [{ stepOrder: 1, description: '', ruleIds: [], ruleSearchQuery: '' }];
+    this.newRubricMode = false;
 
     if (q.ex_ans) {
       const sample = q.ex_ans.sample || '';
@@ -240,11 +273,12 @@ export class QuestionBankComponent implements OnInit {
             this.proceduralSteps = parsed.map((item: any) => ({
               stepOrder: item.stepOrder || item.step_order || 1,
               description: item.description || '',
-              ruleIds: item.ruleIds || item.rule_ids || []
+              ruleIds: item.ruleIds || item.rule_ids || [],
+              ruleSearchQuery: ''
             }));
           }
         } catch {
-          this.proceduralSteps = [{ stepOrder: 1, description: sample, ruleIds: [] }];
+          this.proceduralSteps = [{ stepOrder: 1, description: sample, ruleIds: [], ruleSearchQuery: '' }];
         }
       }
 
@@ -255,11 +289,13 @@ export class QuestionBankComponent implements OnInit {
         this.selectedFunctionIds = q.ex_ans.functions.map(f => f.id);
       }
     }
+    this.showQuestionModal.set(true);
   }
 
   protected cancelEdit(): void {
     this.editingQuestionId.set(null);
     this.resetForm();
+    this.showQuestionModal.set(false);
   }
 
   // --- Submit form ---
@@ -277,11 +313,56 @@ export class QuestionBankComponent implements OnInit {
       return;
     }
 
-    if (!this.selectedRubricId) {
-      this.errorMessage.set('Vui lòng chọn một Rubric.');
-      return;
-    }
+    // Dynamic Rubric Creation inline
+    if (this.newRubricMode) {
+      if (!this.newRubricDescription.trim()) {
+        this.errorMessage.set('Mô tả Rubric mới không được để trống.');
+        return;
+      }
+      const sum = Number(this.newRubricAccW) + Number(this.newRubricCompW) + Number(this.newRubricLogW);
+      if (Math.abs(sum - 1.0) > 0.01) {
+        this.errorMessage.set('Tổng trọng số Rubric (acc + comp + log) phải bằng 1.0.');
+        return;
+      }
 
+      this.isSubmitting.set(true);
+      const rubricPayload = {
+        description: this.newRubricDescription.trim(),
+        acc_w: Number(this.newRubricAccW),
+        comp_w: Number(this.newRubricCompW),
+        log_w: Number(this.newRubricLogW)
+      };
+
+      this.adminApi.createRubric(rubricPayload).subscribe({
+        next: (newRub) => {
+          this.adminApi.getRubrics().subscribe({
+            next: (res) => {
+              this.rubrics.set(res);
+              this.selectedRubricId = newRub.id;
+              this.newRubricMode = false; // reset mode
+              this.submitQuestion();
+            },
+            error: () => {
+              this.isSubmitting.set(false);
+              this.errorMessage.set('Tạo Rubric mới thành công nhưng có lỗi khi tải lại danh sách Rubrics.');
+            }
+          });
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.errorMessage.set(err.error?.message || 'Có lỗi xảy ra khi tạo Rubric mới.');
+        }
+      });
+    } else {
+      if (!this.selectedRubricId) {
+        this.errorMessage.set('Vui lòng chọn một Rubric.');
+        return;
+      }
+      this.submitQuestion();
+    }
+  }
+
+  private submitQuestion(): void {
     // Build sample expected answer depending on type
     let sampleVal = '';
     let finalRuleIds = [...this.selectedRuleIds];
@@ -348,6 +429,7 @@ export class QuestionBankComponent implements OnInit {
           this.isSubmitting.set(false);
           this.successMessage.set('Tạo câu hỏi mới thành công!');
           this.resetForm();
+          this.showQuestionModal.set(false);
           this.refreshQuestions();
         },
         error: (err) => {
@@ -385,7 +467,13 @@ export class QuestionBankComponent implements OnInit {
     this.selectedRuleIds = [];
     this.selectedFunctionIds = [];
     this.proceduralSteps = [
-      { stepOrder: 1, description: '', ruleIds: [] }
+      { stepOrder: 1, description: '', ruleIds: [], ruleSearchQuery: '' }
     ];
+    this.newRubricMode = false;
+    this.newRubricDescription = '';
+    this.newRubricAccW = 0.4;
+    this.newRubricCompW = 0.3;
+    this.newRubricLogW = 0.3;
+    this.ruleSearchQuery = '';
   }
 }
