@@ -165,10 +165,10 @@
 
               <!-- Topic selection -->
               <div class="space-y-1">
-                <label for="topic" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Chủ đề (Topic)</label>
+                <label for="topic" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Chủ đề</label>
                 <select id="topic" name="selectedTopicId" [(ngModel)]="selectedTopicId" required class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-slate-50 focus:bg-white cursor-pointer transition-all shadow-sm">
                   @for (t of topics(); track t.id) {
-                    <option [value]="t.id">{{ t.title }} ({{ t.id }})</option>
+                    <option [value]="t.id">{{ t.title }}</option>
                   }
                 </select>
               </div>
@@ -190,9 +190,9 @@
                     @for (bl of bloomLevels(); track bl.id) {
                       <option [value]="bl.id">{{ bl.display_name }}</option>
                     } @empty {
-                      <option value="REMEMBERING">Nhận biết</option>
-                      <option value="UNDERSTANDING">Thông hiểu</option>
-                      <option value="APPLYING">Vận dụng</option>
+                      <option value="REMEMBERING">Nhận biết (R)</option>
+                      <option value="UNDERSTANDING">Thông hiểu (U)</option>
+                      <option value="APPLYING">Vận dụng (AP)</option>
                     }
                   </select>
                 </div>
@@ -205,7 +205,7 @@
                     } @empty {
                       <option value="EASY">Dễ</option>
                       <option value="MEDIUM">Trung bình</option>
-                      <option value="HARD">Khó</option>
+                      <option value="HARD">Khá</option>
                     }
                   </select>
                 </div>
@@ -238,15 +238,15 @@
                     </div>
                     <div class="grid grid-cols-3 gap-3">
                       <div class="space-y-1">
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase">acc_w (Chính xác)</label>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase">Chính xác</label>
                         <input type="number" step="0.05" min="0" max="1" name="newRubricAccW" [(ngModel)]="newRubricAccW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
                       </div>
                       <div class="space-y-1">
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase">comp_w (Hoàn thiện)</label>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase">Hoàn thiện</label>
                         <input type="number" step="0.05" min="0" max="1" name="newRubricCompW" [(ngModel)]="newRubricCompW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
                       </div>
                       <div class="space-y-1">
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase">log_w (Logic)</label>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase">Logic</label>
                         <input type="number" step="0.05" min="0" max="1" name="newRubricLogW" [(ngModel)]="newRubricLogW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
                       </div>
                     </div>
@@ -258,19 +258,19 @@
 
             <!-- Right Column: Expected Answer and Rules Checklist -->
             <div class="md:col-span-7 border border-slate-200 rounded-xl p-4 bg-slate-50/30 space-y-4 self-start">
-              <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200/60 pb-2">Đáp án & Quy tắc chấm bài</h3>
+              <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200/60 pb-2">Đáp án mẫu & Luật đánh giá</h3>
 
               <!-- Dạng DESCRIPTIVE -->
               @if (selectedType === 'DESCRIPTIVE') {
                 <div class="space-y-4">
                   <div class="space-y-1">
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Ý tưởng/Đáp án mẫu đáp ứng (Văn bản)</label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Đáp án mẫu</label>
                     <textarea name="descriptiveAnswer" [(ngModel)]="descriptiveAnswer" rows="4" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white resize-none shadow-sm" placeholder="Nhập vào nội dung đáp án tự luận mẫu..."></textarea>
                   </div>
 
                   <!-- Rules applying checklist with search feature -->
                   <div class="space-y-2">
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Áp dụng Quy tắc chấm điểm (Rules)</label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Luật đánh giá</label>
                     <input type="text" [(ngModel)]="ruleSearchQuery" name="ruleSearchQuery" placeholder="🔍 Nhập từ khóa để lọc các quy tắc logic..." class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-2">
                     
                     <div class="max-h-56 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
@@ -285,6 +285,14 @@
                                 Concepts: 
                                 @for (cId of rule.concept_ids; track cId; let last = $last) {
                                   <strong class="text-slate-600 font-medium">{{ getConceptSynonyms(cId) }}</strong>{{ !last ? ', ' : '' }}
+                                }
+                              </span>
+                            }
+                            @if (rule.relation_ids && rule.relation_ids.length > 0) {
+                              <span class="text-[10px] text-slate-500 mt-0.5">
+                                Relations: 
+                                @for (rId of rule.relation_ids; track rId; let last = $last) {
+                                  <strong class="text-slate-600 font-medium">{{ getRelationConnectionText(rId) }}</strong>{{ !last ? ', ' : '' }}
                                 }
                               </span>
                             }
@@ -338,6 +346,14 @@
                                 Concepts: 
                                 @for (cId of rule.concept_ids; track cId; let last = $last) {
                                   <strong class="text-slate-600 font-medium">{{ getConceptSynonyms(cId) }}</strong>{{ !last ? ', ' : '' }}
+                                }
+                              </span>
+                            }
+                            @if (rule.relation_ids && rule.relation_ids.length > 0) {
+                              <span class="text-[10px] text-slate-500 mt-0.5">
+                                Relations: 
+                                @for (rId of rule.relation_ids; track rId; let last = $last) {
+                                  <strong class="text-slate-600 font-medium">{{ getRelationConnectionText(rId) }}</strong>{{ !last ? ', ' : '' }}
                                 }
                               </span>
                             }
@@ -414,6 +430,14 @@
                                       Concepts: 
                                       @for (cId of rule.concept_ids; track cId; let last = $last) {
                                         <span>{{ getConceptSynonyms(cId) }}{{ !last ? ', ' : '' }}</span>
+                                      }
+                                    </span>
+                                  }
+                                  @if (rule.relation_ids && rule.relation_ids.length > 0) {
+                                    <span class="text-[9px] text-slate-400 font-light mt-0.5">
+                                      Relations: 
+                                      @for (rId of rule.relation_ids; track rId; let last = $last) {
+                                        <span>{{ getRelationConnectionText(rId) }}{{ !last ? ', ' : '' }}</span>
                                       }
                                     </span>
                                   }
