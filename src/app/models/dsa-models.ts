@@ -55,6 +55,7 @@ export interface ExpectedAnswer {
   relations: Relation[];
   rules: Rule[];
   functions: EvaluatedFunction[] | null;
+  logical_step_sequence_weight?: number;
 }
 
 export interface Rubric {

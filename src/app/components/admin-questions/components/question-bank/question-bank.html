@@ -135,7 +135,7 @@
   <!-- Dialog Modal: Add/Edit Question -->
   @if (showQuestionModal()) {
     <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-7xl shadow-2xl flex flex-col max-h-[90vh]">
         <!-- Header -->
         <div class="p-5 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div>
@@ -282,7 +282,7 @@
                             <!-- Concept detail -->
                             @if (rule.concept_ids && rule.concept_ids.length > 0) {
                               <div class="flex flex-wrap gap-1 items-center mt-1">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Concepts:</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Concepts:</span><br>
                                 @for (cId of rule.concept_ids; track cId) {
                                   @if (getConcept(cId); as cpt) {
                                     <div class="inline-flex flex-wrap items-center gap-1 px-1.5 py-0.5 bg-slate-50 border border-slate-200/85 rounded-md text-[10px]">
@@ -523,6 +523,121 @@
                   </div>
                 </div>
               }
+
+              <!-- Grid của Concept và Relation trực tiếp -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200/60 pt-4">
+                <!-- Cột Concept -->
+                <div class="space-y-2">
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tập Khái niệm (Concepts) trực tiếp của câu hỏi</label>
+                  <input type="text" [(ngModel)]="conceptSearchQuery" name="conceptSearchQuery" placeholder="🔍 Nhập từ khóa để lọc các khái niệm..." class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-2">
+                  
+                  <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+                    @for (concept of getFilteredConcepts(); track concept.id) {
+                      <label class="flex items-start space-x-2 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
+                        <input type="checkbox" [checked]="selectedConceptIds.includes(concept.id)" (change)="toggleConceptSelection(concept.id)" class="mt-0.5 text-[#FF6C37] focus:ring-[#FF6C37] rounded">
+                        <div class="flex flex-col">
+                          <span class="font-bold text-slate-800">{{ concept.title }}</span>
+                          @if (concept.synonyms && concept.synonyms.length > 0) {
+                            <div class="flex flex-wrap gap-0.5 mt-0.5">
+                              @for (syn of concept.synonyms; track syn) {
+                                <span class="px-1 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-100/60 rounded text-[9px] font-mono">{{ syn }}</span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      </label>
+                    } @empty {
+                      <span class="text-[10px] text-slate-400 italic">Không tìm thấy khái niệm nào.</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Cột Relation -->
+                <div class="space-y-2">
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tập Quan hệ (Relations) trực tiếp của câu hỏi</label>
+                  <input type="text" [(ngModel)]="relationSearchQuery" name="relationSearchQuery" placeholder="🔍 Nhập từ khóa để lọc các quan hệ..." class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-2">
+                  
+                  <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+                    @for (rel of getFilteredRelations(); track rel.id) {
+                      <label class="flex items-start space-x-2 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
+                        <input type="checkbox" [checked]="selectedRelationIds.includes(rel.id)" (change)="toggleRelationSelection(rel.id)" class="mt-0.5 text-[#FF6C37] focus:ring-[#FF6C37] rounded">
+                        <div class="flex flex-col">
+                          <span class="font-medium text-slate-700 leading-snug">{{ rel.description }}</span>
+                          <div class="flex items-center gap-0.5 flex-wrap mt-0.5">
+                            <span class="px-1 py-0.2 bg-blue-50 text-blue-700 rounded text-[9px] font-medium">{{ rel.source_title || rel.source_id || '—' }}</span>
+                            <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <span class="px-1 py-0.2 bg-amber-50 text-amber-700 rounded text-[9px] font-bold">{{ rel.relation_title || rel.relation_id || '—' }}</span>
+                            <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <span class="px-1 py-0.2 bg-purple-50 text-purple-700 rounded text-[9px] font-medium">{{ rel.target_title || rel.target_id || '—' }}</span>
+                          </div>
+                        </div>
+                      </label>
+                    } @empty {
+                      <span class="text-[10px] text-slate-400 italic">Không tìm thấy quan hệ nào.</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cấu hình Trọng số Quy tắc (Rule Weights & live validation) -->
+              <div class="space-y-2 border-t border-slate-200/60 pt-4 bg-orange-50/5 p-3 rounded-xl border border-orange-100/30">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                  <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">Cấu hình Trọng số Quy tắc chấm điểm</label>
+                  <div class="flex items-center space-x-2 shrink-0">
+                    <span class="text-[11px] font-semibold text-slate-500">Tổng trọng số:</span>
+                    <span class="text-xs font-extrabold font-mono px-2 py-0.5 rounded-full" 
+                          [ngClass]="isWeightsValid() ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200'">
+                      {{ getWeightsSum() }} / 1.0
+                    </span>
+                  </div>
+                </div>
+
+                @if (getUniqueSelectedRules().length > 0) {
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
+                    @for (rId of getUniqueSelectedRules(); track rId) {
+                      <div class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div class="flex flex-col min-w-0 pr-2">
+                          <span class="text-xs font-bold text-slate-800 truncate" [title]="getRuleDescription(rId)">
+                            {{ getRuleDescription(rId) }}
+                          </span>
+                        </div>
+                        <div class="flex items-center space-x-1 shrink-0">
+                          <span class="text-[10px] text-slate-400 font-medium font-sans">Trọng số:</span>
+                          <input type="number" step="0.05" min="0" max="1" 
+                                 [(ngModel)]="ruleWeights[rId]" 
+                                 [name]="'weight_' + rId"
+                                 class="w-16 border border-slate-250 rounded-lg px-2 py-1 text-xs text-center font-semibold font-mono focus:outline-none focus:border-[#FF6C37] bg-slate-50 focus:bg-white shadow-inner">
+                        </div>
+                      </div>
+                    }
+
+                    @if (selectedType === 'PROCEDURE') {
+                      <div class="flex items-center justify-between p-2 bg-amber-50/40 border border-amber-200/60 rounded-lg shadow-sm">
+                        <div class="flex flex-col">
+                          <span class="text-xs font-bold text-slate-800">
+                            Thứ tự các bước (LogicalStepSequence)
+                          </span>
+                        </div>
+                        <div class="flex items-center space-x-1 shrink-0">
+                          <span class="text-[10px] text-slate-400 font-medium font-sans">Trọng số:</span>
+                          <input type="number" step="0.05" min="0" max="1" 
+                                 [(ngModel)]="logicalStepSequenceWeight" 
+                                 name="logicalStepSequenceWeight"
+                                 class="w-16 border border-slate-250 rounded-lg px-2 py-1 text-xs text-center font-semibold font-mono focus:outline-none focus:border-[#FF6C37] bg-white shadow-inner">
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="text-[10px] text-slate-400 italic">Vui lòng chọn ít nhất một quy tắc chấm điểm ở phía trên để cấu hình trọng số.</p>
+                }
+
+                @if (!isWeightsValid()) {
+                  <p class="text-[10px] text-rose-600 font-semibold flex items-center space-x-1">
+                    <span>⚠️ Tổng trọng số hiện tại là {{ getWeightsSum() }}. Vui lòng phân bổ lại trọng số để tổng bằng đúng 1.0 trước khi lưu.</span>
+                  </p>
+                }
+              </div>
             </div>
           </form>
         </div>
@@ -530,7 +645,7 @@
         <!-- Footer -->
         <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end space-x-2.5 shrink-0 rounded-b-2xl">
           <button type="button" (click)="cancelEdit()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-lg text-xs transition-colors cursor-pointer">Hủy bỏ</button>
-          <button type="submit" form="questionForm" [disabled]="isSubmitting()" class="bg-[#FF6C37] hover:bg-[#E05B2B] text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-all shadow-md shadow-orange-500/10 disabled:opacity-50 flex items-center justify-center space-x-1.5 cursor-pointer">
+          <button type="submit" form="questionForm" [disabled]="isSubmitting() || !isWeightsValid()" class="bg-[#FF6C37] hover:bg-[#E05B2B] text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-all shadow-md shadow-orange-500/10 disabled:opacity-50 flex items-center justify-center space-x-1.5 cursor-pointer">
             @if (isSubmitting()) {
               <svg class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

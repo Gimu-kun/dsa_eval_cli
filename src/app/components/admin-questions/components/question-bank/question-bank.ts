@@ -43,6 +43,8 @@ export class QuestionBankComponent implements OnInit {
 
   // Search filter query
   protected ruleSearchQuery = '';
+  protected conceptSearchQuery = '';
+  protected relationSearchQuery = '';
 
   // Custom Rubric Mode & inputs
   protected newRubricMode = false;
@@ -66,9 +68,13 @@ export class QuestionBankComponent implements OnInit {
   protected descriptiveAnswer = '';
   protected applicationAnswer = '';
   
-  // Multiselect Rule and Function IDs (for DESCRIPTIVE & APPLICATION)
+  // Multiselect Concept, Relation, Rule, Function IDs and weights
+  protected selectedConceptIds: string[] = [];
+  protected selectedRelationIds: string[] = [];
   protected selectedRuleIds: string[] = [];
   protected selectedFunctionIds: string[] = [];
+  protected ruleWeights: { [ruleId: string]: number } = {};
+  protected logicalStepSequenceWeight = 0.2;
 
   // Expected Answer steps for PROCEDURAL
   protected proceduralSteps: ProceduralStepInput[] = [
@@ -209,8 +215,12 @@ export class QuestionBankComponent implements OnInit {
     const idx = this.selectedRuleIds.indexOf(ruleId);
     if (idx > -1) {
       this.selectedRuleIds.splice(idx, 1);
+      delete this.ruleWeights[ruleId];
     } else {
       this.selectedRuleIds.push(ruleId);
+      if (this.ruleWeights[ruleId] === undefined) {
+        this.ruleWeights[ruleId] = 0.0;
+      }
     }
   }
 
@@ -221,6 +231,74 @@ export class QuestionBankComponent implements OnInit {
     } else {
       this.selectedFunctionIds.push(funcId);
     }
+  }
+
+  // --- Concept and Relation Selection helpers ---
+  protected toggleConceptSelection(conceptId: string): void {
+    const idx = this.selectedConceptIds.indexOf(conceptId);
+    if (idx > -1) {
+      this.selectedConceptIds.splice(idx, 1);
+    } else {
+      this.selectedConceptIds.push(conceptId);
+    }
+  }
+
+  protected toggleRelationSelection(relationId: string): void {
+    const idx = this.selectedRelationIds.indexOf(relationId);
+    if (idx > -1) {
+      this.selectedRelationIds.splice(idx, 1);
+    } else {
+      this.selectedRelationIds.push(relationId);
+    }
+  }
+
+  protected getFilteredConcepts(): ConceptResponse[] {
+    const q = this.conceptSearchQuery.trim().toLowerCase();
+    if (!q) return this.concepts();
+    return this.concepts().filter(c =>
+      (c.title || '').toLowerCase().includes(q) ||
+      c.synonyms?.some(syn => syn.toLowerCase().includes(q))
+    );
+  }
+
+  protected getFilteredRelations(): RelationResponse[] {
+    const q = this.relationSearchQuery.trim().toLowerCase();
+    if (!q) return this.relations();
+    return this.relations().filter(r =>
+      (r.description || '').toLowerCase().includes(q) ||
+      (r.source_title || '').toLowerCase().includes(q) ||
+      (r.target_title || '').toLowerCase().includes(q) ||
+      (r.relation_title || '').toLowerCase().includes(q)
+    );
+  }
+
+  protected getUniqueSelectedRules(): string[] {
+    if (this.selectedType !== 'PROCEDURE') {
+      return this.selectedRuleIds;
+    }
+    const stepRulesSet = new Set<string>();
+    this.proceduralSteps.forEach(s => s.ruleIds.forEach(rid => stepRulesSet.add(rid)));
+    const uniqueList = Array.from(stepRulesSet);
+    
+    uniqueList.forEach(rid => {
+      if (this.ruleWeights[rid] === undefined) {
+        this.ruleWeights[rid] = 0.0;
+      }
+    });
+    return uniqueList;
+  }
+
+  protected getWeightsSum(): number {
+    const uniqueRules = this.getUniqueSelectedRules();
+    let sum = uniqueRules.reduce((acc, rId) => acc + (Number(this.ruleWeights[rId]) || 0), 0);
+    if (this.selectedType === 'PROCEDURE') {
+      sum += Number(this.logicalStepSequenceWeight) || 0;
+    }
+    return Math.round(sum * 1000) / 1000;
+  }
+
+  protected isWeightsValid(): boolean {
+    return Math.abs(this.getWeightsSum() - 1.0) < 0.001;
   }
 
   // --- Edit Mode ---
@@ -259,6 +337,10 @@ export class QuestionBankComponent implements OnInit {
     this.applicationAnswer = '';
     this.selectedRuleIds = [];
     this.selectedFunctionIds = [];
+    this.selectedConceptIds = [];
+    this.selectedRelationIds = [];
+    this.ruleWeights = {};
+    this.logicalStepSequenceWeight = 0.2;
     this.proceduralSteps = [{ stepOrder: 1, description: '', ruleIds: [], ruleSearchQuery: '' }];
     this.newRubricMode = false;
 
@@ -290,11 +372,23 @@ export class QuestionBankComponent implements OnInit {
         }
       }
 
+      if (q.ex_ans.concepts) {
+        this.selectedConceptIds = q.ex_ans.concepts.map(c => c.id);
+      }
+      if (q.ex_ans.relations) {
+        this.selectedRelationIds = q.ex_ans.relations.map(r => r.id);
+      }
       if (q.ex_ans.rules) {
         this.selectedRuleIds = q.ex_ans.rules.map(r => r.id);
+        q.ex_ans.rules.forEach(r => {
+          this.ruleWeights[r.id] = r.weight;
+        });
       }
       if (q.ex_ans.functions) {
         this.selectedFunctionIds = q.ex_ans.functions.map(f => f.id);
+      }
+      if (q.ex_ans.logical_step_sequence_weight !== undefined && q.ex_ans.logical_step_sequence_weight !== null) {
+        this.logicalStepSequenceWeight = q.ex_ans.logical_step_sequence_weight;
       }
     }
     this.showQuestionModal.set(true);
@@ -318,6 +412,12 @@ export class QuestionBankComponent implements OnInit {
 
     if (!this.selectedTopicId) {
       this.errorMessage.set('Vui lòng chọn một chủ đề.');
+      return;
+    }
+
+    // Weight validation check
+    if (!this.isWeightsValid()) {
+      this.errorMessage.set(`Tổng trọng số các quy tắc phải bằng 1.0. Hiện tại: ${this.getWeightsSum()}`);
       return;
     }
 
@@ -373,7 +473,7 @@ export class QuestionBankComponent implements OnInit {
   private submitQuestion(): void {
     // Build sample expected answer depending on type
     let sampleVal = '';
-    let finalRuleIds = [...this.selectedRuleIds];
+    let finalRuleIds = this.getUniqueSelectedRules();
     let finalFuncIds = [...this.selectedFunctionIds];
 
     if (this.selectedType === 'DESCRIPTIVE') {
@@ -394,12 +494,12 @@ export class QuestionBankComponent implements OnInit {
         rule_ids: s.ruleIds
       }));
       sampleVal = JSON.stringify(stepsPayload);
-
-      // In PROCEDURAL type, collect all rules mentioned in steps to register in ex_ans.rules ManyToMany
-      const stepRulesSet = new Set<string>();
-      this.proceduralSteps.forEach(s => s.ruleIds.forEach(rid => stepRulesSet.add(rid)));
-      finalRuleIds = Array.from(stepRulesSet);
     }
+
+    const rulesPayload = finalRuleIds.map(rId => ({
+      rule_id: rId,
+      weight: Number(this.ruleWeights[rId]) || 0.0
+    }));
 
     const payload = {
       topic_id: this.selectedTopicId,
@@ -410,8 +510,11 @@ export class QuestionBankComponent implements OnInit {
       difficulty: this.selectedDifficulty,
       ex_ans: {
         sample: sampleVal,
-        rules: finalRuleIds,
-        functions: finalFuncIds
+        concepts: this.selectedConceptIds,
+        relations: this.selectedRelationIds,
+        rules: rulesPayload,
+        functions: finalFuncIds,
+        logical_step_sequence_weight: this.selectedType === 'PROCEDURE' ? Number(this.logicalStepSequenceWeight) : null
       }
     };
 
@@ -474,6 +577,10 @@ export class QuestionBankComponent implements OnInit {
     this.applicationAnswer = '';
     this.selectedRuleIds = [];
     this.selectedFunctionIds = [];
+    this.selectedConceptIds = [];
+    this.selectedRelationIds = [];
+    this.ruleWeights = {};
+    this.logicalStepSequenceWeight = 0.2;
     this.proceduralSteps = [
       { stepOrder: 1, description: '', ruleIds: [], ruleSearchQuery: '' }
     ];
@@ -483,5 +590,7 @@ export class QuestionBankComponent implements OnInit {
     this.newRubricCompW = 0.3;
     this.newRubricLogW = 0.3;
     this.ruleSearchQuery = '';
+    this.conceptSearchQuery = '';
+    this.relationSearchQuery = '';
   }
 }
