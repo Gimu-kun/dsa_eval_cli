@@ -281,20 +281,43 @@
                             <span class="font-bold text-slate-800">{{ rule.name }} <strong class="text-[9px] px-1 py-0.2 bg-slate-100 text-slate-500 rounded font-mono font-normal uppercase">{{ rule.type }}</strong></span>
                             <!-- Concept detail -->
                             @if (rule.concept_ids && rule.concept_ids.length > 0) {
-                              <span class="text-[10px] text-slate-500 mt-0.5">
-                                Concepts: 
-                                @for (cId of rule.concept_ids; track cId; let last = $last) {
-                                  <strong class="text-slate-600 font-medium">{{ getConceptSynonyms(cId) }}</strong>{{ !last ? ', ' : '' }}
+                              <div class="flex flex-wrap gap-1 items-center mt-1">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Concepts:</span>
+                                @for (cId of rule.concept_ids; track cId) {
+                                  @if (getConcept(cId); as cpt) {
+                                    <div class="inline-flex flex-wrap items-center gap-1 px-1.5 py-0.5 bg-slate-50 border border-slate-200/85 rounded-md text-[10px]">
+                                      <span class="font-semibold text-slate-700">{{ cpt.title }}</span>
+                                      @if (cpt.synonyms && cpt.synonyms.length > 0) {
+                                        <div class="flex flex-wrap gap-0.5 ml-1">
+                                          @for (syn of cpt.synonyms; track syn) {
+                                            <span class="px-1 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-100/60 rounded text-[9px] font-mono font-normal">{{ syn }}</span>
+                                          }
+                                        </div>
+                                      }
+                                    </div>
+                                  }
                                 }
-                              </span>
+                              </div>
                             }
+                            <!-- Relation detail -->
                             @if (rule.relation_ids && rule.relation_ids.length > 0) {
-                              <span class="text-[10px] text-slate-500 mt-0.5">
-                                Relations: 
-                                @for (rId of rule.relation_ids; track rId; let last = $last) {
-                                  <strong class="text-slate-600 font-medium">{{ getRelationConnectionText(rId) }}</strong>{{ !last ? ', ' : '' }}
+                              <div class="flex flex-wrap gap-1.5 items-center mt-1.5">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Relations:</span>
+                                @for (rId of rule.relation_ids; track rId) {
+                                  @if (getRelation(rId); as rel) {
+                                    <div class="inline-flex items-center gap-1 p-1 bg-slate-50/50 border border-slate-200/60 rounded-md text-[9px]">
+                                      <span class="text-slate-500 font-medium font-sans mr-0.5">{{ rel.description }}:</span>
+                                      <div class="flex items-center gap-0.5 flex-wrap">
+                                        <span class="px-1 py-0.2 bg-blue-50 text-blue-700 rounded font-medium">{{ rel.source_title || rel.source_id || '—' }}</span>
+                                        <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        <span class="px-1 py-0.2 bg-amber-50 text-amber-700 rounded font-bold">{{ rel.relation_title || rel.relation_id || '—' }}</span>
+                                        <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        <span class="px-1 py-0.2 bg-purple-50 text-purple-700 rounded font-medium">{{ rel.target_title || rel.target_id || '—' }}</span>
+                                      </div>
+                                    </div>
+                                  }
                                 }
-                              </span>
+                              </div>
                             }
                           </div>
                         </label>
@@ -342,20 +365,43 @@
                             <span class="font-bold text-slate-800">{{ rule.name }} <strong class="text-[9px] px-1 py-0.2 bg-slate-100 text-slate-500 rounded font-mono font-normal uppercase">{{ rule.type }}</strong></span>
                             <!-- Concept detail -->
                             @if (rule.concept_ids && rule.concept_ids.length > 0) {
-                              <span class="text-[10px] text-slate-500 mt-0.5">
-                                Concepts: 
-                                @for (cId of rule.concept_ids; track cId; let last = $last) {
-                                  <strong class="text-slate-600 font-medium">{{ getConceptSynonyms(cId) }}</strong>{{ !last ? ', ' : '' }}
+                              <div class="flex flex-wrap gap-1 items-center mt-1">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Concepts:</span>
+                                @for (cId of rule.concept_ids; track cId) {
+                                  @if (getConcept(cId); as cpt) {
+                                    <div class="inline-flex flex-wrap items-center gap-1 px-1.5 py-0.5 bg-slate-50 border border-slate-200/85 rounded-md text-[10px]">
+                                      <span class="font-semibold text-slate-700">{{ cpt.title }}</span>
+                                      @if (cpt.synonyms && cpt.synonyms.length > 0) {
+                                        <div class="flex flex-wrap gap-0.5 ml-1">
+                                          @for (syn of cpt.synonyms; track syn) {
+                                            <span class="px-1 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-100/60 rounded text-[9px] font-mono font-normal">{{ syn }}</span>
+                                          }
+                                        </div>
+                                      }
+                                    </div>
+                                  }
                                 }
-                              </span>
+                              </div>
                             }
+                            <!-- Relation detail -->
                             @if (rule.relation_ids && rule.relation_ids.length > 0) {
-                              <span class="text-[10px] text-slate-500 mt-0.5">
-                                Relations: 
-                                @for (rId of rule.relation_ids; track rId; let last = $last) {
-                                  <strong class="text-slate-600 font-medium">{{ getRelationConnectionText(rId) }}</strong>{{ !last ? ', ' : '' }}
+                              <div class="flex flex-wrap gap-1.5 items-center mt-1.5">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Relations:</span>
+                                @for (rId of rule.relation_ids; track rId) {
+                                  @if (getRelation(rId); as rel) {
+                                    <div class="inline-flex items-center gap-1 p-1 bg-slate-50/50 border border-slate-200/60 rounded-md text-[9px]">
+                                      <span class="text-slate-500 font-medium font-sans mr-0.5">{{ rel.description }}:</span>
+                                      <div class="flex items-center gap-0.5 flex-wrap">
+                                        <span class="px-1 py-0.2 bg-blue-50 text-blue-700 rounded font-medium">{{ rel.source_title || rel.source_id || '—' }}</span>
+                                        <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        <span class="px-1 py-0.2 bg-amber-50 text-amber-700 rounded font-bold">{{ rel.relation_title || rel.relation_id || '—' }}</span>
+                                        <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        <span class="px-1 py-0.2 bg-purple-50 text-purple-700 rounded font-medium">{{ rel.target_title || rel.target_id || '—' }}</span>
+                                      </div>
+                                    </div>
+                                  }
                                 }
-                              </span>
+                              </div>
                             }
                           </div>
                         </label>
@@ -425,21 +471,45 @@
                                 <input type="checkbox" [checked]="isStepRuleSelected(step, rule.id)" (change)="toggleStepRule(step, rule.id)" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded scale-85 mt-0.5">
                                 <div class="flex flex-col">
                                   <span class="font-bold text-slate-800 leading-snug">{{ rule.name }}</span>
+                                  <!-- Concept detail -->
                                   @if (rule.concept_ids && rule.concept_ids.length > 0) {
-                                    <span class="text-[9px] text-slate-400 font-light mt-0.5">
-                                      Concepts: 
-                                      @for (cId of rule.concept_ids; track cId; let last = $last) {
-                                        <span>{{ getConceptSynonyms(cId) }}{{ !last ? ', ' : '' }}</span>
+                                    <div class="flex flex-wrap gap-1 items-center mt-1">
+                                      <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider mr-1">Concepts:</span>
+                                      @for (cId of rule.concept_ids; track cId) {
+                                        @if (getConcept(cId); as cpt) {
+                                          <div class="inline-flex flex-wrap items-center gap-1 px-1 py-0.2 bg-slate-50 border border-slate-200/80 rounded text-[9px]">
+                                            <span class="font-semibold text-slate-755">{{ cpt.title }}</span>
+                                            @if (cpt.synonyms && cpt.synonyms.length > 0) {
+                                              <div class="flex flex-wrap gap-0.5 ml-1">
+                                                @for (syn of cpt.synonyms; track syn) {
+                                                  <span class="px-1 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-100/60 rounded text-[8px] font-mono font-normal">{{ syn }}</span>
+                                                }
+                                              </div>
+                                            }
+                                          </div>
+                                        }
                                       }
-                                    </span>
+                                    </div>
                                   }
+                                  <!-- Relation detail -->
                                   @if (rule.relation_ids && rule.relation_ids.length > 0) {
-                                    <span class="text-[9px] text-slate-400 font-light mt-0.5">
-                                      Relations: 
-                                      @for (rId of rule.relation_ids; track rId; let last = $last) {
-                                        <span>{{ getRelationConnectionText(rId) }}{{ !last ? ', ' : '' }}</span>
+                                    <div class="flex flex-wrap gap-1 items-center mt-1">
+                                      <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider mr-1">Relations:</span>
+                                      @for (rId of rule.relation_ids; track rId) {
+                                        @if (getRelation(rId); as rel) {
+                                          <div class="inline-flex items-center gap-1 p-0.5 bg-slate-50/50 border border-slate-200/60 rounded text-[8px]">
+                                            <span class="text-slate-500 font-medium font-sans mr-0.5">{{ rel.description }}:</span>
+                                            <div class="flex items-center gap-0.5 flex-wrap">
+                                              <span class="px-1 py-0.2 bg-blue-50 text-blue-700 rounded font-medium">{{ rel.source_title || rel.source_id || '—' }}</span>
+                                              <svg class="w-2 h-2 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                              <span class="px-1 py-0.2 bg-amber-50 text-amber-700 rounded font-bold">{{ rel.relation_title || rel.relation_id || '—' }}</span>
+                                              <svg class="w-2 h-2 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                              <span class="px-1 py-0.2 bg-purple-50 text-purple-700 rounded font-medium">{{ rel.target_title || rel.target_id || '—' }}</span>
+                                            </div>
+                                          </div>
+                                        }
                                       }
-                                    </span>
+                                    </div>
                                   }
                                 </div>
                               </label>

@@ -138,6 +138,14 @@ export class QuestionBankComponent implements OnInit {
   }
 
   // --- Lookup Info display helpers ---
+  protected getConcept(conceptId: string): ConceptResponse | undefined {
+    return this.concepts().find(x => x.id === conceptId);
+  }
+
+  protected getRelation(relationId: string): RelationResponse | undefined {
+    return this.relations().find(x => x.id === relationId);
+  }
+
   protected getConceptSynonyms(conceptId: string): string {
     const c = this.concepts().find(x => x.id === conceptId);
     if (!c) return '';
