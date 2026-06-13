@@ -21,10 +21,6 @@
       [class]="activeTab() === 'questions' ? 'border-b-2 border-[#FF6C37] text-[#FF6C37] font-bold py-2.5 px-4 text-sm transition-all shrink-0 cursor-pointer' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-900 py-2.5 px-4 text-sm transition-all shrink-0 cursor-pointer'">
       Ngân hàng câu hỏi
     </button>
-    <button (click)="changeTab('evaluation')"
-      [class]="activeTab() === 'evaluation' ? 'border-b-2 border-[#FF6C37] text-[#FF6C37] font-bold py-2.5 px-4 text-sm transition-all shrink-0 cursor-pointer' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-900 py-2.5 px-4 text-sm transition-all shrink-0 cursor-pointer'">
-      Cấu hình đánh giá
-    </button>
     <button (click)="changeTab('matrix')"
       [class]="activeTab() === 'matrix' ? 'border-b-2 border-[#FF6C37] text-[#FF6C37] font-bold py-2.5 px-4 text-sm transition-all shrink-0 cursor-pointer' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-900 py-2.5 px-4 text-sm transition-all shrink-0 cursor-pointer'">
       Ma trận sinh đề thi
@@ -39,9 +35,6 @@
   <div class="p-6 bg-white border-x border-b border-slate-200 rounded-b-xl shadow-sm">
     @if (activeTab() === 'questions') {
       <app-question-bank></app-question-bank>
-    }
-    @if (activeTab() === 'evaluation') {
-      <app-evaluation-grading></app-evaluation-grading>
     }
     @if (activeTab() === 'matrix') {
       <app-exam-matrix></app-exam-matrix>

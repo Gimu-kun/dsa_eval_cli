@@ -339,8 +339,8 @@
               <label class="block text-[10px] font-bold text-slate-500 uppercase">Chủ đề</label>
               <select [(ngModel)]="modalSelectedTopicId" class="block w-full border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer">
                 <option value="ALL">Tất cả chủ đề</option>
-                @for (t of topics; track t.id) {
-                  <option [value]="t.id">{{ t.name }}</option>
+                @for (t of topics(); track t.id) {
+                  <option [value]="t.id">{{ t.title }}</option>
                 }
               </select>
             </div>

@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService } from '../../../../services/mock-data.service';
+import { AdminApiService } from '../../../../services/admin-api.service';
 
 @Component({
   selector: 'app-evaluation-grading',
@@ -10,7 +10,7 @@ import { MockDataService } from '../../../../services/mock-data.service';
   templateUrl: './evaluation-grading.html'
 })
 export class EvaluationGradingComponent implements OnInit {
-  private readonly mockService = inject(MockDataService);
+  private readonly adminApi = inject(AdminApiService);
 
   protected readonly successMessage = signal<string>('');
   protected readonly errorMessage = signal<string>('');
@@ -65,22 +65,22 @@ export class EvaluationGradingComponent implements OnInit {
   protected loadEvaluationElements(): void {
     this.isLoading.set(true);
     
-    this.mockService.fetchConcepts().subscribe({
+    this.adminApi.getConcepts().subscribe({
       next: (res) => this.conceptsList.set(res),
       error: (err) => console.error('Lỗi khi tải danh sách khái niệm:', err)
     });
 
-    this.mockService.fetchRelations().subscribe({
+    this.adminApi.getRelations().subscribe({
       next: (res) => this.relationsList.set(res),
       error: (err) => console.error('Lỗi khi tải danh sách quan hệ:', err)
     });
 
-    this.mockService.fetchRules().subscribe({
+    this.adminApi.getRules().subscribe({
       next: (res) => this.rulesList.set(res),
       error: (err) => console.error('Lỗi khi tải danh sách quy tắc:', err)
     });
 
-    this.mockService.fetchFunctions().subscribe({
+    this.adminApi.getFuncs().subscribe({
       next: (res) => {
         this.functionsList.set(res);
         this.isLoading.set(false);
@@ -99,12 +99,11 @@ export class EvaluationGradingComponent implements OnInit {
     }
     const termsArray = this.cptTerms.split(',').map(t => t.trim()).filter(t => t.length > 0);
     const payload = {
-      description: this.cptDesc.trim(),
-      err_message: this.cptErr.trim() || null,
-      terms: termsArray
+      title: this.cptDesc.trim(),
+      synonyms: termsArray
     };
     this.isSubmitting.set(true);
-    this.mockService.createConcept(payload).subscribe({
+    this.adminApi.createConcept(payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.successMessage.set('Tạo Khái niệm thành công!');
@@ -122,11 +121,11 @@ export class EvaluationGradingComponent implements OnInit {
 
   protected onStartEditConcept(concept: any): void {
     this.editingConceptId.set(concept.id);
-    this.editCptDesc = concept.description;
+    this.editCptDesc = concept.title || concept.description;
     this.editCptErr = concept.errMessage || '';
     
     // Map concept terms to a simple string array for JSON editing
-    const termValues = (concept.terms || []).map((t: any) => t.value);
+    const termValues = concept.synonyms || [];
     this.editCptTerms = JSON.stringify(termValues, null, 2);
   }
 
@@ -159,13 +158,12 @@ export class EvaluationGradingComponent implements OnInit {
     }
 
     const payload = {
-      description: this.editCptDesc.trim(),
-      err_message: this.editCptErr.trim() || null,
-      terms: parsedTerms
+      title: this.editCptDesc.trim(),
+      synonyms: parsedTerms
     };
 
     this.isSubmitting.set(true);
-    this.mockService.updateConcept(id, payload).subscribe({
+    this.adminApi.updateConcept(id, payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.successMessage.set('Cập nhật khái niệm thành công!');
@@ -181,7 +179,7 @@ export class EvaluationGradingComponent implements OnInit {
 
   protected onDeleteConcept(id: string): void {
     if (!confirm('Xóa khái niệm này?')) return;
-    this.mockService.deleteConcept(id).subscribe({
+    this.adminApi.deleteConcept(id).subscribe({
       next: () => {
         this.successMessage.set('Xóa khái niệm thành công!');
         this.loadEvaluationElements();
@@ -199,12 +197,12 @@ export class EvaluationGradingComponent implements OnInit {
       description: this.srDesc.trim(),
       regex_pattern: this.srPattern.trim(),
       err_message: this.srErr.trim() || 'Sai cấu trúc quan hệ ngữ nghĩa',
-      src_concept_id: this.srSrcId.trim(),
-      target_concept_id: this.srTargetId.trim() || null,
-      relation_concept_id: this.srRelationId.trim()
+      source_id: this.srSrcId.trim(),
+      target_id: this.srTargetId.trim() || undefined,
+      relation_id: this.srRelationId.trim()
     };
     this.isSubmitting.set(true);
-    this.mockService.createRelation(payload).subscribe({
+    this.adminApi.createRelation(payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.successMessage.set('Tạo Quan hệ ngữ nghĩa thành công!');
@@ -225,7 +223,7 @@ export class EvaluationGradingComponent implements OnInit {
 
   protected onDeleteRelation(id: string): void {
     if (!confirm('Xóa quan hệ này?')) return;
-    this.mockService.deleteRelation(id).subscribe({
+    this.adminApi.deleteRelation(id).subscribe({
       next: () => {
         this.successMessage.set('Xóa quan hệ thành công!');
         this.loadEvaluationElements();
@@ -236,22 +234,19 @@ export class EvaluationGradingComponent implements OnInit {
 
   protected onCreateRule(): void {
     if (!this.lrDesc.trim() || !this.lrPattern.trim()) {
-      this.errorMessage.set('Mô tả và regex không được để trống.');
+      this.errorMessage.set('Mô tả và quy tắc không được để trống.');
       return;
     }
     const conceptIdsArray = this.lrConceptIds.split(',').map(id => id.trim()).filter(id => id.length > 0);
     const payload = {
-      description: this.lrDesc.trim(),
-      regex_pattern: this.lrPattern.trim(),
+      name: this.lrDesc.trim(),
       err_message: this.lrErr.trim() || 'Sai quy tắc suy diễn logic',
-      logical_type: this.lrType,
+      type: 'SYN' as const,
       weight: this.lrWeight,
-      concepts_id: conceptIdsArray,
-      expected_steps: this.lrExpectedSteps.trim() || null,
-      ast_structure: this.lrAstStructure.trim() || null
+      concept_ids: conceptIdsArray
     };
     this.isSubmitting.set(true);
-    this.mockService.createRule(payload).subscribe({
+    this.adminApi.createRule(payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.successMessage.set('Tạo Quy tắc logic thành công!');
@@ -273,7 +268,7 @@ export class EvaluationGradingComponent implements OnInit {
 
   protected onDeleteRule(id: string): void {
     if (!confirm('Xóa quy tắc này?')) return;
-    this.mockService.deleteRule(id).subscribe({
+    this.adminApi.deleteRule(id).subscribe({
       next: () => {
         this.successMessage.set('Xóa quy tắc thành công!');
         this.loadEvaluationElements();
@@ -287,15 +282,13 @@ export class EvaluationGradingComponent implements OnInit {
       this.errorMessage.set('Mô tả và tập biểu thức Regex không được để trống.');
       return;
     }
-    const patternsArray = this.lfPatterns.split(',').map(p => p.trim()).filter(p => p.length > 0);
     const payload = {
-      description: this.lfDesc.trim(),
-      regex_pattern: patternsArray,
-      err_message: this.lfErr.trim() || 'Sai cấu trúc kiểm định hàm',
-      logical_type: this.lfType
+      name: this.lfDesc.trim(),
+      regex_pattern: this.lfPatterns.trim(),
+      err_message: this.lfErr.trim() || 'Sai cấu trúc kiểm định hàm'
     };
     this.isSubmitting.set(true);
-    this.mockService.createFunction(payload).subscribe({
+    this.adminApi.createFunc(payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.successMessage.set('Tạo Hàm logic thành công!');
@@ -313,7 +306,7 @@ export class EvaluationGradingComponent implements OnInit {
 
   protected onDeleteFunction(id: string): void {
     if (!confirm('Xóa hàm này?')) return;
-    this.mockService.deleteFunction(id).subscribe({
+    this.adminApi.deleteFunc(id).subscribe({
       next: () => {
         this.successMessage.set('Xóa hàm thành công!');
         this.loadEvaluationElements();

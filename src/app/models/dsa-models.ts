@@ -29,6 +29,8 @@ export interface Rule {
   id: string;
   description: string;
   err_message: string | null;
+  errMessage?: string | null;
+  name?: string;
   concepts_id: string[];
   logical_type: 'AND' | 'OR';
   regex_pattern: string;
@@ -39,6 +41,8 @@ export interface EvaluatedFunction {
   id: string;
   description: string;
   err_message: string | null;
+  errMessage?: string | null;
+  name?: string;
   logical_type: 'AND' | 'OR';
   regex_pattern: string[];
 }
@@ -46,6 +50,7 @@ export interface EvaluatedFunction {
 export interface ExpectedAnswer {
   id: string;
   question: string;
+  sample?: string;
   concepts: Concept[];
   relations: Relation[];
   rules: Rule[];

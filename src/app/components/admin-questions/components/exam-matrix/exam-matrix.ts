@@ -1,7 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService } from '../../../../services/mock-data.service';
+import { AdminApiService, TopicResponse } from '../../../../services/admin-api.service';
+import { QuestionApiService } from '../../../../services/question-api.service';
+import { ExamApiService } from '../../../../services/exam-api.service';
 import { Question } from '../../../../models/dsa-models';
 
 @Component({
@@ -11,7 +13,9 @@ import { Question } from '../../../../models/dsa-models';
   templateUrl: './exam-matrix.html'
 })
 export class ExamMatrixComponent implements OnInit {
-  private readonly mockService = inject(MockDataService);
+  private readonly adminApi = inject(AdminApiService);
+  private readonly questionApi = inject(QuestionApiService);
+  private readonly examApi = inject(ExamApiService);
 
   protected readonly successMessage = signal<string>('');
   protected readonly errorMessage = signal<string>('');
@@ -38,12 +42,25 @@ export class ExamMatrixComponent implements OnInit {
   protected modalSelectedTopicId = 'ALL';
   protected modalSelectedDifficulty = 'ALL';
 
-  protected readonly topics = this.mockService.topics;
+  protected readonly topics = signal<TopicResponse[]>([]);
+  protected readonly questions = signal<Question[]>([]);
 
   ngOnInit(): void {
-    this.initMatrixConfigs();
-    this.loadSavedTemplates();
-    this.loadSavedExams();
+    this.adminApi.getTopics().subscribe({
+      next: (res) => {
+        this.topics.set(res);
+        this.initMatrixConfigs();
+        this.loadSavedTemplates();
+        this.loadSavedExams();
+        this.loadQuestions();
+      }
+    });
+  }
+
+  protected loadQuestions(): void {
+    this.questionApi.getQuestions().subscribe({
+      next: (res) => this.questions.set(res)
+    });
   }
 
   protected initMatrixConfigs(): void {
@@ -98,182 +115,174 @@ export class ExamMatrixComponent implements OnInit {
         questionCount: 5,
         configs: [
           { type: 'DESCRIPTIVE', bloomLevel: 'UNDERSTANDING', difficulty: 'MEDIUM', suggestedTime: 15, maxScore: 2.0 },
-          { type: 'PROCEDURE', bloomLevel: 'APPLYING', difficulty: 'MEDIUM', suggestedTime: 20, maxScore: 2.0 },
+          { type: 'PROCEDURE', bloomLevel: 'APPLYING', difficulty: 'MEDIUM', suggestedTime: 18, maxScore: 2.0 },
           { type: 'APPLICATION', bloomLevel: 'APPLYING', difficulty: 'MEDIUM', suggestedTime: 20, maxScore: 2.0 },
           { type: 'APPLICATION', bloomLevel: 'APPLYING', difficulty: 'HARD', suggestedTime: 25, maxScore: 2.0 },
-          { type: 'PROCEDURE', bloomLevel: 'APPLYING', difficulty: 'HARD', suggestedTime: 25, maxScore: 2.0 }
+          { type: 'APPLICATION', bloomLevel: 'APPLYING', difficulty: 'HARD', suggestedTime: 25, maxScore: 2.0 }
         ]
       }
     ];
 
-    if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem('dsa_matrix_templates');
-      if (saved) {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('dsa_exam_templates');
+      if (stored) {
         try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            this.savedTemplates.set(parsed);
-            if (parsed.length > 0) {
-              this.selectedTemplateId = parsed[0].id;
-            }
-            return;
-          }
-        } catch (e) {
-          console.error('Lỗi khi parse templates:', e);
-        }
+          const parsed = JSON.parse(stored);
+          this.savedTemplates.set([...defaultTemplates, ...parsed]);
+          return;
+        } catch {}
       }
     }
-
     this.savedTemplates.set(defaultTemplates);
-    this.saveTemplatesToStorage(defaultTemplates);
-    this.selectedTemplateId = defaultTemplates[0].id;
   }
 
-  protected saveTemplatesToStorage(templates: any[]): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('dsa_matrix_templates', JSON.stringify(templates));
-    }
+  protected loadSavedExams(): void {
+    this.examApi.fetchExams().subscribe({
+      next: (res) => {
+        const mapped = res.map((ex: any) => ({
+          ...ex,
+          customQuestions: ex.examQuestions ? ex.examQuestions.map((eq: any) => ({
+            question: eq.question,
+            maxScore: eq.maxScore || eq.max_score || 1.0,
+            suggestedTime: eq.suggestedTime || eq.suggested_time || 15,
+            sequenceOrder: eq.sequenceOrder || eq.sequence_order || 1
+          })) : []
+        }));
+        this.savedExams.set(mapped);
+      },
+      error: (err) => console.error('Lỗi khi tải danh sách đề thi:', err)
+    });
   }
 
-  protected onSaveMatrixTemplate(): void {
-    this.successMessage.set('');
-    this.errorMessage.set('');
+  protected applyTemplate(): void {
+    const template = this.savedTemplates().find(t => t.id === this.selectedTemplateId);
+    if (!template) return;
 
-    const name = this.newTemplateName.trim();
-    if (!name) {
-      this.errorMessage.set('Vui lòng nhập tên bản mẫu ma trận.');
+    this.matrixQuestionCount = template.questionCount;
+    this.matrixConfigs = JSON.parse(JSON.stringify(template.configs));
+    this.successMessage.set(`Đã áp dụng mẫu thiết kế: "${template.name}"`);
+  }
+
+  protected saveAsTemplate(): void {
+    if (!this.newTemplateName.trim()) {
+      this.errorMessage.set('Vui lòng nhập tên mẫu thiết kế.');
       return;
     }
 
-    const template = {
-      id: 'TMPL_' + Date.now(),
-      name: name,
+    const newTemplate = {
+      id: 'TEMPLATE_' + Date.now(),
+      name: this.newTemplateName.trim(),
       questionCount: this.matrixQuestionCount,
-      configs: JSON.parse(JSON.stringify(this.matrixConfigs))
+      configs: this.matrixConfigs
     };
 
-    const updated = [...this.savedTemplates(), template];
-    this.savedTemplates.set(updated);
-    this.saveTemplatesToStorage(updated);
+    const currentTemplates = this.savedTemplates().filter(t => !t.id.startsWith('DEFAULT_'));
+    const updated = [...currentTemplates, newTemplate];
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dsa_exam_templates', JSON.stringify(updated));
+    }
+
+    this.loadSavedTemplates();
     this.newTemplateName = '';
-    this.successMessage.set(`Lưu bản mẫu ma trận "${name}" thành công!`);
-  }
-
-  protected onDeleteMatrixTemplate(id: string, event: Event): void {
-    event.stopPropagation();
-    if (!confirm('Bạn có chắc chắn muốn xóa bản mẫu ma trận này không?')) {
-      return;
-    }
-    this.successMessage.set('');
-    this.errorMessage.set('');
-
-    const updated = this.savedTemplates().filter(t => t.id !== id);
-    this.savedTemplates.set(updated);
-    this.saveTemplatesToStorage(updated);
-    if (this.selectedTemplateId === id) {
-      this.selectedTemplateId = '';
-    }
-    this.successMessage.set('Xóa bản mẫu ma trận thành công!');
+    this.successMessage.set('Đã lưu mẫu thiết kế thành công!');
   }
 
   protected changeMatrixMode(mode: 'custom' | 'auto'): void {
     this.matrixMode.set(mode);
-    this.successMessage.set('');
-    this.errorMessage.set('');
   }
 
-  protected recalculateExamStats(exam: any): any {
-    if (!exam || !exam.customQuestions) return exam;
+  protected onSaveMatrixTemplate(): void {
+    this.saveAsTemplate();
+  }
 
-    let totalTime = 0;
-    let totalScore = 0.0;
-    let difficultyWeightSum = 0;
-    const uniqueTypes = new Set<string>();
-
-    exam.customQuestions.forEach((cq: any) => {
-      totalTime += cq.suggestedTime || 0;
-      totalScore += cq.maxScore || 0;
-
-      if (cq.question && cq.question.type) {
-        uniqueTypes.add(cq.question.type);
-      }
-
-      const diff = (cq.question && cq.question.difficulty) ? cq.question.difficulty.toUpperCase() : 'EASY';
-      if (diff === 'EASY') difficultyWeightSum += 1;
-      else if (diff === 'MEDIUM') difficultyWeightSum += 2;
-      else if (diff === 'HARD') difficultyWeightSum += 3;
-      else difficultyWeightSum += 1;
-    });
-
-    exam.totalTime = totalTime;
-    exam.totalScore = parseFloat(totalScore.toFixed(2));
-
-    const count = exam.customQuestions.length;
-    if (count > 0) {
-      const avgWeight = difficultyWeightSum / count;
-      if (avgWeight <= 1.5) {
-        exam.difficulty = 'EASY';
-      } else if (avgWeight <= 2.5) {
-        exam.difficulty = 'MEDIUM';
-      } else {
-        exam.difficulty = 'HARD';
-      }
-    } else {
-      exam.difficulty = 'EASY';
+  protected onDeleteMatrixTemplate(id: string, event: Event): void {
+    event.stopPropagation();
+    if (!confirm('Bạn có chắc muốn xóa bản mẫu ma trận này?')) return;
+    const currentTemplates = this.savedTemplates().filter(t => t.id !== id && !t.id.startsWith('DEFAULT_'));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dsa_exam_templates', JSON.stringify(currentTemplates));
     }
-
-    exam.includedTypes = Array.from(uniqueTypes).join(', ');
-    return exam;
+    this.loadSavedTemplates();
+    if (this.selectedTemplateId === id) {
+      this.selectedTemplateId = '';
+    }
+    this.successMessage.set('Đã xóa bản mẫu ma trận thành công.');
   }
 
   protected onGenerateExam(): void {
     this.successMessage.set('');
     this.errorMessage.set('');
-    this.isGeneratingExam.set(true);
-    this.generatedExam.set(null);
 
-    this.mockService.generateCustomExam(this.matrixConfigs).subscribe({
+    const formattedConfigs = this.matrixConfigs.map((c, index) => ({
+      topic_id: this.topics()[index % this.topics().length]?.id,
+      count: 1,
+      type: c.type === 'ANY' ? 'DESCRIPTIVE' : c.type,
+      bloom_level: c.bloomLevel === 'ANY' ? 'UNDERSTANDING' : c.bloomLevel,
+      difficulty: c.difficulty === 'ANY' ? 'MEDIUM' : c.difficulty,
+      suggested_time: c.suggestedTime,
+      max_score: c.maxScore
+    }));
+
+    this.isGeneratingExam.set(true);
+
+    this.examApi.generateCustomExam(formattedConfigs).subscribe({
       next: (res) => {
         this.isGeneratingExam.set(false);
-        res.status = 'DRAFT';
-        const calculated = this.recalculateExamStats(res);
-        this.generatedExam.set(calculated);
-        this.successMessage.set('Tự sinh đề thi theo ma trận cấu hình thành công!');
+        const mappedExam = {
+          ...res,
+          customQuestions: res.examQuestions ? res.examQuestions.map((eq: any) => ({
+            question: eq.question,
+            maxScore: eq.maxScore || eq.max_score || 1.0,
+            suggestedTime: eq.suggestedTime || eq.suggested_time || 15,
+            sequenceOrder: eq.sequenceOrder || eq.sequence_order || 1
+          })) : []
+        };
+        this.generatedExam.set(mappedExam);
+        this.successMessage.set('Sinh đề thi từ ma trận thành công!');
       },
       error: (err) => {
         this.isGeneratingExam.set(false);
-        this.errorMessage.set(err.error?.message || 'Lỗi khi sinh đề thi. Hãy kiểm tra xem cơ sở dữ liệu có đủ câu hỏi thỏa mãn các tiêu chí cấu hình không.');
+        this.errorMessage.set(err.error?.message || 'Không tìm thấy đủ câu hỏi trong ngân hàng khớp với cấu hình ma trận.');
       }
     });
   }
 
   protected onGenerateExamAuto(): void {
-    if (!this.selectedTemplateId) {
-      this.errorMessage.set('Vui lòng chọn một bản mẫu ma trận.');
-      return;
-    }
     const template = this.savedTemplates().find(t => t.id === this.selectedTemplateId);
-    if (!template) {
-      this.errorMessage.set('Không tìm thấy bản mẫu ma trận đã chọn.');
-      return;
-    }
+    if (!template) return;
 
     this.successMessage.set('');
     this.errorMessage.set('');
     this.isGeneratingExam.set(true);
-    this.generatedExam.set(null);
 
-    this.mockService.generateCustomExam(template.configs).subscribe({
+    const formattedConfigs = template.configs.map((c: any, index: number) => ({
+      topic_id: this.topics()[index % this.topics().length]?.id,
+      count: 1,
+      type: c.type === 'ANY' ? 'DESCRIPTIVE' : c.type,
+      bloom_level: c.bloomLevel === 'ANY' ? 'UNDERSTANDING' : c.bloomLevel,
+      difficulty: c.difficulty === 'ANY' ? 'MEDIUM' : c.difficulty,
+      suggested_time: c.suggestedTime,
+      max_score: c.maxScore
+    }));
+
+    this.examApi.generateCustomExam(formattedConfigs).subscribe({
       next: (res) => {
         this.isGeneratingExam.set(false);
-        res.status = 'DRAFT';
-        const calculated = this.recalculateExamStats(res);
-        this.generatedExam.set(calculated);
-        this.successMessage.set(`Tự sinh đề thi tự động từ bản mẫu "${template.name}" thành công!`);
+        const mappedExam = {
+          ...res,
+          customQuestions: res.examQuestions ? res.examQuestions.map((eq: any) => ({
+            question: eq.question,
+            maxScore: eq.maxScore || eq.max_score || 1.0,
+            suggestedTime: eq.suggestedTime || eq.suggested_time || 15,
+            sequenceOrder: eq.sequenceOrder || eq.sequence_order || 1
+          })) : []
+        };
+        this.generatedExam.set(mappedExam);
+        this.successMessage.set('Sinh đề thi từ bản mẫu thành công!');
       },
       error: (err) => {
         this.isGeneratingExam.set(false);
-        this.errorMessage.set(err.error?.message || 'Lỗi khi sinh đề thi tự động. Hãy kiểm tra xem ngân hàng có đủ câu hỏi không.');
+        this.errorMessage.set(err.error?.message || 'Không tìm thấy đủ câu hỏi trong ngân hàng khớp với cấu hình bản mẫu.');
       }
     });
   }
@@ -286,99 +295,83 @@ export class ExamMatrixComponent implements OnInit {
     }
   }
 
-  protected loadSavedExams(): void {
-    this.mockService.fetchExams().subscribe({
-      next: (res) => {
-        this.savedExams.set(res);
-      },
-      error: (err) => {
-        console.error('Lỗi khi tải danh sách đề thi:', err);
-      }
-    });
+  protected onSaveExam(): void {
+    this.saveExamToDatabase();
   }
 
-  protected onSaveExam(): void {
-    this.successMessage.set('');
-    this.errorMessage.set('');
-
-    const title = this.examTitle.trim();
-    if (!title) {
-      this.errorMessage.set('Vui lòng nhập tiêu đề cho đề thi.');
-      return;
-    }
-
+  protected saveExamToDatabase(): void {
     const exam = this.generatedExam();
     if (!exam) return;
 
-    const questionsPayload = exam.customQuestions.map((cq: any) => ({
-      questionId: cq.question?.id,
-      maxScore: cq.maxScore,
-      suggestedTime: cq.suggestedTime
-    }));
-
     const payload = {
-      id: exam.id,
-      title: title,
-      difficulty: exam.difficulty,
-      status: exam.status || 'DRAFT',
-      questions: questionsPayload
+      title: this.examTitle.trim(),
+      difficulty: this.matrixDifficulty,
+      duration: exam.duration || 60,
+      total_time: exam.totalTime || 60,
+      total_score: exam.totalScore || 10.0,
+      status: exam.status || 'ACTIVE',
+      questions: exam.customQuestions ? exam.customQuestions.map((cq: any) => ({
+        question_id: cq.question.id,
+        max_score: cq.maxScore || 1.0,
+        sequence_order: cq.sequenceOrder || 1
+      })) : []
     };
 
-    this.mockService.saveExam(payload).subscribe({
-      next: (res) => {
-        this.successMessage.set(`Lưu đề thi "${title}" thành công!`);
+    this.examApi.saveExam(payload).subscribe({
+      next: () => {
+        this.successMessage.set('Lưu đề thi vào cơ sở dữ liệu thành công!');
         this.generatedExam.set(null);
         this.loadSavedExams();
       },
       error: (err) => {
-        this.errorMessage.set(err.error?.message || 'Lỗi khi lưu đề thi.');
-      }
-    });
-  }
-
-  protected updateSavedExamStatus(exam: any, newStatus: string): void {
-    this.successMessage.set('');
-    this.errorMessage.set('');
-
-    const questionsPayload = exam.customQuestions.map((cq: any) => ({
-      questionId: cq.question?.id,
-      maxScore: cq.maxScore,
-      suggestedTime: cq.suggestedTime
-    }));
-
-    const payload = {
-      id: exam.id,
-      title: exam.title,
-      difficulty: exam.difficulty,
-      status: newStatus,
-      questions: questionsPayload
-    };
-
-    this.mockService.saveExam(payload).subscribe({
-      next: (res) => {
-        this.successMessage.set(`Cập nhật trạng thái đề thi "${exam.title}" thành công!`);
-        this.loadSavedExams();
-      },
-      error: (err) => {
-        this.errorMessage.set(err.error?.message || 'Lỗi khi cập nhật trạng thái đề thi.');
+        this.errorMessage.set(err.error?.message || 'Có lỗi xảy ra khi lưu đề thi.');
       }
     });
   }
 
   protected onDeleteExam(id: string): void {
-    if (!confirm('Bạn có chắc chắn muốn xóa đề thi này không?')) {
-      return;
-    }
+    if (!confirm('Bạn có chắc chắn muốn xóa đề thi này không?')) return;
+
     this.successMessage.set('');
     this.errorMessage.set('');
 
-    this.mockService.deleteExam(id).subscribe({
-      next: (res) => {
-        this.successMessage.set('Xóa đề thi thành công!');
+    this.examApi.deleteExam(id).subscribe({
+      next: () => {
+        this.successMessage.set('Đã xóa đề thi thành công.');
         this.loadSavedExams();
       },
       error: (err) => {
-        this.errorMessage.set(err.error?.message || 'Lỗi khi xóa đề thi.');
+        this.errorMessage.set(err.error?.message || 'Không thể xóa đề thi này.');
+      }
+    });
+  }
+
+  protected updateSavedExamStatus(exam: any, status: string): void {
+    this.successMessage.set('');
+    this.errorMessage.set('');
+    
+    const payload = {
+      id: exam.id,
+      title: exam.title,
+      difficulty: exam.difficulty,
+      duration: exam.duration || 60,
+      total_time: exam.totalTime || 60,
+      total_score: exam.totalScore || 10.0,
+      status: status,
+      questions: exam.customQuestions ? exam.customQuestions.map((cq: any) => ({
+        question_id: cq.question?.id,
+        max_score: cq.maxScore || 1.0,
+        sequence_order: cq.sequenceOrder || 1
+      })) : []
+    };
+
+    this.examApi.saveExam(payload).subscribe({
+      next: () => {
+        this.successMessage.set(`Đã cập nhật trạng thái đề thi "${exam.title}" thành ${status}`);
+        this.loadSavedExams();
+      },
+      error: (err) => {
+        this.errorMessage.set(err.error?.message || 'Không thể cập nhật trạng thái đề thi.');
       }
     });
   }
@@ -389,10 +382,31 @@ export class ExamMatrixComponent implements OnInit {
       exam.customQuestions.splice(index, 1);
       const calculated = this.recalculateExamStats(exam);
       this.generatedExam.set({ ...calculated });
+      this.successMessage.set('Đã xóa câu hỏi khỏi đề thi.');
     }
   }
 
   protected onMaxScoreChange(index: number, newScore: number): void {
+    this.onScoreChange(index, newScore);
+  }
+
+  private recalculateExamStats(exam: any): any {
+    if (!exam || !exam.customQuestions) return exam;
+
+    let time = 0;
+    let score = 0;
+    exam.customQuestions.forEach((cq: any) => {
+      time += Number(cq.suggestedTime) || 0;
+      score += Number(cq.maxScore) || 0;
+    });
+
+    exam.duration = time;
+    exam.totalTime = time;
+    exam.totalScore = score;
+    return exam;
+  }
+
+  protected onScoreChange(index: number, newScore: number): void {
     const exam = this.generatedExam();
     if (exam && exam.customQuestions && exam.customQuestions[index]) {
       exam.customQuestions[index].maxScore = Number(newScore) || 0;
@@ -423,11 +437,11 @@ export class ExamMatrixComponent implements OnInit {
   }
 
   protected getQuestionsList(): Question[] {
-    return this.mockService.getQuestions();
+    return this.questions();
   }
 
   protected getTopicName(topicId: string): string {
-    return this.topics.find(t => t.id === topicId)?.name || topicId;
+    return this.topics().find(t => t.id === topicId)?.title || topicId;
   }
 
   protected getModalFilteredQuestions(): Question[] {

@@ -89,4 +89,9 @@ export class AdminApiService {
   createFunc(b: FuncRequest): Observable<FuncResponse>                { return this.http.post<FuncResponse>(`${this.base}/funcs`, b); }
   updateFunc(id: string, b: FuncRequest): Observable<FuncResponse>    { return this.http.put<FuncResponse>(`${this.base}/funcs/${id}`, b); }
   deleteFunc(id: string): Observable<any>                             { return this.http.delete(`${this.base}/funcs/${id}`); }
+
+  // --- Metadata ---
+  getBloomLevels(): Observable<any[]> { return this.http.get<any[]>(`${this.base}/bloom-levels`); }
+  getDifficulties(): Observable<any[]> { return this.http.get<any[]>(`${this.base}/difficulties`); }
+  getQuestionTypes(): Observable<any[]> { return this.http.get<any[]>(`${this.base}/question-types`); }
 }

@@ -2,7 +2,9 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService } from '../../services/mock-data.service';
+import { TokenService } from '../../services/token.service';
+import { ExamApiService } from '../../services/exam-api.service';
+import { AdminApiService, TopicResponse } from '../../services/admin-api.service';
 import { Question, QuestionType, BloomLevel, QuestionDifficulty } from '../../models/dsa-models';
 
 interface StepItem {
@@ -31,12 +33,15 @@ interface StepItem {
 export class SolveAssignmentComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly mockService = inject(MockDataService);
+  private readonly examApi = inject(ExamApiService);
+  private readonly adminApi = inject(AdminApiService);
+  private readonly tokenService = inject(TokenService);
 
   // Exam details
   protected readonly exam = signal<any | undefined>(undefined);
   protected readonly activeQuestionIndex = signal<number>(0);
   protected readonly answersDraft = signal<{[questionId: string]: string}>({});
+  protected readonly topics = signal<TopicResponse[]>([]);
 
   protected readonly activeQuestion = computed(() => {
     const ex = this.exam();
@@ -53,7 +58,7 @@ export class SolveAssignmentComponent implements OnInit {
   protected readonly topicName = computed(() => {
     const q = this.activeQuestion();
     if (!q) return '';
-    return this.mockService.topics.find(t => t.id === q.topic_id)?.name || '';
+    return this.topics().find(t => t.id === q.topic_id)?.title || '';
   });
 
   // Editor Inputs
@@ -71,9 +76,14 @@ export class SolveAssignmentComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Fetch topics for resolving names
+    this.adminApi.getTopics().subscribe({
+      next: (res) => this.topics.set(res)
+    });
+
     const examId = this.route.snapshot.paramMap.get('id');
     if (examId) {
-      this.mockService.fetchExamById(examId).subscribe({
+      this.examApi.fetchExamById(examId).subscribe({
         next: (res) => {
           this.exam.set(res);
           const drafts: {[key: string]: string} = {};
@@ -184,7 +194,7 @@ export class SolveAssignmentComponent implements OnInit {
     }
 
     // Verify draft has contents
-    const user = this.mockService.currentUser();
+    const user = this.tokenService.currentUser();
     const userId = user ? user.id : 'STU_001';
 
     const answersPayload = Object.keys(this.answersDraft()).map(qId => ({
@@ -203,13 +213,13 @@ export class SolveAssignmentComponent implements OnInit {
       answers: answersPayload
     };
 
-    this.mockService.submitExam(payload).subscribe({
+    this.examApi.submitExam(payload).subscribe({
       next: (result) => {
         // Redirect to evaluation report using submission ID
-        this.router.navigate(['/evaluation', result.examSubmissionId]);
+        this.router.navigate(['/evaluation', result.submission_id || result.examSubmissionId]);
       },
       error: (err) => {
-        alert('Lỗi khi gửi bài làm: ' + err.message);
+        alert('Lỗi khi gửi bài làm: ' + (err.error?.message || err.message));
       }
     });
   }

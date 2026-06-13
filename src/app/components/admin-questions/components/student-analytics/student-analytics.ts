@@ -1,7 +1,8 @@
 import { Component, inject, signal, ElementRef, ViewChild, OnInit, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService } from '../../../../services/mock-data.service';
+import { StudentApiService } from '../../../../services/student-api.service';
+import { AdminApiService, TopicResponse } from '../../../../services/admin-api.service';
 import { Chart, registerables } from 'chart.js/auto';
 
 Chart.register(...registerables);
@@ -13,7 +14,8 @@ Chart.register(...registerables);
   templateUrl: './student-analytics.html'
 })
 export class StudentAnalyticsComponent implements OnInit, OnDestroy {
-  private readonly mockService = inject(MockDataService);
+  private readonly studentApi = inject(StudentApiService);
+  private readonly adminApi = inject(AdminApiService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
@@ -23,6 +25,7 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
   protected readonly studentProgress = signal<any>(null);
 
   protected readonly studentsList = signal<any[]>([]);
+  protected readonly topics = signal<TopicResponse[]>([]);
   protected selectedStudentId = '';
 
   protected readonly selectedSubmission = signal<any>(null);
@@ -50,8 +53,13 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
   private overallChapterChartInstance: Chart | null = null;
 
   ngOnInit(): void {
-    this.loadStudents();
-    this.loadOverallStats();
+    this.adminApi.getTopics().subscribe({
+      next: (res) => {
+        this.topics.set(res);
+        this.loadStudents();
+        this.loadOverallStats();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -72,7 +80,7 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
 
   protected loadOverallStats(): void {
     this.isLoadingOverall.set(true);
-    this.mockService.fetchOverallStats().subscribe({
+    this.studentApi.fetchOverallStats().subscribe({
       next: (res) => {
         this.overallStats.set(res);
         this.isLoadingOverall.set(false);
@@ -86,7 +94,7 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
   }
 
   protected loadStudents(): void {
-    this.mockService.fetchStudents().subscribe({
+    this.studentApi.fetchStudents().subscribe({
       next: (res) => {
         this.studentsList.set(res);
         if (res.length > 0 && !this.selectedStudentId) {
@@ -101,60 +109,27 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
   }
 
   protected onStudentChange(): void {
-    if (!this.selectedStudentId) {
-      this.studentProgress.set(null);
-      this.destroyCharts();
-      return;
-    }
+    if (!this.selectedStudentId) return;
 
     this.isLoadingProgress.set(true);
-    this.studentProgress.set(null);
     this.destroyCharts();
 
-    this.mockService.fetchStudentProgress(this.selectedStudentId).subscribe({
+    this.studentApi.fetchStudentProgress(this.selectedStudentId).subscribe({
       next: (res) => {
-        // Map snake_case properties to camelCase for local studentProgress mapping
-        const mappedHistory = (res.history || []).map((item: any) => {
-          const rawScore = item.score !== undefined ? item.score : (item.score_earned !== undefined ? item.score_earned : 0);
-          const score = Math.round(rawScore * 100) / 100;
-          const evalRes = item.evaluation_result || item.evaluationResult;
-          let formattedEvalRes = undefined;
-          if (evalRes) {
-            formattedEvalRes = {
-              ...evalRes,
-              score_earned: Math.round((evalRes.score_earned !== undefined ? evalRes.score_earned : rawScore) * 100) / 100,
-              acc_score: evalRes.acc_score !== undefined ? Math.round(evalRes.acc_score * 100) / 100 : 0,
-              comp_score: evalRes.comp_score !== undefined ? Math.round(evalRes.comp_score * 100) / 100 : 0,
-              log_score: evalRes.log_score !== undefined ? Math.round(evalRes.log_score * 100) / 100 : 0,
-            };
-          }
-          return {
-            id: item.id || item.answer_id,
-            questionId: item.question_id || item.questionId,
-            questionTitle: item.question_title || item.questionTitle,
-            topicId: item.topic_id || item.topicId,
-            submittedText: item.submitted_text || item.submittedText,
-            score: score,
-            bloomLevel: item.bloom_level || item.bloomLevel,
-            difficulty: item.difficulty,
-            type: item.type,
-            evaluatedAt: item.evaluated_at || item.evaluatedAt,
-            evaluationResult: formattedEvalRes
-          };
-        });
-
-        const mappedRes = {
+        const mappedProgress = {
           ...res,
-          overallExamSlope: res.overall_exam_slope !== undefined ? res.overall_exam_slope : (res.overallExamSlope !== undefined ? res.overallExamSlope : 0),
+          history: res.history || [],
+          overallExamSlope: res.overall_exam_slope !== undefined ? res.overall_exam_slope : (res.overallExamSlope || 0),
           overallExamTrend: res.overall_exam_trend || res.overallExamTrend || 'STABLE',
           currentMasteryLevels: res.current_mastery_levels || res.currentMasteryLevels || {},
           chapterMasteryLevels: res.chapter_mastery_levels || res.chapterMasteryLevels || {},
-          history: mappedHistory
+          solvedCount: res.solved_count !== undefined ? res.solved_count : (res.solvedCount || (res.history ? res.history.length : 0)),
+          totalSubmissions: res.total_submissions !== undefined ? res.total_submissions : (res.totalSubmissions || (res.history ? res.history.length : 0)),
+          averageScore: res.average_score !== undefined ? res.average_score : (res.averageScore || 0.0)
         };
-
-        this.studentProgress.set(mappedRes);
+        this.studentProgress.set(mappedProgress);
         this.isLoadingProgress.set(false);
-        setTimeout(() => this.renderCharts(), 100);
+        setTimeout(() => this.renderIndividualCharts(), 100);
       },
       error: (err) => {
         console.error('Lỗi khi tải tiến trình học viên:', err);
@@ -163,33 +138,34 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected getStudentTotalSubmissions(): number {
-    const prog = this.studentProgress();
-    return prog && prog.history ? prog.history.length : 0;
-  }
-
-  protected getStudentAverageScore(): number {
-    const prog = this.studentProgress();
-    if (!prog || !prog.history || prog.history.length === 0) return 0;
-    const sum = prog.history.reduce((acc: number, log: any) => acc + log.score, 0);
-    return parseFloat((sum / prog.history.length).toFixed(2));
-  }
-
   protected getStudentSolvedCount(): number {
-    const prog = this.studentProgress();
-    if (!prog || !prog.history) return 0;
-    const uniqueQuestions = new Set(prog.history.map((log: any) => log.questionId));
-    return uniqueQuestions.size;
+    const progress = this.studentProgress();
+    return progress ? (progress.solvedCount ?? 0) : 0;
   }
 
-  protected openSubmissionDetails(sub: any): void {
-    this.selectedSubmission.set(sub);
+  protected getStudentTotalSubmissions(): number {
+    const progress = this.studentProgress();
+    return progress ? (progress.totalSubmissions ?? 0) : 0;
+  }
+
+  protected getStudentAverageScore(): string {
+    const progress = this.studentProgress();
+    if (!progress) return '0.0';
+    return Number(progress.averageScore ?? 0.0).toFixed(1);
+  }
+
+  protected openSubmissionDetails(log: any): void {
+    this.viewSubmissionDetail(log);
+  }
+
+  protected viewSubmissionDetail(submission: any): void {
+    this.selectedSubmission.set(submission);
     this.showSubmissionModal.set(true);
   }
 
   protected closeSubmissionModal(): void {
-    this.selectedSubmission.set(null);
     this.showSubmissionModal.set(false);
+    this.selectedSubmission.set(null);
   }
 
   private destroyCharts(): void {
@@ -233,8 +209,8 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
     // 1. Topic mastery averages
     if (this.overallTopicCanvas) {
       const topicAverages = stats.topic_mastery_averages || {};
-      const topicLabels = this.mockService.topics.map(t => t.name);
-      const topicVals = this.mockService.topics.map(t => topicAverages[t.id] || 0.0);
+      const topicLabels = this.topics().map(t => t.title);
+      const topicVals = this.topics().map(t => topicAverages[t.id] || 0.0);
 
       this.overallTopicChartInstance = new Chart(this.overallTopicCanvas.nativeElement, {
         type: 'bar',
@@ -259,7 +235,7 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
             tooltip: {
               backgroundColor: '#1e293b',
               callbacks: {
-                label: (context) => ` Mức làm chủ TB: ${context.parsed.y} / 10`
+                label: (context) => ` Mức làm chủ: ${context.parsed.y} / 10`
               }
             }
           },
@@ -316,7 +292,7 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
             tooltip: {
               backgroundColor: '#1e293b',
               callbacks: {
-                label: (context) => ` Mức làm chủ TB: ${context.parsed.y} / 10`
+                label: (context) => ` Mức làm chủ: ${context.parsed.y} / 10`
               }
             }
           },
@@ -337,41 +313,33 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private renderCharts(): void {
+  private renderIndividualCharts(): void {
     if (!this.isBrowser) return;
-    
+
     const progress = this.studentProgress();
     if (!progress) return;
 
-    this.destroyCharts();
-
-    const historyData = [...(progress.history || [])].reverse();
-
     // 1. Render Growth Chart
     if (this.growthCanvas) {
-      const dates = historyData.map((log: any) => {
-        const d = new Date(log.evaluatedAt);
-        return `${d.getDate()}/${d.getMonth() + 1} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
-      });
-      const scores = historyData.map((log: any) => log.score);
+      const history = progress.history || [];
+      const labels = history.map((h: any, idx: number) => `Bài ${idx + 1}`);
+      const scores = history.map((h: any) => h.score || 0.0);
 
       this.growthChartInstance = new Chart(this.growthCanvas.nativeElement, {
         type: 'line',
         data: {
-          labels: dates.length > 0 ? dates : ['Chưa làm bài'],
+          labels: labels.length > 0 ? labels : ['Chưa có dữ liệu'],
           datasets: [{
-            label: 'Điểm số đạt được',
-            data: scores.length > 0 ? scores : [0],
+            label: 'Điểm thi tổng thể',
+            data: scores.length > 0 ? scores : [0.0],
             borderColor: '#FF6C37',
             backgroundColor: 'rgba(255, 108, 55, 0.08)',
-            borderWidth: 3,
+            borderWidth: 1.5,
             fill: true,
             tension: 0.35,
             pointBackgroundColor: '#FF6C37',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            pointHoverRadius: 7
+            pointRadius: 3.5,
+            pointHoverRadius: 5
           }]
         },
         options: {
@@ -380,10 +348,7 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
           plugins: {
             legend: { display: false },
             tooltip: {
-              padding: 10,
               backgroundColor: '#1e293b',
-              titleFont: { size: 12, weight: 'bold' },
-              bodyFont: { size: 13 },
               callbacks: {
                 label: (context) => ` Điểm: ${context.parsed.y} / 10`
               }
@@ -392,7 +357,7 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
           scales: {
             x: {
               grid: { display: false },
-              ticks: { font: { size: 11, family: 'monospace' } }
+              ticks: { font: { size: 10 } }
             },
             y: {
               min: 0,
@@ -408,8 +373,8 @@ export class StudentAnalyticsComponent implements OnInit, OnDestroy {
     // 2. Render Topic Mastery Chart
     if (this.masteryCanvas) {
       const currentMastery = progress.currentMasteryLevels || {};
-      const topicLabels = this.mockService.topics.map(t => t.name);
-      const topicAverages = this.mockService.topics.map(t => currentMastery[t.id] || 0.0);
+      const topicLabels = this.topics().map(t => t.title);
+      const topicAverages = this.topics().map(t => currentMastery[t.id] || 0.0);
 
       this.masteryChartInstance = new Chart(this.masteryCanvas.nativeElement, {
         type: 'bar',

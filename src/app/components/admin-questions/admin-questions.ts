@@ -2,7 +2,6 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { QuestionBankComponent } from './components/question-bank/question-bank';
-import { EvaluationGradingComponent } from './components/evaluation-grading/evaluation-grading';
 import { ExamMatrixComponent } from './components/exam-matrix/exam-matrix';
 import { StudentAnalyticsComponent } from './components/student-analytics/student-analytics';
 
@@ -13,7 +12,6 @@ import { StudentAnalyticsComponent } from './components/student-analytics/studen
     CommonModule, 
     RouterLink,
     QuestionBankComponent,
-    EvaluationGradingComponent,
     ExamMatrixComponent,
     StudentAnalyticsComponent
   ],
