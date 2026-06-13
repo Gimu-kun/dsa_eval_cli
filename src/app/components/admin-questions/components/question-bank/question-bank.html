@@ -135,7 +135,7 @@
   <!-- Dialog Modal: Add/Edit Question -->
   @if (showQuestionModal()) {
     <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col max-h-[90vh]">
         <!-- Header -->
         <div class="p-5 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div>
@@ -152,109 +152,113 @@
         </div>
 
         <!-- Body (Scrollable) -->
-        <div class="flex-grow overflow-y-auto p-6 space-y-5">
-          <form (submit)="onSubmit()" id="questionForm" class="space-y-5">
-            <!-- Question content -->
-            <div class="space-y-1">
-              <label for="content" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Nội dung câu hỏi</label>
-              <textarea id="content" name="content" [(ngModel)]="content" required rows="3" class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] focus:ring-1 focus:ring-[#FF6C37] bg-slate-50 focus:bg-white resize-none transition-all" placeholder="Ví dụ: Mô tả các tính chất cơ bản của cây nhị phân tìm kiếm (BST)?"></textarea>
-            </div>
-
-            <!-- Topic selection -->
-            <div class="space-y-1">
-              <label for="topic" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Chủ đề (Topic)</label>
-              <select id="topic" name="selectedTopicId" [(ngModel)]="selectedTopicId" required class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-slate-50 focus:bg-white cursor-pointer transition-all">
-                @for (t of topics(); track t.id) {
-                  <option [value]="t.id">{{ t.title }} ({{ t.id }})</option>
-                }
-              </select>
-            </div>
-
-            <!-- Question meta tags -->
-            <div class="grid grid-cols-3 gap-3">
+        <div class="flex-grow overflow-y-auto p-6">
+          <form (submit)="onSubmit()" id="questionForm" class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            <!-- Left Column: Question Details & Rubric -->
+            <div class="md:col-span-5 space-y-4">
+              <!-- Question content -->
               <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Dạng câu hỏi</label>
-                <select name="selectedType" [(ngModel)]="selectedType" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
-                  <option value="DESCRIPTIVE">Descriptive</option>
-                  <option value="PROCEDURE">Procedural</option>
-                  <option value="APPLICATION">Application</option>
-                </select>
+                <label for="content" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Nội dung câu hỏi</label>
+                <textarea id="content" name="content" [(ngModel)]="content" required rows="4" class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] focus:ring-1 focus:ring-[#FF6C37] bg-slate-50 focus:bg-white resize-none transition-all shadow-inner" placeholder="Ví dụ: Mô tả các tính chất cơ bản của cây nhị phân tìm kiếm (BST)?"></textarea>
               </div>
 
+              <!-- Topic selection -->
               <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Thang Bloom</label>
-                <select name="selectedBloom" [(ngModel)]="selectedBloom" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
-                  @for (bl of bloomLevels(); track bl.id) {
-                    <option [value]="bl.id">{{ bl.display_name }}</option>
-                  } @empty {
-                    <option value="REMEMBERING">Nhận biết</option>
-                    <option value="UNDERSTANDING">Thông hiểu</option>
-                    <option value="APPLYING">Vận dụng</option>
+                <label for="topic" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Chủ đề (Topic)</label>
+                <select id="topic" name="selectedTopicId" [(ngModel)]="selectedTopicId" required class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-slate-50 focus:bg-white cursor-pointer transition-all shadow-sm">
+                  @for (t of topics(); track t.id) {
+                    <option [value]="t.id">{{ t.title }} ({{ t.id }})</option>
                   }
                 </select>
               </div>
 
-              <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Độ khó</label>
-                <select name="selectedDifficulty" [(ngModel)]="selectedDifficulty" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
-                  @for (df of difficulties(); track df.id) {
-                    <option [value]="df.id">{{ df.display_name }}</option>
-                  } @empty {
-                    <option value="EASY">Dễ</option>
-                    <option value="MEDIUM">Trung bình</option>
-                    <option value="HARD">Khó</option>
-                  }
-                </select>
-              </div>
-            </div>
-
-            <!-- Rubric Selection and Custom Definition -->
-            <div class="space-y-2 bg-slate-50/50 border border-slate-200/70 p-4 rounded-xl">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Rubric chấm điểm</label>
-                <label class="flex items-center space-x-1.5 text-[11px] text-[#FF6C37] hover:text-[#E05B2B] font-bold cursor-pointer select-none">
-                  <input type="checkbox" name="newRubricMode" [(ngModel)]="newRubricMode" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded scale-90">
-                  <span>Tự định nghĩa Rubric mới</span>
-                </label>
-              </div>
-
-              @if (!newRubricMode) {
+              <!-- Question meta tags -->
+              <div class="grid grid-cols-3 gap-2">
                 <div class="space-y-1">
-                  <select id="rubric" name="selectedRubricId" [(ngModel)]="selectedRubricId" class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer">
-                    @for (r of rubrics(); track r.id) {
-                      <option [value]="r.id">{{ r.description }} (acc: {{ r.acc_w }}, comp: {{ r.comp_w }}, log: {{ r.log_w }})</option>
+                  <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">Dạng câu hỏi</label>
+                  <select name="selectedType" [(ngModel)]="selectedType" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
+                    <option value="DESCRIPTIVE">Descriptive</option>
+                    <option value="PROCEDURE">Procedural</option>
+                    <option value="APPLICATION">Application</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">Thang Bloom</label>
+                  <select name="selectedBloom" [(ngModel)]="selectedBloom" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
+                    @for (bl of bloomLevels(); track bl.id) {
+                      <option [value]="bl.id">{{ bl.display_name }}</option>
+                    } @empty {
+                      <option value="REMEMBERING">Nhận biết</option>
+                      <option value="UNDERSTANDING">Thông hiểu</option>
+                      <option value="APPLYING">Vận dụng</option>
                     }
                   </select>
                 </div>
-              } @else {
-                <!-- Custom Rubric Form Container -->
-                <div class="bg-orange-50/15 border border-orange-100/60 rounded-xl p-3.5 space-y-3.5 animate-fade-in">
-                  <div class="space-y-1">
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wide">Mô tả Rubric mới</label>
-                    <input type="text" name="newRubricDescription" [(ngModel)]="newRubricDescription" placeholder="Ví dụ: Đánh giá bài BFS - Trọng số 4/3/3" class="block w-full border border-slate-250 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm">
-                  </div>
-                  <div class="grid grid-cols-3 gap-3">
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-bold text-slate-500 uppercase">Độ chính xác (acc_w)</label>
-                      <input type="number" step="0.05" min="0" max="1" name="newRubricAccW" [(ngModel)]="newRubricAccW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
-                    </div>
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-bold text-slate-500 uppercase">Độ hoàn thiện (comp_w)</label>
-                      <input type="number" step="0.05" min="0" max="1" name="newRubricCompW" [(ngModel)]="newRubricCompW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
-                    </div>
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-bold text-slate-500 uppercase">Tính logic (log_w)</label>
-                      <input type="number" step="0.05" min="0" max="1" name="newRubricLogW" [(ngModel)]="newRubricLogW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
-                    </div>
-                  </div>
-                  <p class="text-[9px] text-slate-400 italic">Mẹo: Tổng 3 trọng số phải bằng 1.0 (ví dụ: 0.4 + 0.3 + 0.3 = 1.0).</p>
+
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">Độ khó</label>
+                  <select name="selectedDifficulty" [(ngModel)]="selectedDifficulty" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
+                    @for (df of difficulties(); track df.id) {
+                      <option [value]="df.id">{{ df.display_name }}</option>
+                    } @empty {
+                      <option value="EASY">Dễ</option>
+                      <option value="MEDIUM">Trung bình</option>
+                      <option value="HARD">Khó</option>
+                    }
+                  </select>
                 </div>
-              }
+              </div>
+
+              <!-- Rubric Selection and Custom Definition -->
+              <div class="space-y-2 bg-slate-50/50 border border-slate-200/70 p-4 rounded-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Rubric chấm điểm</label>
+                  <label class="flex items-center space-x-1.5 text-[11px] text-[#FF6C37] hover:text-[#E05B2B] font-bold cursor-pointer select-none">
+                    <input type="checkbox" name="newRubricMode" [(ngModel)]="newRubricMode" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded scale-90">
+                    <span>Tự định nghĩa Rubric mới</span>
+                  </label>
+                </div>
+
+                @if (!newRubricMode) {
+                  <div class="space-y-1">
+                    <select id="rubric" name="selectedRubricId" [(ngModel)]="selectedRubricId" class="block w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer shadow-sm">
+                      @for (r of rubrics(); track r.id) {
+                        <option [value]="r.id">{{ r.description }} (acc: {{ r.acc_w }}, comp: {{ r.comp_w }}, log: {{ r.log_w }})</option>
+                      }
+                    </select>
+                  </div>
+                } @else {
+                  <!-- Custom Rubric Form Container -->
+                  <div class="bg-orange-50/15 border border-orange-100/60 rounded-xl p-3.5 space-y-3.5 animate-fade-in">
+                    <div class="space-y-1">
+                      <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wide">Mô tả Rubric mới</label>
+                      <input type="text" name="newRubricDescription" [(ngModel)]="newRubricDescription" placeholder="Ví dụ: Đánh giá bài BFS - Trọng số 4/3/3" class="block w-full border border-slate-250 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm">
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                      <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase">acc_w (Chính xác)</label>
+                        <input type="number" step="0.05" min="0" max="1" name="newRubricAccW" [(ngModel)]="newRubricAccW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
+                      </div>
+                      <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase">comp_w (Hoàn thiện)</label>
+                        <input type="number" step="0.05" min="0" max="1" name="newRubricCompW" [(ngModel)]="newRubricCompW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
+                      </div>
+                      <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase">log_w (Logic)</label>
+                        <input type="number" step="0.05" min="0" max="1" name="newRubricLogW" [(ngModel)]="newRubricLogW" class="block w-full border border-slate-250 rounded-lg p-2 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold font-mono">
+                      </div>
+                    </div>
+                    <p class="text-[9px] text-slate-400 italic">Tổng 3 trọng số phải bằng 1.0.</p>
+                  </div>
+                }
+              </div>
             </div>
 
-            <!-- Expected Answer and Rules Checklist -->
-            <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/30 space-y-4">
-              <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200/60 pb-2">Thiết lập Đáp án & Quy tắc chấm bài</h3>
+            <!-- Right Column: Expected Answer and Rules Checklist -->
+            <div class="md:col-span-7 border border-slate-200 rounded-xl p-4 bg-slate-50/30 space-y-4 self-start">
+              <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200/60 pb-2">Đáp án & Quy tắc chấm bài</h3>
 
               <!-- Dạng DESCRIPTIVE -->
               @if (selectedType === 'DESCRIPTIVE') {
@@ -269,9 +273,9 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Áp dụng Quy tắc chấm điểm (Rules)</label>
                     <input type="text" [(ngModel)]="ruleSearchQuery" name="ruleSearchQuery" placeholder="🔍 Nhập từ khóa để lọc các quy tắc logic..." class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-2">
                     
-                    <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+                    <div class="max-h-56 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
                       @for (rule of getFilteredRules(ruleSearchQuery); track rule.id) {
-                        <label class="flex items-start space-x-2.5 text-xs text-slate-650 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
+                        <label class="flex items-start space-x-2.5 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
                           <input type="checkbox" [checked]="selectedRuleIds.includes(rule.id)" (change)="toggleRuleSelection(rule.id)" class="mt-0.5 text-[#FF6C37] focus:ring-[#FF6C37] rounded">
                           <div class="flex flex-col">
                             <span class="font-bold text-slate-800">{{ rule.name }} <strong class="text-[9px] px-1 py-0.2 bg-slate-100 text-slate-500 rounded font-mono font-normal uppercase">{{ rule.type }}</strong></span>
@@ -281,15 +285,6 @@
                                 Concepts: 
                                 @for (cId of rule.concept_ids; track cId; let last = $last) {
                                   <strong class="text-slate-600 font-medium">{{ getConceptSynonyms(cId) }}</strong>{{ !last ? ', ' : '' }}
-                                }
-                              </span>
-                            }
-                            <!-- Relation detail -->
-                            @if (rule.relation_ids && rule.relation_ids.length > 0) {
-                              <span class="text-[10px] text-slate-500">
-                                Relations: 
-                                @for (rId of rule.relation_ids; track rId; let last = $last) {
-                                  <strong class="text-slate-600 font-medium">{{ getRelationConnectionText(rId) }}</strong>{{ !last ? ', ' : '' }}
                                 }
                               </span>
                             }
@@ -306,7 +301,7 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Áp dụng Hàm logic kiểm định (Functions)</label>
                     <div class="max-h-36 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-1.5">
                       @for (f of functions(); track f.id) {
-                        <label class="flex items-center space-x-2 text-xs text-slate-650 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
+                        <label class="flex items-center space-x-2 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
                           <input type="checkbox" [checked]="selectedFunctionIds.includes(f.id)" (change)="toggleFuncSelection(f.id)" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded">
                           <span>{{ f.name }} <em class="text-slate-400 text-[10px] font-mono">({{ f.regex_pattern }})</em></span>
                         </label>
@@ -331,9 +326,9 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Áp dụng Quy tắc (Rules)</label>
                     <input type="text" [(ngModel)]="ruleSearchQuery" name="ruleSearchQuery" placeholder="🔍 Nhập từ khóa để lọc các quy tắc logic..." class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-2">
                     
-                    <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+                    <div class="max-h-56 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
                       @for (rule of getFilteredRules(ruleSearchQuery); track rule.id) {
-                        <label class="flex items-start space-x-2.5 text-xs text-slate-650 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
+                        <label class="flex items-start space-x-2.5 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
                           <input type="checkbox" [checked]="selectedRuleIds.includes(rule.id)" (change)="toggleRuleSelection(rule.id)" class="mt-0.5 text-[#FF6C37] focus:ring-[#FF6C37] rounded">
                           <div class="flex flex-col">
                             <span class="font-bold text-slate-800">{{ rule.name }} <strong class="text-[9px] px-1 py-0.2 bg-slate-100 text-slate-500 rounded font-mono font-normal uppercase">{{ rule.type }}</strong></span>
@@ -359,7 +354,7 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Áp dụng Hàm logic (Functions)</label>
                     <div class="max-h-36 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-1.5">
                       @for (f of functions(); track f.id) {
-                        <label class="flex items-center space-x-2 text-xs text-slate-650 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
+                        <label class="flex items-center space-x-2 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
                           <input type="checkbox" [checked]="selectedFunctionIds.includes(f.id)" (change)="toggleFuncSelection(f.id)" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded">
                           <span>{{ f.name }}</span>
                         </label>
@@ -379,11 +374,11 @@
                     </button>
                   </div>
 
-                  <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                  <div class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
                     @for (step of proceduralSteps; track step.stepOrder; let idx = $index) {
-                      <div class="border border-slate-250 rounded-xl p-4 bg-white space-y-3.5 relative shadow-sm hover:border-[#FF6C37]/30 transition-colors">
+                      <div class="border border-slate-250 rounded-xl p-4 bg-white space-y-3 relative shadow-sm hover:border-[#FF6C37]/30 transition-colors">
                         <!-- Delete step button -->
-                        <button type="button" (click)="removeStep(idx)" class="absolute top-3 right-3 text-slate-400 hover:text-rose-650 cursor-pointer transition-colors" title="Xóa bước">
+                        <button type="button" (click)="removeStep(idx)" class="absolute top-3 right-3 text-slate-400 hover:text-rose-655 cursor-pointer transition-colors" title="Xóa bước">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4.5 h-4.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                           </svg>
@@ -404,13 +399,13 @@
 
                         <!-- Rule checkboxes for this specific step with individual search -->
                         <div class="space-y-1.5">
-                          <label class="block text-[9px] font-bold text-slate-500 uppercase">Quy tắc đối sánh bước này (Rules)</label>
+                          <label class="block text-[9px] font-bold text-slate-505 uppercase">Quy tắc đối sánh bước này (Rules)</label>
                           <!-- Local step rule search input -->
                           <input type="text" [ngModel]="step.ruleSearchQuery || ''" (ngModelChange)="step.ruleSearchQuery = $event" [ngModelOptions]="{standalone: true}" placeholder="🔍 Lọc quy tắc cho bước này..." class="block w-full border border-slate-200 rounded-lg p-1.5 text-[10px] focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-1.5">
                           
                           <div class="grid grid-cols-1 gap-1 border border-slate-200 rounded-lg p-2 bg-slate-50/60 max-h-28 overflow-y-auto">
                             @for (rule of getFilteredRules(step.ruleSearchQuery || ''); track rule.id) {
-                              <label class="flex items-start space-x-2 text-[10px] text-slate-650 cursor-pointer p-1 rounded hover:bg-white transition-colors">
+                              <label class="flex items-start space-x-2 text-[10px] text-slate-655 cursor-pointer p-1 rounded hover:bg-white transition-colors">
                                 <input type="checkbox" [checked]="isStepRuleSelected(step, rule.id)" (change)="toggleStepRule(step, rule.id)" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded scale-85 mt-0.5">
                                 <div class="flex flex-col">
                                   <span class="font-bold text-slate-800 leading-snug">{{ rule.name }}</span>
