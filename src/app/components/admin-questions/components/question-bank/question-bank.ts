@@ -63,6 +63,7 @@ export class QuestionBankComponent implements OnInit {
   protected selectedBloom = '';
   protected selectedDifficulty = '';
   protected selectedRubricId = '';
+  protected suggestedTime = 20;
 
   // Expected Answer for DESCRIPTIVE and APPLICATION
   protected descriptiveAnswer = '';
@@ -80,6 +81,10 @@ export class QuestionBankComponent implements OnInit {
   protected proceduralSteps: ProceduralStepInput[] = [
     { stepOrder: 1, description: '', ruleIds: [], ruleSearchQuery: '' }
   ];
+
+  // Expected Answer steps for APPLICATION
+  protected applicationComplexity = 'O(log n)';
+  protected applicationRules: any[] = [];
 
   ngOnInit(): void {
     this.loadAllData();
@@ -289,6 +294,10 @@ export class QuestionBankComponent implements OnInit {
   }
 
   protected getWeightsSum(): number {
+    if (this.selectedType === 'APPLICATION') {
+      const sum = this.applicationRules.reduce((acc, r) => acc + (Number(r.weight) || 0), 0);
+      return Math.round(sum * 1000) / 1000;
+    }
     const uniqueRules = this.getUniqueSelectedRules();
     let sum = uniqueRules.reduce((acc, rId) => acc + (Number(this.ruleWeights[rId]) || 0), 0);
     if (this.selectedType === 'PROCEDURE') {
@@ -301,11 +310,206 @@ export class QuestionBankComponent implements OnInit {
     return Math.abs(this.getWeightsSum() - 1.0) < 0.001;
   }
 
+  protected getApplicationSample(sampleStr: string | undefined): any {
+    if (!sampleStr) return { code: '', complexity: '', rules: [] };
+    try {
+      const parsed = JSON.parse(sampleStr);
+      if (parsed && typeof parsed === 'object' && parsed.hasOwnProperty('sample_code')) {
+        return {
+          code: parsed.sample_code || '',
+          complexity: (parsed.features && parsed.features.complexity) || '',
+          rules: parsed.application_rules || []
+        };
+      }
+      return { code: sampleStr, complexity: '', rules: [] };
+    } catch {
+      return { code: sampleStr, complexity: '', rules: [] };
+    }
+  }
+
+  protected addApplicationRule(): void {
+    this.applicationRules.push({
+      name: '',
+      weight: 0.0,
+      concept_ids: [],
+      relation_ids: [],
+      sequence: [],
+      expected_templates: [],
+      astStr: '',
+      conceptSearchQuery: '',
+      showConceptDropdown: false,
+      relationSearchQuery: '',
+      showRelationDropdown: false,
+      astIsValid: undefined
+    });
+  }
+
+  protected removeApplicationRule(index: number): void {
+    this.applicationRules.splice(index, 1);
+  }
+
+  protected getFilteredConceptsForRule(rule: any): any[] {
+    const q = (rule.conceptSearchQuery || '').trim().toLowerCase();
+    if (!q) return this.concepts();
+    return this.concepts().filter(c => 
+      (c.title || '').toLowerCase().includes(q) || 
+      (c.id || '').toLowerCase().includes(q) ||
+      (c.synonyms && c.synonyms.some(s => s.toLowerCase().includes(q)))
+    );
+  }
+
+  protected selectConceptForRule(rule: any, conceptId: string): void {
+    if (!rule.concept_ids) {
+      rule.concept_ids = [];
+    }
+    if (!rule.concept_ids.includes(conceptId)) {
+      rule.concept_ids.push(conceptId);
+    }
+    rule.conceptSearchQuery = '';
+    rule.showConceptDropdown = false;
+  }
+
+  protected removeConceptFromRule(rule: any, conceptId: string): void {
+    if (rule.concept_ids) {
+      const idx = rule.concept_ids.indexOf(conceptId);
+      if (idx !== -1) {
+        rule.concept_ids.splice(idx, 1);
+      }
+    }
+  }
+
+  protected getConceptTitle(conceptId: string): string {
+    const c = this.concepts().find(x => x.id === conceptId);
+    return c ? c.title : conceptId;
+  }
+
+  protected getFilteredRelationsForRule(rule: any): RelationResponse[] {
+    const q = (rule.relationSearchQuery || '').trim().toLowerCase();
+    if (!q) return this.relations();
+    return this.relations().filter(r => 
+      (r.description || '').toLowerCase().includes(q) || 
+      (r.id || '').toLowerCase().includes(q)
+    );
+  }
+
+  protected selectRelationForRule(rule: any, relationId: string): void {
+    if (!rule.relation_ids) {
+      rule.relation_ids = [];
+    }
+    if (!rule.relation_ids.includes(relationId)) {
+      rule.relation_ids.push(relationId);
+    }
+    rule.relationSearchQuery = '';
+    rule.showRelationDropdown = false;
+  }
+
+  protected removeRelationFromRule(rule: any, relationId: string): void {
+    if (rule.relation_ids) {
+      const idx = rule.relation_ids.indexOf(relationId);
+      if (idx !== -1) {
+        rule.relation_ids.splice(idx, 1);
+      }
+    }
+  }
+
+  protected getRelationDescriptionBrief(relationId: string): string {
+    const r = this.relations().find(x => x.id === relationId);
+    return r ? (r.description || r.id) : relationId;
+  }
+
+  protected addSequenceStepToRule(rule: any): void {
+    if (!rule.sequence) {
+      rule.sequence = [];
+    }
+    rule.sequence.push({
+      order: rule.sequence.length + 1,
+      type: 'CONCEPT',
+      id: ''
+    });
+  }
+
+  protected removeSequenceStepFromRule(rule: any, idx: number): void {
+    if (rule.sequence) {
+      rule.sequence.splice(idx, 1);
+      rule.sequence.forEach((item: any, i: number) => {
+        item.order = i + 1;
+      });
+    }
+  }
+
+  protected onSequenceTypeChanged(rule: any, seqItem: any): void {
+    seqItem.id = '';
+  }
+
+  protected addExpectedTemplateToRule(rule: any): void {
+    if (!rule.expected_templates) {
+      rule.expected_templates = [];
+    }
+    rule.expected_templates.push('');
+  }
+
+  protected removeExpectedTemplateFromRule(rule: any, idx: number): void {
+    if (rule.expected_templates) {
+      rule.expected_templates.splice(idx, 1);
+    }
+  }
+
+  protected validateRuleAstJson(rule: any): void {
+    if (!rule.astStr || rule.astStr.trim() === '') {
+      rule.astIsValid = undefined;
+      return;
+    }
+    try {
+      JSON.parse(rule.astStr);
+      rule.astIsValid = true;
+    } catch {
+      rule.astIsValid = false;
+    }
+  }
+
+  protected onEntitiesChangedForRule(rule: any): void {
+    if (rule.sequence) {
+      rule.sequence.forEach((item: any) => {
+        if (item.type === 'CONCEPT' && rule.concept_ids && !rule.concept_ids.includes(item.id)) {
+          item.id = '';
+        }
+        if (item.type === 'RELATION' && rule.relation_ids && !rule.relation_ids.includes(item.id)) {
+          item.id = '';
+        }
+      });
+    }
+  }
+
+  protected closeConceptDropdownDelay(rule: any): void {
+    setTimeout(() => {
+      rule.showConceptDropdown = false;
+    }, 200);
+  }
+
+  protected closeRelationDropdownDelay(rule: any): void {
+    setTimeout(() => {
+      rule.showRelationDropdown = false;
+    }, 200);
+  }
+
   // --- Edit Mode ---
   protected openAddQuestionModal(): void {
     this.editingQuestionId.set(null);
     this.resetForm();
     this.showQuestionModal.set(true);
+  }
+
+  protected onDifficultyChange(): void {
+    const found = this.difficulties().find(d => d.id === this.selectedDifficulty);
+    const acronym = found ? (found.acronym || found.id || '') : this.selectedDifficulty;
+    const acr = acronym.toUpperCase();
+    if (acr === 'E' || acr === 'EASY' || acr.includes('EASY') || acr.includes('DỄ') || acr.includes('DE')) {
+      this.suggestedTime = 15;
+    } else if (acr === 'M' || acr === 'MEDIUM' || acr.includes('MEDIUM') || acr.includes('TRUNG BINH') || acr.includes('TB')) {
+      this.suggestedTime = 20;
+    } else if (acr === 'H' || acr === 'HARD' || acr.includes('HARD') || acr.includes('KHÓ') || acr.includes('KHO') || acr.includes('KHÁ') || acr.includes('KHA')) {
+      this.suggestedTime = 25;
+    }
   }
 
   protected getFilteredRules(query: string): RuleResponse[] {
@@ -331,6 +535,7 @@ export class QuestionBankComponent implements OnInit {
     this.selectedBloom = q.bloom_level;
     this.selectedDifficulty = q.difficulty;
     this.selectedRubricId = q.rubric?.id || '';
+    this.suggestedTime = q.suggested_time || 20;
 
     // Reset expected answers
     this.descriptiveAnswer = '';
@@ -349,17 +554,73 @@ export class QuestionBankComponent implements OnInit {
       if (q.type === 'DESCRIPTIVE') {
         this.descriptiveAnswer = sample;
       } else if (q.type === 'APPLICATION') {
-        // Sample in APPLICATION is GenericAstNode JSON.
         try {
-          const ast = JSON.parse(sample);
-          this.applicationAnswer = ast.content || sample;
+          const parsed = JSON.parse(sample);
+          if (parsed && typeof parsed === 'object' && parsed.hasOwnProperty('sample_code')) {
+            this.applicationAnswer = parsed.sample_code || '';
+            this.applicationComplexity = (parsed.features && parsed.features.complexity) || 'O(log n)';
+            const appRules = parsed.application_rules || [];
+            this.applicationRules = appRules.map((r: any) => {
+              const ruleObj: any = {
+                name: r.name || '',
+                weight: r.weight || 0.0,
+                concept_ids: r.concept_ids || [],
+                relation_ids: r.relation_ids || [],
+                sequence: Array.isArray(r.sequence) ? r.sequence.map((seqItem: any, idx: number) => {
+                  if (typeof seqItem === 'string') {
+                    return { order: idx + 1, type: 'CONCEPT', id: seqItem };
+                  }
+                  return {
+                    order: seqItem.order || (idx + 1),
+                    type: seqItem.type || 'CONCEPT',
+                    id: seqItem.id || ''
+                  };
+                }) : [],
+                expected_templates: [],
+                astStr: '',
+                conceptSearchQuery: '',
+                showConceptDropdown: false,
+                relationSearchQuery: '',
+                showRelationDropdown: false,
+                astIsValid: undefined
+              };
+
+              if (r.logic_constraints) {
+                ruleObj.expected_templates = r.logic_constraints.expected_templates || [];
+                if (r.logic_constraints.ast) {
+                  ruleObj.astStr = JSON.stringify(r.logic_constraints.ast, null, 2);
+                }
+              } else if (r.ast) {
+                ruleObj.astStr = JSON.stringify(r.ast, null, 2);
+              }
+
+              this.validateRuleAstJson(ruleObj);
+              return ruleObj;
+            });
+          } else {
+            this.applicationAnswer = parsed.content || sample;
+            this.applicationComplexity = 'O(log n)';
+            this.applicationRules = [];
+          }
         } catch {
           this.applicationAnswer = sample;
+          this.applicationComplexity = 'O(log n)';
+          this.applicationRules = [];
         }
       } else if (q.type === 'PROCEDURE') {
         try {
           const parsed = JSON.parse(sample);
-          if (Array.isArray(parsed)) {
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            this.descriptiveAnswer = parsed.sample || '';
+            const stepsList = parsed.steps || [];
+            this.proceduralSteps = stepsList.map((item: any) => ({
+              stepOrder: item.stepOrder || item.step_order || 1,
+              description: item.description || '',
+              ruleIds: item.ruleIds || item.rule_ids || [],
+              ruleSearchQuery: ''
+            }));
+          } else if (Array.isArray(parsed)) {
+            this.descriptiveAnswer = '';
             this.proceduralSteps = parsed.map((item: any) => ({
               stepOrder: item.stepOrder || item.step_order || 1,
               description: item.description || '',
@@ -368,6 +629,7 @@ export class QuestionBankComponent implements OnInit {
             }));
           }
         } catch {
+          this.descriptiveAnswer = sample;
           this.proceduralSteps = [{ stepOrder: 1, description: sample, ruleIds: [], ruleSearchQuery: '' }];
         }
       }
@@ -479,24 +741,63 @@ export class QuestionBankComponent implements OnInit {
     if (this.selectedType === 'DESCRIPTIVE') {
       sampleVal = this.descriptiveAnswer.trim();
     } else if (this.selectedType === 'APPLICATION') {
-      // Convert to GenericAstNode JSON structure
-      const astPayload = {
-        root_type: 'PROGRAM',
-        content: this.applicationAnswer.trim(),
-        children: []
+      const rulesPayloadList = this.applicationRules.map(r => {
+        let parsedAst = null;
+        if (r.astStr && r.astStr.trim() !== '') {
+          try {
+            parsedAst = JSON.parse(r.astStr);
+          } catch (e) {
+            parsedAst = null;
+          }
+        }
+
+        const templates = Array.isArray(r.expected_templates)
+          ? r.expected_templates.map((t: string) => t.trim()).filter((t: string) => t !== '')
+          : [];
+
+        const sequencePayload = Array.isArray(r.sequence)
+          ? r.sequence.map((s: any, idx: number) => ({
+              order: idx + 1,
+              type: s.type || 'CONCEPT',
+              id: s.id
+            })).filter((s: any) => s.id)
+          : [];
+
+        return {
+          name: r.name.trim(),
+          concept_ids: r.concept_ids || [],
+          relation_ids: r.relation_ids || [],
+          weight: Number(r.weight) || 0.0,
+          sequence: sequencePayload,
+          logic_constraints: {
+            expected_templates: templates,
+            ast: parsedAst
+          }
+        };
+      });
+
+      const serialized = {
+        sample_code: this.applicationAnswer.trim(),
+        features: {
+          complexity: this.applicationComplexity.trim()
+        },
+        application_rules: rulesPayloadList
       };
-      sampleVal = JSON.stringify(astPayload);
+      sampleVal = JSON.stringify(serialized);
     } else if (this.selectedType === 'PROCEDURE') {
-      // Convert proceduralSteps list to OrderedStepDto JSON
       const stepsPayload = this.proceduralSteps.map(s => ({
         step_order: s.stepOrder,
         description: s.description.trim(),
         rule_ids: s.ruleIds
       }));
-      sampleVal = JSON.stringify(stepsPayload);
+      const serialized = {
+        sample: this.descriptiveAnswer.trim(),
+        steps: stepsPayload
+      };
+      sampleVal = JSON.stringify(serialized);
     }
 
-    const rulesPayload = finalRuleIds.map(rId => ({
+    const rulesPayload = this.selectedType === 'APPLICATION' ? [] : finalRuleIds.map(rId => ({
       rule_id: rId,
       weight: Number(this.ruleWeights[rId]) || 0.0
     }));
@@ -508,6 +809,7 @@ export class QuestionBankComponent implements OnInit {
       type: this.selectedType,
       bloom_level: this.selectedBloom,
       difficulty: this.selectedDifficulty,
+      suggested_time: this.suggestedTime,
       ex_ans: {
         sample: sampleVal,
         concepts: this.selectedConceptIds,
@@ -574,6 +876,7 @@ export class QuestionBankComponent implements OnInit {
   private resetForm(): void {
     this.content = '';
     this.descriptiveAnswer = '';
+    this.suggestedTime = 20;
     this.applicationAnswer = '';
     this.selectedRuleIds = [];
     this.selectedFunctionIds = [];
@@ -592,5 +895,26 @@ export class QuestionBankComponent implements OnInit {
     this.ruleSearchQuery = '';
     this.conceptSearchQuery = '';
     this.relationSearchQuery = '';
+    this.applicationComplexity = 'O(log n)';
+    this.applicationRules = [];
+  }
+
+  protected getProceduralSample(sample: string | undefined): { sample: string; steps: any[] } {
+    if (!sample) return { sample: '', steps: [] };
+    try {
+      const parsed = JSON.parse(sample);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return {
+          sample: parsed.sample || '',
+          steps: parsed.steps || []
+        };
+      } else if (Array.isArray(parsed)) {
+        return {
+          sample: '',
+          steps: parsed
+        };
+      }
+    } catch {}
+    return { sample: sample, steps: [] };
   }
 }

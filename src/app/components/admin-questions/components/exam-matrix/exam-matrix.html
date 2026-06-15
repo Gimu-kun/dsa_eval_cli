@@ -33,133 +33,162 @@
         <div class="flex border border-slate-200 rounded-lg p-1 bg-slate-50 space-x-1 shrink-0">
           <button (click)="changeMatrixMode('custom')"
             [class]="matrixMode() === 'custom' ? 'bg-white text-[#FF6C37] font-bold shadow-sm px-3 py-1 rounded text-xs transition-all cursor-pointer' : 'text-slate-500 hover:text-slate-900 px-3 py-1 rounded text-xs transition-all cursor-pointer'">
-            Thiết lập tùy chỉnh
+            Cấu hình Bản mẫu Ma trận
           </button>
           <button (click)="changeMatrixMode('auto')"
             [class]="matrixMode() === 'auto' ? 'bg-white text-[#FF6C37] font-bold shadow-sm px-3 py-1 rounded text-xs transition-all cursor-pointer' : 'text-slate-500 hover:text-slate-900 px-3 py-1 rounded text-xs transition-all cursor-pointer'">
-            Sinh đề tự động từ Bản mẫu
+            Sinh đề từ Bản mẫu
           </button>
         </div>
       </div>
 
-      <!-- MODE 1: Custom Matrix Generator -->
+      <!-- MODE 1: Custom Matrix Template Setup -->
       @if (matrixMode() === 'custom') {
         <div class="space-y-6 bg-slate-50/50 border border-slate-100 p-5 rounded-xl animate-fade-in">
-          <!-- Question Count Selector -->
-          <div class="flex items-center space-x-4 max-w-sm">
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider shrink-0">Số lượng câu hỏi trong đề:</label>
-            <select [ngModel]="matrixQuestionCount" (ngModelChange)="onQuestionCountChange($event)" class="block w-full border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-800">
-              <option [value]="1">1 Câu</option>
-              <option [value]="2">2 Câu</option>
-              <option [value]="3">3 Câu</option>
-              <option [value]="4">4 Câu</option>
-              <option [value]="5">5 Câu</option>
-              <option [value]="6">6 Câu</option>
-              <option [value]="7">7 Câu</option>
-              <option [value]="8">8 Câu</option>
-            </select>
-          </div>
-
-          <!-- Configuration Grid -->
-          <div class="space-y-3">
-            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cấu hình tiêu chuẩn cho từng câu hỏi:</h3>
-            <div class="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
-              @for (config of matrixConfigs; track $index; let idx = $index) {
-                <div class="border border-slate-200 bg-white rounded-xl p-4 space-y-3 shadow-sm hover:border-[#FF6C37]/35 transition-colors">
-                  <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center space-x-1.5">
-                      <span class="w-5 h-5 rounded-full bg-[#FF6C37] text-white flex items-center justify-center font-bold text-[10px]">{{ idx + 1 }}</span>
-                      <span>Câu hỏi #{{ idx + 1 }}</span>
-                    </span>
-                  </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-semibold text-slate-500 uppercase">Dạng câu hỏi</label>
-                      <select name="type_{{idx}}" [(ngModel)]="config.type" class="block w-full border border-slate-200 rounded p-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
-                        <option value="ANY">Bất kỳ (ANY)</option>
-                        <option value="DESCRIPTIVE">Descriptive</option>
-                        <option value="PROCEDURE">Procedural</option>
-                        <option value="APPLICATION">Application</option>
-                      </select>
-                    </div>
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-semibold text-slate-500 uppercase">Thang Bloom</label>
-                      <select name="bloom_{{idx}}" [(ngModel)]="config.bloomLevel" class="block w-full border border-slate-200 rounded p-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
-                        <option value="ANY">Bất kỳ (ANY)</option>
-                        <option value="REMEMBERING">Nhận biết</option>
-                        <option value="UNDERSTANDING">Thông hiểu</option>
-                        <option value="APPLYING">Vận dụng</option>
-                      </select>
-                    </div>
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-semibold text-slate-500 uppercase">Độ khó</label>
-                      <select name="diff_{{idx}}" [(ngModel)]="config.difficulty" class="block w-full border border-slate-200 rounded p-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 cursor-pointer">
-                        <option value="ANY">Bất kỳ (ANY)</option>
-                        <option value="EASY">Dễ</option>
-                        <option value="MEDIUM">Trung bình</option>
-                        <option value="HARD">Khó</option>
-                      </select>
-                    </div>
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-semibold text-slate-500 uppercase">Thời gian (phút)</label>
-                      <input type="number" name="time_{{idx}}" [(ngModel)]="config.suggestedTime" class="block w-full border border-slate-200 rounded p-1 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-slate-50" min="1" max="180">
-                    </div>
-                    <div class="space-y-1">
-                      <label class="block text-[9px] font-semibold text-slate-500 uppercase">Điểm tối đa</label>
-                      <input type="number" step="0.5" name="score_{{idx}}" [(ngModel)]="config.maxScore" class="block w-full border border-slate-200 rounded p-1 text-xs text-center focus:outline-none focus:border-[#FF6C37] bg-slate-50" min="0.5" max="100">
-                    </div>
-                  </div>
-                </div>
-              }
+          
+          <!-- Difficulty Preset Selector -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Cấu hình nhanh theo ma trận mẫu:</label>
+            <div class="flex flex-wrap gap-3">
+              <button type="button" (click)="applyDefaultMatrixSettings('EASY')" class="px-4 py-2 text-xs rounded-xl font-bold bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 transition-all cursor-pointer flex items-center space-x-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Đề Dễ (70% Dễ - 30% TB - 0% Khó)</span>
+              </button>
+              <button type="button" (click)="applyDefaultMatrixSettings('MEDIUM')" class="px-4 py-2 text-xs rounded-xl font-bold bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 transition-all cursor-pointer flex items-center space-x-1">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span>Đề Trung bình (40% Dễ - 50% TB - 10% Khó)</span>
+              </button>
+              <button type="button" (click)="applyDefaultMatrixSettings('HARD')" class="px-4 py-2 text-xs rounded-xl font-bold bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 transition-all cursor-pointer flex items-center space-x-1">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                <span>Đề Khá / Khó (20% Dễ - 40% TB - 40% Khó)</span>
+              </button>
             </div>
           </div>
 
-          <!-- Save Matrix Template Config -->
-          <div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-end sm:items-center gap-4 bg-orange-50/20 p-4 rounded-xl border border-orange-100/50">
-            <div class="flex-grow space-y-1 w-full">
-              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Tên bản mẫu ma trận đề thi để lưu lại:</label>
-              <input type="text" [(ngModel)]="newTemplateName" name="newTemplateName" placeholder="Ví dụ: Đề thi giữa kỳ 1 - Phân bổ Dễ/Khó" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white">
+          <!-- Basic template info -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Tên bản mẫu ma trận đề thi:</label>
+              <input type="text" [(ngModel)]="templateTitle" placeholder="Ví dụ: Ma trận Đề kiểm tra cuối kỳ..." class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white font-bold text-slate-800 shadow-sm">
             </div>
-            <button type="button" (click)="onSaveMatrixTemplate()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition-all shrink-0 cursor-pointer shadow-sm flex items-center space-x-1.5 w-full sm:w-auto justify-center">
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Mức độ khó chung (Tự động tính):</label>
+              <div class="h-10 flex items-center px-3 border border-slate-200 bg-slate-100 rounded-lg text-xs font-bold font-mono">
+                @if (calculatedDifficultyAcronym === 'EASY') {
+                  <span class="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">DỄ (EASY)</span>
+                } @else if (calculatedDifficultyAcronym === 'HARD') {
+                  <span class="px-2.5 py-1 rounded-md bg-rose-50 text-rose-700 border border-rose-200 uppercase">KHÁ (HARD)</span>
+                } @else {
+                  <span class="px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-250 uppercase font-bold">TRUNG BÌNH (MEDIUM)</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Checklist selections: Chapters, Types, Blooms -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+            <!-- Chapters Selection (Multi-select) -->
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                <span>Chọn các Chương:</span>
+                <span class="text-[10px] text-slate-400 font-normal">({{ selectedChapterIds.length }} đã chọn)</span>
+              </label>
+              <div class="bg-white border border-slate-200 rounded-xl p-3 max-h-[200px] overflow-y-auto space-y-1.5 shadow-sm">
+                @for (c of chapters(); track c.id) {
+                  <label class="flex items-center space-x-2.5 p-1.5 hover:bg-slate-50 rounded cursor-pointer transition-colors text-xs text-slate-700">
+                    <input type="checkbox" [checked]="isChapterSelected(c.id)" (change)="toggleChapter(c.id)" class="accent-[#FF6C37] w-4 h-4 rounded">
+                    <span>{{ c.chapter_name }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            <!-- Question Types Selection (Multi-select) -->
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                <span>Dạng câu hỏi:</span>
+                <span class="text-[10px] text-slate-400 font-normal">({{ selectedTypeIds.length }} đã chọn)</span>
+              </label>
+              <div class="bg-white border border-slate-200 rounded-xl p-3 max-h-[200px] overflow-y-auto space-y-1.5 shadow-sm">
+                @for (t of questionTypes(); track t.id) {
+                  <label class="flex items-center space-x-2.5 p-1.5 hover:bg-slate-50 rounded cursor-pointer transition-colors text-xs text-slate-700">
+                    <input type="checkbox" [checked]="isTypeSelected(t.id)" (change)="toggleType(t.id)" class="accent-[#FF6C37] w-4 h-4 rounded">
+                    <span>{{ t.display_name }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            <!-- Bloom levels Selection (Multi-select) -->
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                <span>Thang Bloom:</span>
+                <span class="text-[10px] text-slate-400 font-normal">({{ selectedBloomLevelIds.length }} đã chọn)</span>
+              </label>
+              <div class="bg-white border border-slate-200 rounded-xl p-3 max-h-[200px] overflow-y-auto space-y-1.5 shadow-sm">
+                @for (b of bloomLevels(); track b.id) {
+                  <label class="flex items-center space-x-2.5 p-1.5 hover:bg-slate-50 rounded cursor-pointer transition-colors text-xs text-slate-700">
+                    <input type="checkbox" [checked]="isBloomLevelSelected(b.id)" (change)="toggleBloomLevel(b.id)" class="accent-[#FF6C37] w-4 h-4 rounded">
+                    <span>{{ b.display_name }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Ratios Setup -->
+          <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-3">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Tỷ lệ phân bổ độ khó câu hỏi (%):</h4>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Tỷ lệ câu Dễ (%)</label>
+                <input type="number" [(ngModel)]="easyPer" class="w-full border border-slate-200 rounded-lg p-2 text-center text-sm font-bold bg-slate-50 focus:outline-none focus:border-[#FF6C37]" min="0" max="100">
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Tỷ lệ câu T.Bình (%)</label>
+                <input type="number" [(ngModel)]="mediumPer" class="w-full border border-slate-200 rounded-lg p-2 text-center text-sm font-bold bg-slate-50 focus:outline-none focus:border-[#FF6C37]" min="0" max="100">
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Tỷ lệ câu Khó (%)</label>
+                <input type="number" [(ngModel)]="hardPer" class="w-full border border-slate-200 rounded-lg p-2 text-center text-sm font-bold bg-slate-50 focus:outline-none focus:border-[#FF6C37]" min="0" max="100">
+              </div>
+            </div>
+            <div class="pt-2 flex items-center justify-between text-xs font-bold">
+              <span>Tổng tỷ lệ:</span>
+              <span [class]="isRatioValid ? 'text-emerald-600' : 'text-rose-600'">
+                {{ totalRatio }}% {{ isRatioValid ? '(Hợp lệ)' : '(Phải bằng 100%)' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Action Save Template Button -->
+          <div class="flex justify-end pt-3 border-t border-slate-200/80">
+            <button type="button" (click)="onSaveTemplate()" [disabled]="!isRatioValid || selectedChapterIds.length === 0 || selectedTypeIds.length === 0 || selectedBloomLevelIds.length === 0" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition-all shrink-0 cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1.5 shadow-md shadow-indigo-500/10">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Lưu bản mẫu ma trận</span>
-            </button>
-          </div>
-
-          <!-- Generate Action Button -->
-          <div class="flex justify-end pt-3 border-t border-slate-200/80">
-            <button (click)="onGenerateExam()" [disabled]="isGeneratingExam()" class="bg-[#FF6C37] hover:bg-orange-600 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition-all shrink-0 cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-2 shadow-md shadow-orange-500/10 hover:shadow-orange-500/20">
-              @if (isGeneratingExam()) {
-                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Đang tính toán ma trận...</span>
-              } @else {
-                <span>Sinh đề thi tùy chỉnh</span>
-              }
+              <span>Lưu bản mẫu ma trận lên hệ thống</span>
             </button>
           </div>
         </div>
       }
 
-      <!-- MODE 2: Auto Matrix Generator from saved templates -->
+      <!-- MODE 2: Generate Exam from Template -->
       @if (matrixMode() === 'auto') {
         <div class="space-y-6 bg-slate-50/50 border border-slate-100 p-5 rounded-xl animate-fade-in">
-          <div class="space-y-4 max-w-xl">
+          <div class="space-y-4 max-w-2xl">
+            <!-- Template selection dropdown -->
             <div class="space-y-1">
-              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Chọn bản mẫu ma trận đã cấu hình trước đó:</label>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Chọn bản mẫu ma trận đã lưu:</label>
               <div class="flex gap-2">
-                <select [(ngModel)]="selectedTemplateId" name="selectedTemplateId" class="block flex-grow border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-800">
+                <select [(ngModel)]="selectedTemplateId" name="selectedTemplateId" class="block flex-grow border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-800 shadow-sm">
                   <option value="">-- Chọn bản mẫu ma trận đề thi --</option>
                   @for (tmpl of savedTemplates(); track tmpl.id) {
-                    <option [value]="tmpl.id">{{ tmpl.name }} (Quy định: {{ tmpl.questionCount }} câu)</option>
+                    <option [value]="tmpl.id">{{ tmpl.title }} (Dễ: {{ tmpl.easyPerPct }}%, TB: {{ tmpl.mediumPerPct }}%, Khó: {{ tmpl.hardPerPct }}%)</option>
                   }
                 </select>
                 @if (selectedTemplateId) {
-                  <button type="button" (click)="onDeleteMatrixTemplate(selectedTemplateId, $event)" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2.5 rounded-lg border border-rose-150 cursor-pointer transition-colors shadow-sm flex items-center justify-center" title="Xóa bản mẫu này">
+                  <button type="button" (click)="onDeleteTemplate(selectedTemplateId, $event)" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2.5 rounded-lg border border-rose-200 cursor-pointer transition-colors shadow-sm flex items-center justify-center" title="Xóa bản mẫu này khỏi DB">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                     </svg>
@@ -167,22 +196,46 @@
                 }
               </div>
               @if (savedTemplates().length === 0) {
-                <p class="text-[10px] text-slate-400 italic mt-1">Chưa có bản mẫu ma trận nào được lưu. Vui lòng chuyển sang tab "Thiết lập tùy chỉnh" để lưu cấu hình đề.</p>
+                <p class="text-[10px] text-slate-400 italic mt-1">Chưa có bản mẫu ma trận nào trong CSDL. Vui lòng chuyển sang tab "Cấu hình Bản mẫu Ma trận" để thêm mới.</p>
               }
             </div>
 
+            <!-- Specific Exam Configuration parameters -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Tiêu đề đề thi được sinh ra:</label>
+                <input type="text" [(ngModel)]="examTitle" placeholder="Nhập tiêu đề đề thi..." class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white font-bold text-slate-800 shadow-sm">
+              </div>
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Thời lượng làm bài (phút):</label>
+                <input type="number" [(ngModel)]="examDuration" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white font-bold text-slate-800 shadow-sm" min="15" max="180">
+              </div>
+            </div>
+
+            <!-- Plus Minus Question Count Control -->
+            <div class="flex items-center space-x-3 pt-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider shrink-0">Số lượng câu hỏi trong đề:</label>
+              <div class="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden shadow-sm">
+                <button type="button" (click)="decreaseQuestionCount()" class="px-3.5 py-2 text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-extrabold text-sm transition-all focus:outline-none select-none cursor-pointer border-r border-slate-100">-</button>
+                <span class="px-5 py-2 font-bold text-slate-850 text-sm font-mono min-w-[36px] text-center bg-slate-50/20">{{ matrixQuestionCount }}</span>
+                <button type="button" (click)="increaseQuestionCount()" class="px-3.5 py-2 text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-extrabold text-sm transition-all focus:outline-none select-none cursor-pointer border-l border-slate-100">+</button>
+              </div>
+            </div>
+
             <!-- Generate Action Button -->
-            <button (click)="onGenerateExamAuto()" [disabled]="isGeneratingExam() || !selectedTemplateId" class="bg-[#FF6C37] hover:bg-orange-600 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition-all shrink-0 cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-2 shadow-md shadow-orange-500/10 hover:shadow-orange-500/20">
-              @if (isGeneratingExam()) {
-                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Đang tự sinh câu hỏi...</span>
-              } @else {
-                <span>Sinh đề thi tự động</span>
-              }
-            </button>
+            <div class="pt-3">
+              <button (click)="onGenerateExam()" [disabled]="isGeneratingExam() || !selectedTemplateId" class="bg-[#FF6C37] hover:bg-orange-600 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition-all shrink-0 cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-2 shadow-md shadow-orange-500/10 hover:shadow-orange-500/20">
+                @if (isGeneratingExam()) {
+                  <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Đang sinh đề tự động ở Backend...</span>
+                } @else {
+                  <span>Sinh đề thi tự động</span>
+                }
+              </button>
+            </div>
           </div>
         </div>
       }
@@ -193,11 +246,15 @@
       <div class="border border-slate-200 rounded-2xl p-5 md:p-6 bg-slate-50/20 space-y-6 animate-fade-in shadow-inner">
         <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-4 gap-4">
           <div class="space-y-1 flex-grow">
-            <h3 class="text-base font-bold text-slate-800">Bản xem trước & Trình quản lý đề thi</h3>
-            <div class="flex flex-col sm:flex-row gap-3 pt-2 max-w-2xl">
+            <h3 class="text-base font-bold text-slate-800">Bản xem trước & Trình cấu hình đề thi</h3>
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
               <div class="flex-grow space-y-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tiêu đề đề thi:</label>
                 <input type="text" [(ngModel)]="examTitle" placeholder="Nhập tiêu đề đề thi..." class="block w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white font-bold text-slate-800 shadow-sm">
+              </div>
+              <div class="w-50 space-y-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thời lượng (phút):</label>
+                <input type="number" [(ngModel)]="generatedExam().duration" class="block w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white font-bold text-slate-800 shadow-sm">
               </div>
               <div class="space-y-1 shrink-0">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái:</label>
@@ -208,7 +265,7 @@
                 </select>
               </div>
               <div class="flex items-end shrink-0">
-                <button (click)="onSaveExam()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow-md shadow-emerald-500/10 cursor-pointer flex items-center space-x-1.5 h-[34px]">
+                <button (click)="onSaveExam()" [disabled]="generatedExam().totalScore !== 10.0" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow-md shadow-emerald-500/10 cursor-pointer disabled:opacity-40 flex items-center space-x-1.5 h-[34px]">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -219,33 +276,44 @@
           </div>
         </div>
 
+        <!-- 10 Point Constraint Validation Message -->
+        <div class="p-3.5 rounded-xl border flex items-center space-x-3" [class]="generatedExam().totalScore === 10.0 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'">
+          @if (generatedExam().totalScore === 10.0) {
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-emerald-600 shrink-0">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            <span class="text-xs font-bold">Tổng số điểm của đề thi đã đạt 10.0/10.0 điểm. Hợp lệ để lưu vào hệ thống!</span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-rose-600 shrink-0">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            <span class="text-xs font-bold">Tổng số điểm của đề thi hiện tại là <span class="font-mono font-extrabold underline text-sm">{{ generatedExam().totalScore }}đ</span>. Yêu cầu điều chỉnh lại điểm câu hỏi để tổng điểm bằng đúng <span class="underline text-sm font-extrabold">10.0đ</span> trước khi lưu.</span>
+          }
+        </div>
+
         <!-- Overview Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-white border border-slate-100 rounded-xl p-4 text-center shadow-sm">
             <span class="block text-2xl font-bold text-slate-900">{{ generatedExam().customQuestions?.length || 0 }}</span>
             <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tổng câu hỏi</span>
           </div>
           <div class="bg-white border border-slate-100 rounded-xl p-4 text-center shadow-sm">
-            <span class="block text-2xl font-bold text-slate-900">{{ generatedExam().totalTime || 0 }} phút</span>
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tổng thời gian</span>
+            <span class="block text-2xl font-bold text-slate-900">{{ generatedExam().duration || 0 }} phút</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Thời lượng đề</span>
           </div>
           <div class="bg-white border border-slate-100 rounded-xl p-4 text-center shadow-sm">
-            <span class="block text-2xl font-bold text-emerald-600">{{ generatedExam().totalScore || 0 }} điểm</span>
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tổng điểm tối đa</span>
+            <span class="block text-2xl font-bold" [class]="generatedExam().totalScore === 10.0 ? 'text-emerald-600' : 'text-rose-600'">{{ generatedExam().totalScore || 0 }} / 10.0</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tổng điểm hiện tại</span>
           </div>
           <div class="bg-white border border-slate-100 rounded-xl p-4 text-center shadow-sm">
-            <span class="block text-2xl font-bold text-[#FF6C37] uppercase">{{ generatedExam().difficulty }}</span>
+            <span class="block text-2xl font-bold text-[#FF6C37] uppercase">{{ getDifficultyDisplayName(generatedExam().difficulty) }}</span>
             <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Độ khó chung</span>
-          </div>
-          <div class="bg-white border border-slate-100 rounded-xl p-4 text-center shadow-sm col-span-2 md:col-span-1">
-            <span class="block text-xs font-mono font-bold text-indigo-700 truncate max-w-full" [title]="generatedExam().includedTypes">{{ generatedExam().includedTypes || 'Trống' }}</span>
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dạng câu hỏi</span>
           </div>
         </div>
 
         <!-- Questions Selected -->
         <div class="space-y-4">
-          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh sách câu hỏi chi tiết:</h4>
+          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Chi tiết các câu hỏi trong đề:</h4>
           <div class="space-y-4">
             @for (cq of generatedExam().customQuestions; track $index; let idx = $index) {
               <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm items-start hover:border-[#FF6C37]/35 transition-colors space-y-3 relative group">
@@ -254,35 +322,51 @@
                     <div class="font-bold text-slate-400 text-sm py-0.5 w-6 text-center shrink-0">#{{ idx + 1 }}</div>
                     <div class="space-y-1.5 flex-grow">
                       <h5 class="text-sm font-bold text-slate-800 leading-snug">{{ cq.question?.content }}</h5>
-                      <div class="flex flex-wrap gap-2 text-[9px] font-mono font-bold items-center font-mono">
-                        <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase">{{ cq.question?.bloomLevel || cq.question?.bloom_level }}</span>
-                        <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">{{ cq.question?.difficulty }}</span>
-                        <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">{{ cq.question?.type }}</span>
-                        <span class="text-slate-400 select-all font-light py-0.5">ID: {{ cq.question?.id }}</span>
+                      <div class="flex flex-wrap gap-2 text-[9px] font-mono font-bold items-center">
+                        <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase font-mono">{{ cq.question?.bloomLevel?.displayName || cq.question?.bloomLevel?.display_name || cq.question?.bloom_level?.displayName || cq.question?.bloom_level?.display_name || cq.question?.bloomLevel || cq.question?.bloom_level }}</span>
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-255 uppercase font-mono">{{ cq.question?.difficulty?.displayName || cq.question?.difficulty?.display_name || cq.question?.difficulty }}</span>
+                        <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-mono">{{ cq.question?.type?.displayName || cq.question?.type?.display_name || cq.question?.type }}</span>
+                        <span class="text-slate-400 font-light select-all py-0.5">ID: {{ cq.question?.id }}</span>
                       </div>
                     </div>
                   </div>
                   
-                  <!-- Remove button -->
-                  <button (click)="onRemoveQuestion(idx)" class="text-slate-400 hover:text-rose-600 p-1.5 rounded hover:bg-rose-50 cursor-pointer transition-colors" title="Xóa câu hỏi khỏi đề">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
+                  <!-- Action buttons: Reorder and Remove -->
+                  <div class="flex items-center space-x-1 shrink-0">
+                    <!-- Move Up button -->
+                    <button (click)="moveQuestionUp(idx)" [disabled]="idx === 0" class="text-slate-400 hover:text-[#FF6C37] p-1.5 rounded hover:bg-slate-50 cursor-pointer disabled:opacity-20 transition-colors" title="Di chuyển câu hỏi lên trên">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                      </svg>
+                    </button>
+                    <!-- Move Down button -->
+                    <button (click)="moveQuestionDown(idx)" [disabled]="idx === generatedExam().customQuestions.length - 1" class="text-slate-400 hover:text-[#FF6C37] p-1.5 rounded hover:bg-slate-50 cursor-pointer disabled:opacity-20 transition-colors" title="Di chuyển câu hỏi xuống dưới">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+                    <!-- Remove button -->
+                    <button (click)="onRemoveQuestion(idx)" class="text-slate-400 hover:text-rose-600 p-1.5 rounded hover:bg-rose-50 cursor-pointer transition-colors" title="Xóa câu hỏi khỏi đề">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Config inline values & Replace button -->
                 <div class="border-t border-slate-100 pt-3 flex flex-wrap items-center justify-between gap-4">
                   <div class="flex items-center space-x-6">
                     <div class="flex items-center space-x-2">
-                      <span class="text-[10px] font-bold text-slate-500 uppercase">Thời gian gợi ý:</span>
-                      <input type="number" [ngModel]="cq.suggestedTime" (ngModelChange)="onSuggestedTimeChange(idx, $event)" class="w-16 border border-slate-200 rounded px-1.5 py-0.5 text-center text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 font-bold" min="1" max="180">
-                      <span class="text-[10px] text-slate-400">phút</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="text-[10px] font-bold text-slate-500 uppercase">Điểm tối đa:</span>
-                      <input type="number" step="0.5" [ngModel]="cq.maxScore" (ngModelChange)="onMaxScoreChange(idx, $event)" class="w-16 border border-slate-200 rounded px-1.5 py-0.5 text-center text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 font-bold" min="0.5" max="100">
+                      <span class="text-[10px] font-bold text-slate-500 uppercase">Gán điểm tối đa:</span>
+                      <input type="number" step="0.5" [ngModel]="cq.maxScore" (ngModelChange)="onScoreChange(idx, $event)" class="w-16 border border-slate-200 rounded px-1.5 py-0.5 text-center text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 font-bold" min="0" max="10">
                       <span class="text-[10px] text-slate-400">điểm</span>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                      <span class="text-[10px] font-bold text-slate-500 uppercase">Thời lượng gợi ý:</span>
+                      <input type="number" [ngModel]="cq.suggestedTime || cq.suggested_time" (ngModelChange)="onTimeChange(idx, $event)" class="w-16 border border-slate-200 rounded px-1.5 py-0.5 text-center text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 font-bold" min="1" max="180">
+                      <span class="text-[10px] text-slate-400">phút</span>
                     </div>
                   </div>
 
@@ -290,7 +374,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                     </svg>
-                    <span>Đổi câu hỏi khác</span>
+                    <span>Thay câu hỏi khác</span>
                   </button>
                 </div>
               </div>
@@ -303,7 +387,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              <span>Thêm câu hỏi từ Ngân hàng</span>
+              <span>Thêm câu hỏi mới từ Ngân hàng</span>
             </button>
           </div>
         </div>
@@ -362,8 +446,9 @@
                 <div class="space-y-1.5">
                   <div class="flex flex-wrap gap-1.5 text-[8px] font-mono font-bold">
                     <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase font-mono">{{ q.bloom_level }}</span>
-                    <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase font-mono">{{ q.difficulty }}</span>
+                    <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-255 uppercase font-mono">{{ q.difficulty }}</span>
                     <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-mono">{{ q.type }}</span>
+                    <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-mono">Gợi ý: {{ q.suggested_time || 20 }} phút</span>
                   </div>
                   <h4 class="text-xs font-bold text-slate-800 leading-snug group-hover:text-[#FF6C37] transition-colors">{{ q.content }}</h4>
                 </div>
@@ -420,17 +505,17 @@
                 <td class="px-4 py-3.5 font-bold text-slate-900">{{ ex.title }}</td>
                 <td class="px-4 py-3.5">
                   <span class="px-2 py-0.5 rounded text-[10px] font-bold border font-mono uppercase" [ngClass]="{
-                    'bg-emerald-50 text-emerald-700 border-emerald-250': ex.difficulty === 'EASY',
-                    'bg-amber-50 text-amber-700 border-amber-250': ex.difficulty === 'MEDIUM',
-                    'bg-rose-50 text-rose-700 border-rose-250': ex.difficulty === 'HARD',
-                    'bg-indigo-50 text-indigo-700 border-indigo-250': ex.difficulty === 'CUSTOM'
-                  }">{{ ex.difficulty }}</span>
+                    'bg-emerald-50 text-emerald-700 border-emerald-200': ex.difficulty === 'EASY' || getDifficultyDisplayName(ex.difficulty) === 'EASY',
+                    'bg-amber-50 text-amber-700 border-amber-250': ex.difficulty === 'MEDIUM' || getDifficultyDisplayName(ex.difficulty) === 'MEDIUM',
+                    'bg-rose-50 text-rose-700 border-rose-200': ex.difficulty === 'HARD' || getDifficultyDisplayName(ex.difficulty) === 'HARD',
+                    'bg-indigo-50 text-indigo-700 border-indigo-250': ex.difficulty === 'CUSTOM' || getDifficultyDisplayName(ex.difficulty) === 'CUSTOM'
+                  }">{{ getDifficultyDisplayName(ex.difficulty) }}</span>
                 </td>
                 <td class="px-4 py-3.5 text-center font-mono">{{ ex.customQuestions?.length || 0 }} câu</td>
-                <td class="px-4 py-3.5 text-center font-mono">{{ ex.totalTime }} phút</td>
+                <td class="px-4 py-3.5 text-center font-mono">{{ ex.duration }} phút</td>
                 <td class="px-4 py-3.5 text-center font-mono font-bold text-emerald-600">{{ ex.totalScore }}đ</td>
                 <td class="px-4 py-3.5">
-                  <select [ngModel]="ex.status" (ngModelChange)="updateSavedExamStatus(ex, $event)" class="text-[11px] border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700">
+                  <select [ngModel]="ex.status" (ngModelChange)="updateSavedExamStatus(ex, $event)" class="text-[11px] border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:border-[#FF6C37] bg-white cursor-pointer font-bold text-slate-700 shadow-sm">
                     <option value="DRAFT">Nháp (Draft)</option>
                     <option value="ACTIVE">Hoạt động (Active)</option>
                     <option value="SUSPENDED">Tạm ngưng (Suspended)</option>

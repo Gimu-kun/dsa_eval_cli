@@ -76,6 +76,8 @@ export interface Question {
   rubric: Rubric;
   ex_ans: ExpectedAnswer;
   topic_id: string;
+  suggested_time?: number;
+  suggestedTime?: number;
 }
 
 export interface Submission {
@@ -177,7 +179,8 @@ export interface UserSession {
 export interface ExamQuestion {
   question: Question;
   maxScore: number;
-  suggestedTime: number;
+  suggestedTime?: number;
+  suggested_time?: number;
   sequenceOrder?: number;
 }
 
@@ -187,6 +190,7 @@ export interface Exam {
   difficulty: string;
   status: 'DRAFT' | 'ACTIVE' | 'SUSPENDED';
   totalTime: number;
+  duration?: number;
   totalScore: number;
   questions?: Question[];
   customQuestions?: ExamQuestion[];

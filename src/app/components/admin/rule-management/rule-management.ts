@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, RuleResponse, RuleRequest, OrderedStep } from '../../../services/admin-api.service';
+import { AdminApiService, RuleResponse, RuleRequest, OrderedStep, ConceptResponse, RelationResponse } from '../../../services/admin-api.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog';
 
 type RuleType = 'SYN' | 'ORD' | 'COD';
@@ -16,6 +16,8 @@ export class RuleManagementComponent implements OnInit {
   private readonly api = inject(AdminApiService);
 
   readonly rules = signal<RuleResponse[]>([]);
+  readonly concepts = signal<ConceptResponse[]>([]);
+  readonly relations = signal<RelationResponse[]>([]);
   readonly isLoading = signal(false);
   readonly searchQuery = signal('');
   readonly filterType = signal<RuleType | ''>('');
@@ -30,10 +32,17 @@ export class RuleManagementComponent implements OnInit {
   readonly showConfirm = signal(false);
   readonly deletingId = signal<string | null>(null);
 
+  // Search & dropdown flags for Concept & Relation multi-selections
+  readonly conceptSearchQuery = signal('');
+  readonly showConceptDropdown = signal(false);
+
+  readonly relationSearchQuery = signal('');
+  readonly showRelationDropdown = signal(false);
+
   // Form – dùng snake_case để khớp với DTO
-  form = { name: '', err_message: '', type: 'SYN' as RuleType, weight: 1.0 };
-  // SYN
-  synForm = { concept_ids: '', relation_ids: '' };
+  form = { name: '', err_message: '', type: 'SYN' as RuleType };
+  // SYN - store as arrays of strings directly
+  synForm = { concept_ids: [] as string[], relation_ids: [] as string[] };
   // ORD
   ordSteps: { description: string; rule_ids: string }[] = [{ description: '', rule_ids: '' }];
   // COD
@@ -47,13 +56,35 @@ export class RuleManagementComponent implements OnInit {
     );
   });
 
+  readonly filteredConcepts = computed(() => {
+    const q = this.conceptSearchQuery().toLowerCase().trim();
+    const selected = this.synForm.concept_ids;
+    return this.concepts().filter(c =>
+      !selected.includes(c.id) &&
+      (c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+    );
+  });
+
+  readonly filteredRelations = computed(() => {
+    const q = this.relationSearchQuery().toLowerCase().trim();
+    const selected = this.synForm.relation_ids;
+    return this.relations().filter(r =>
+      !selected.includes(r.id) &&
+      (r.description.toLowerCase().includes(q) || r.id.toLowerCase().includes(q))
+    );
+  });
+
   typeColors: Record<RuleType, string> = {
     SYN: 'bg-blue-100 text-blue-700',
     ORD: 'bg-amber-100 text-amber-700',
     COD: 'bg-purple-100 text-purple-700'
   };
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { 
+    this.load(); 
+    this.loadConcepts();
+    this.loadRelations();
+  }
 
   load(): void {
     this.isLoading.set(true);
@@ -67,23 +98,87 @@ export class RuleManagementComponent implements OnInit {
     });
   }
 
+  loadConcepts(): void {
+    this.api.getConcepts().subscribe({
+      next: d => this.concepts.set(d),
+      error: e => console.error('Lỗi tải concepts:', e)
+    });
+  }
+
+  loadRelations(): void {
+    this.api.getRelations().subscribe({
+      next: d => this.relations.set(d),
+      error: e => console.error('Lỗi tải relations:', e)
+    });
+  }
+
+  getConceptTitle(id: string): string {
+    const concept = this.concepts().find(c => c.id === id);
+    return concept ? concept.title : id;
+  }
+
+  getRelationTitle(id: string): string {
+    const rel = this.relations().find(r => r.id === id);
+    return rel ? rel.description : id;
+  }
+
+  selectConcept(id: string): void {
+    if (!this.synForm.concept_ids.includes(id)) {
+      this.synForm.concept_ids.push(id);
+    }
+    this.conceptSearchQuery.set('');
+    this.showConceptDropdown.set(false);
+  }
+
+  removeConcept(id: string): void {
+    this.synForm.concept_ids = this.synForm.concept_ids.filter(cid => cid !== id);
+  }
+
+  onConceptBlur(): void {
+    setTimeout(() => this.showConceptDropdown.set(false), 200);
+  }
+
+  selectRelation(id: string): void {
+    if (!this.synForm.relation_ids.includes(id)) {
+      this.synForm.relation_ids.push(id);
+    }
+    this.relationSearchQuery.set('');
+    this.showRelationDropdown.set(false);
+  }
+
+  removeRelation(id: string): void {
+    this.synForm.relation_ids = this.synForm.relation_ids.filter(rid => rid !== id);
+  }
+
+  onRelationBlur(): void {
+    setTimeout(() => this.showRelationDropdown.set(false), 200);
+  }
+
   openCreate(): void {
-    this.form = { name: '', err_message: '', type: 'SYN', weight: 1.0 };
-    this.synForm = { concept_ids: '', relation_ids: '' };
+    this.form = { name: '', err_message: '', type: 'SYN' };
+    this.synForm = { concept_ids: [], relation_ids: [] };
     this.ordSteps = [{ description: '', rule_ids: '' }];
     this.codAst = '';
+    this.conceptSearchQuery.set('');
+    this.relationSearchQuery.set('');
+    this.showConceptDropdown.set(false);
+    this.showRelationDropdown.set(false);
     this.isEditing.set(false); this.editingId.set(null); this.showModal.set(true); this.errorMsg.set('');
   }
 
   openEdit(r: RuleResponse): void {
-    this.form = { name: r.name, err_message: r.err_message, type: r.type, weight: r.weight };
+    this.form = { name: r.name, err_message: r.err_message, type: r.type };
     this.synForm = {
-      concept_ids: (r.concept_ids ?? []).join(', '),
-      relation_ids: (r.relation_ids ?? []).join(', ')
+      concept_ids: [...(r.concept_ids ?? [])],
+      relation_ids: [...(r.relation_ids ?? [])]
     };
     this.ordSteps = (r.ordered_steps ?? [{ step_order: 1, description: '', rule_ids: [] }])
       .map((s: OrderedStep) => ({ description: s.description, rule_ids: s.rule_ids.join(', ') }));
     this.codAst = r.code_ast ? JSON.stringify(r.code_ast, null, 2) : '';
+    this.conceptSearchQuery.set('');
+    this.relationSearchQuery.set('');
+    this.showConceptDropdown.set(false);
+    this.showRelationDropdown.set(false);
     this.isEditing.set(true); this.editingId.set(r.id); this.showModal.set(true); this.errorMsg.set('');
   }
 
@@ -98,13 +193,12 @@ export class RuleManagementComponent implements OnInit {
     const body: RuleRequest = {
       name: this.form.name.trim(),
       err_message: this.form.err_message.trim(),
-      type: this.form.type,
-      weight: this.form.weight
+      type: this.form.type
     };
 
     if (this.form.type === 'SYN') {
-      body.concept_ids = this.synForm.concept_ids.split(',').map(s => s.trim()).filter(Boolean);
-      body.relation_ids = this.synForm.relation_ids.split(',').map(s => s.trim()).filter(Boolean);
+      body.concept_ids = this.synForm.concept_ids;
+      body.relation_ids = this.synForm.relation_ids;
     } else if (this.form.type === 'ORD') {
       if (!this.ordSteps.some(s => s.description.trim())) { this.errorMsg.set('Phải có ít nhất 1 bước!'); return; }
       body.ordered_steps = this.ordSteps.map((s, i): OrderedStep => ({

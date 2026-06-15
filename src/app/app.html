@@ -32,6 +32,12 @@
           Dashboard
         </a>
 
+        <!-- Làm bài -->
+        <a routerLink="/student/exams" routerLinkActive="text-[#FF6C37] bg-orange-50 font-medium"
+          class="px-3 py-1.5 rounded-md text-sm text-slate-600 hover:text-[#FF6C37] hover:bg-slate-50 transition-colors">
+          Làm bài
+        </a>
+
         @if (currentUser()?.role === 'ADMIN') {
         <!-- Admin mega dropdown -->
         <div id="knowledge-menu" class="relative">

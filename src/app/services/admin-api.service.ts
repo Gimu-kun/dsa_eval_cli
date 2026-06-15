@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface TopicRequest { chapter_id: string; title: string; parent_id?: string; }
 export interface TopicResponse { id: string; title: string; chapter_id: string; parent_id?: string; }
+export interface ChapterResponse { id: string; chapter_name: string; precedes_id?: string; }
 
 export interface RubricRequest  { description: string; acc_w: number; comp_w: number; log_w: number; }
 export interface RubricResponse { id: string; description: string; acc_w: number; comp_w: number; log_w: number; created_at?: string; }
@@ -26,13 +27,13 @@ export interface OrderedStep    { step_order: number; description: string; rule_
 export interface GenericAstNode { root_type: string; content?: string; children?: GenericAstNode[]; }
 
 export interface RuleRequest {
-  name: string; err_message: string; type: 'SYN' | 'ORD' | 'COD'; weight: number;
+  name: string; err_message: string; type: 'SYN' | 'ORD' | 'COD';
   concept_ids?: string[]; relation_ids?: string[];
   ordered_steps?: OrderedStep[];
   code_ast?: GenericAstNode;
 }
 export interface RuleResponse {
-  id: string; name: string; err_message: string; type: 'SYN' | 'ORD' | 'COD'; weight: number;
+  id: string; name: string; err_message: string; type: 'SYN' | 'ORD' | 'COD';
   concept_ids?: string[]; relation_ids?: string[];
   ordered_steps?: OrderedStep[];
   code_ast?: GenericAstNode;
@@ -94,4 +95,5 @@ export class AdminApiService {
   getBloomLevels(): Observable<any[]> { return this.http.get<any[]>(`${this.base}/bloom-levels`); }
   getDifficulties(): Observable<any[]> { return this.http.get<any[]>(`${this.base}/difficulties`); }
   getQuestionTypes(): Observable<any[]> { return this.http.get<any[]>(`${this.base}/question-types`); }
+  getChapters(): Observable<ChapterResponse[]> { return this.http.get<ChapterResponse[]>(`${this.base}/chapters`); }
 }

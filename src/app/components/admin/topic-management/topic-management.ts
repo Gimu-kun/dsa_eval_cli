@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, TopicResponse, TopicRequest } from '../../../services/admin-api.service';
+import { AdminApiService, TopicResponse, TopicRequest, ChapterResponse } from '../../../services/admin-api.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
@@ -14,6 +14,7 @@ export class TopicManagementComponent implements OnInit {
   private readonly api = inject(AdminApiService);
 
   readonly topics = signal<TopicResponse[]>([]);
+  readonly chapters = signal<ChapterResponse[]>([]);
   readonly isLoading = signal(false);
   readonly searchQuery = signal('');
   readonly errorMsg = signal('');
@@ -27,6 +28,10 @@ export class TopicManagementComponent implements OnInit {
   readonly showConfirm = signal(false);
   readonly deletingId = signal<string | null>(null);
 
+  // Search & dropdown flags for Chapter selection
+  readonly chapterSearchQuery = signal('');
+  readonly showChapterDropdown = signal(false);
+
   // Form dùng snake_case để khớp request body
   form = { chapter_id: '', title: '', parent_id: '' };
 
@@ -38,7 +43,17 @@ export class TopicManagementComponent implements OnInit {
     );
   });
 
-  ngOnInit(): void { this.load(); }
+  readonly filteredChapters = computed(() => {
+    const q = this.chapterSearchQuery().toLowerCase().trim();
+    return this.chapters().filter(c =>
+      c.chapter_name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
+    );
+  });
+
+  ngOnInit(): void { 
+    this.load(); 
+    this.loadChapters();
+  }
 
   load(): void {
     this.isLoading.set(true);
@@ -56,21 +71,52 @@ export class TopicManagementComponent implements OnInit {
     });
   }
 
+  loadChapters(): void {
+    this.api.getChapters().subscribe({
+      next: d => this.chapters.set(d),
+      error: e => console.error('Lỗi tải chapters:', e)
+    });
+  }
+
+  getChapterName(id: string): string {
+    const chap = this.chapters().find(c => c.id === id);
+    return chap ? chap.chapter_name : id;
+  }
+
+  selectChapter(chap: ChapterResponse): void {
+    this.form.chapter_id = chap.id;
+    this.chapterSearchQuery.set(chap.chapter_name);
+    this.showChapterDropdown.set(false);
+  }
+
+  onChapterBlur(): void {
+    setTimeout(() => {
+      this.showChapterDropdown.set(false);
+      const current = this.chapters().find(c => c.id === this.form.chapter_id);
+      this.chapterSearchQuery.set(current ? current.chapter_name : '');
+    }, 200);
+  }
+
   openCreate(): void {
     this.form = { chapter_id: '', title: '', parent_id: '' };
+    this.chapterSearchQuery.set('');
+    this.showChapterDropdown.set(false);
     this.isEditing.set(false); this.editingId.set(null); this.showModal.set(true);
     this.errorMsg.set('');
   }
 
   openEdit(t: TopicResponse): void {
     this.form = { chapter_id: t.chapter_id ?? '', title: t.title, parent_id: t.parent_id ?? '' };
+    const chap = this.chapters().find(c => c.id === t.chapter_id);
+    this.chapterSearchQuery.set(chap ? chap.chapter_name : (t.chapter_id ?? ''));
+    this.showChapterDropdown.set(false);
     this.isEditing.set(true); this.editingId.set(t.id); this.showModal.set(true);
     this.errorMsg.set('');
   }
 
   save(): void {
     if (!this.form.title.trim() || !this.form.chapter_id.trim()) {
-      this.errorMsg.set('Tiêu đề và Chapter ID không được để trống!'); return;
+      this.errorMsg.set('Tiêu đề và Chapter không được để trống!'); return;
     }
     const body: TopicRequest = {
       chapter_id: this.form.chapter_id.trim(),

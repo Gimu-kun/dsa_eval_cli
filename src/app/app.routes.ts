@@ -62,6 +62,16 @@ export const routes: Routes = [
         canActivate: [authGuard, adminGuard]
     },
     {
+        path: 'student/exams',
+        loadComponent: () => import('./components/student/exam-selection/exam-selection').then(m => m.ExamSelectionComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'student/solve/:examId',
+        loadComponent: () => import('./components/student/exam-solve/exam-solve').then(m => m.ExamSolveComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: 'evaluation/:submissionId',
         loadComponent: () => import('./components/evaluation-report/evaluation-report').then(m => m.EvaluationReportComponent),
         canActivate: [authGuard]

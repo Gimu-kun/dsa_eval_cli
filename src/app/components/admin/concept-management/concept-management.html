@@ -79,9 +79,50 @@
         <textarea [(ngModel)]="form.synonymsInput" rows="3" placeholder="binary search, tìm kiếm nhị phân, tìm nhị phân, ..." class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"></textarea>
         @if (parseSynonyms().length > 0) { <p class="text-xs text-emerald-600 mt-1">✓ {{ parseSynonyms().length }} synonym</p> }
       </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Topic IDs <span class="font-normal text-slate-400">(cách nhau bằng dấu phẩy, tùy chọn)</span></label>
-        <input type="text" [(ngModel)]="form.topic_ids" placeholder="TOPIC-xxx, TOPIC-yyy" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/>
+      <div class="relative">
+        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Topics liên kết</label>
+        
+        <!-- Selected Topic Tags -->
+        @if (form.topic_ids.length > 0) {
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            @for (tid of form.topic_ids; track tid) {
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 text-orange-700 rounded-lg text-xs border border-orange-100 font-medium">
+                {{ getTopicTitle(tid) }}
+                <button type="button" (click)="removeTopic(tid)" class="hover:text-orange-950 font-bold transition-colors">✕</button>
+              </span>
+            }
+          </div>
+        }
+
+        <!-- Search Input -->
+        <div class="relative">
+          <input type="text" 
+                 [value]="topicSearchQuery()" 
+                 (input)="topicSearchQuery.set($any($event.target).value)"
+                 (focus)="showTopicDropdown.set(true)" 
+                 (blur)="onTopicBlur()"
+                 placeholder="Tìm kiếm và chọn topic..." 
+                 class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"/>
+          
+          <!-- Dropdown List -->
+          @if (showTopicDropdown()) {
+            @if (filteredTopics().length > 0) {
+              <div class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+                @for (t of filteredTopics(); track t.id) {
+                  <div (mousedown)="selectTopic(t.id); $event.preventDefault()" 
+                       class="px-3 py-2 text-sm cursor-pointer hover:bg-orange-50 hover:text-orange-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0">
+                    <span class="font-medium text-slate-700">{{ t.title }}</span>
+                    <span class="text-[10px] font-mono text-slate-400 bg-slate-50 px-1 rounded">{{ t.id }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="absolute z-50 w-full mt-1 p-3 text-xs text-center text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+                Không tìm thấy topic nào
+              </div>
+            }
+          }
+        </div>
       </div>
     </div>
     <div class="flex gap-3 mt-6 justify-end">
