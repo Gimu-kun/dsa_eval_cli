@@ -510,16 +510,15 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
       alert(`Bạn chưa hoàn thành các câu hỏi: ${unansweredIndices.map(i => 'Câu ' + i).join(', ')}. Vui lòng trả lời đầy đủ trước khi nộp bài.`);
       return;
     }
-
     if (confirm('Bạn có chắc chắn muốn nộp bài thi? Hành động này sẽ kết thúc phiên thi và không thể chỉnh sửa lại bài làm.')) {
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
         this.timerInterval = undefined;
       }
       this.examApi.submitExamSession(this.sessionId, this.answersDraft()).subscribe({
-        next: () => {
+        next: (res: any) => {
           alert('Chúc mừng! Bạn đã hoàn thành và nộp bài thi thành công.');
-          this.router.navigate(['/student/exams']);
+          this.router.navigate(['/evaluation', res.id || this.sessionId]);
         },
         error: (err) => {
           alert('Lỗi nộp bài thi: ' + (err.error?.message || err.message));
@@ -534,9 +533,9 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
       this.timerInterval = undefined;
     }
     this.examApi.submitExamSession(this.sessionId, this.answersDraft()).subscribe({
-      next: () => {
+      next: (res: any) => {
         alert('Hệ thống đã tự động nộp bài thi thành công.');
-        this.router.navigate(['/student/exams']);
+        this.router.navigate(['/evaluation', res.id || this.sessionId]);
       },
       error: (err) => {
         alert('Lỗi tự động nộp bài thi: ' + (err.error?.message || err.message));
@@ -544,7 +543,6 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
       }
     });
   }
-
   protected onForfeit(): void {
     if (confirm('Bạn có chắc chắn muốn BỎ CUỘC? Phiên làm bài này sẽ dừng lại ngay lập tức, bị hủy bỏ và dừng tính điểm.')) {
       if (this.timerInterval) {
