@@ -38,7 +38,16 @@ export class RelationManagementComponent implements OnInit {
   readonly relationSearchQuery = signal('');
   readonly showRelationDropdown = signal(false);
 
+  readonly conceptSearchQuery = signal('');
+  readonly showConceptDropdown = signal(false);
+  readonly selectedConcepts = signal<ConceptResponse[]>([]);
+
   form = { description: '', regex_pattern: '', err_message: '', source_id: '', target_id: '', relation_id: '' };
+  
+  readonly selectedSources = signal<ConceptResponse[]>([]);
+  readonly selectedTargets = signal<ConceptResponse[]>([]);
+  readonly sourceOperator = signal<'AND' | 'OR'>('OR');
+  readonly targetOperator = signal<'AND' | 'OR'>('OR');
 
   readonly filtered = computed(() => {
     const q = this.searchQuery().toLowerCase();
@@ -46,6 +55,28 @@ export class RelationManagementComponent implements OnInit {
       r.description.toLowerCase().includes(q) ||
       (r.relation_title ?? '').toLowerCase().includes(q)
     );
+  });
+
+  // Pagination state
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+
+  readonly paginatedRelations = computed(() => {
+    const list = this.filtered();
+    const startIndex = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(startIndex, startIndex + this.pageSize());
+  });
+
+  readonly totalPages = computed(() => {
+    return Math.ceil(this.filtered().length / this.pageSize()) || 1;
+  });
+
+  readonly pageNumbers = computed(() => {
+    return Array.from({ length: this.totalPages() }, (_, i) => i + 1);
+  });
+
+  readonly currentDisplayEndIndex = computed(() => {
+    return Math.min(this.currentPage() * this.pageSize(), this.filtered().length);
   });
 
   readonly filteredSourceConcepts = computed(() => {
@@ -66,6 +97,15 @@ export class RelationManagementComponent implements OnInit {
     const q = this.relationSearchQuery().toLowerCase().trim();
     return this.concepts().filter(c =>
       c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
+    );
+  });
+
+  readonly filteredConcepts = computed(() => {
+    const q = this.conceptSearchQuery().toLowerCase().trim();
+    const selected = this.selectedConcepts().map(x => x.id);
+    return this.concepts().filter(c =>
+      !selected.includes(c.id) &&
+      (c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
     );
   });
 
@@ -98,31 +138,49 @@ export class RelationManagementComponent implements OnInit {
     return concept ? concept.title : id;
   }
 
+  formatConcepts(concepts: ConceptResponse[] | undefined, operator: string | undefined, legacyId?: string, legacyTitle?: string): string {
+    if (concepts && concepts.length > 0) {
+      const joinWord = operator === 'AND' ? '&' : '|';
+      return concepts.map(c => c.title).join(joinWord);
+    }
+    return legacyTitle || legacyId || '—';
+  }
+
   selectSource(c: ConceptResponse): void {
-    this.form.source_id = c.id;
-    this.sourceSearchQuery.set(c.title);
+    if (!this.selectedSources().some(s => s.id === c.id)) {
+      this.selectedSources.update(curr => [...curr, c]);
+    }
+    this.sourceSearchQuery.set('');
     this.showSourceDropdown.set(false);
+  }
+
+  removeSource(c: ConceptResponse): void {
+    this.selectedSources.update(curr => curr.filter(s => s.id !== c.id));
   }
 
   onSourceBlur(): void {
     setTimeout(() => {
       this.showSourceDropdown.set(false);
-      const current = this.concepts().find(c => c.id === this.form.source_id);
-      this.sourceSearchQuery.set(current ? current.title : '');
+      this.sourceSearchQuery.set('');
     }, 200);
   }
 
   selectTarget(c: ConceptResponse): void {
-    this.form.target_id = c.id;
-    this.targetSearchQuery.set(c.title);
+    if (!this.selectedTargets().some(t => t.id === c.id)) {
+      this.selectedTargets.update(curr => [...curr, c]);
+    }
+    this.targetSearchQuery.set('');
     this.showTargetDropdown.set(false);
+  }
+
+  removeTarget(c: ConceptResponse): void {
+    this.selectedTargets.update(curr => curr.filter(t => t.id !== c.id));
   }
 
   onTargetBlur(): void {
     setTimeout(() => {
       this.showTargetDropdown.set(false);
-      const current = this.concepts().find(c => c.id === this.form.target_id);
-      this.targetSearchQuery.set(current ? current.title : '');
+      this.targetSearchQuery.set('');
     }, 200);
   }
 
@@ -140,14 +198,40 @@ export class RelationManagementComponent implements OnInit {
     }, 200);
   }
 
+  selectConcept(c: ConceptResponse): void {
+    if (!this.selectedConcepts().some(x => x.id === c.id)) {
+      this.selectedConcepts.update(curr => [...curr, c]);
+    }
+    this.conceptSearchQuery.set('');
+    this.showConceptDropdown.set(false);
+  }
+
+  removeConcept(c: ConceptResponse): void {
+    this.selectedConcepts.update(curr => curr.filter(x => x.id !== c.id));
+  }
+
+  onConceptBlur(): void {
+    setTimeout(() => {
+      this.showConceptDropdown.set(false);
+      this.conceptSearchQuery.set('');
+    }, 200);
+  }
+
   openCreate(): void {
     this.form = { description: '', regex_pattern: '', err_message: '', source_id: '', target_id: '', relation_id: '' };
+    this.selectedSources.set([]);
+    this.selectedTargets.set([]);
+    this.selectedConcepts.set([]);
+    this.sourceOperator.set('OR');
+    this.targetOperator.set('OR');
     this.sourceSearchQuery.set('');
     this.targetSearchQuery.set('');
     this.relationSearchQuery.set('');
+    this.conceptSearchQuery.set('');
     this.showSourceDropdown.set(false);
     this.showTargetDropdown.set(false);
     this.showRelationDropdown.set(false);
+    this.showConceptDropdown.set(false);
     this.isEditing.set(false); this.editingId.set(null); this.showModal.set(true); this.errorMsg.set('');
   }
 
@@ -156,11 +240,37 @@ export class RelationManagementComponent implements OnInit {
       description: r.description, regex_pattern: r.regex_pattern, err_message: r.err_message,
       source_id: r.source_id ?? '', target_id: r.target_id ?? '', relation_id: r.relation_id ?? ''
     };
-    const src = this.concepts().find(c => c.id === r.source_id);
-    this.sourceSearchQuery.set(src ? src.title : (r.source_id ?? ''));
+    
+    if (r.source_concepts) {
+      this.selectedSources.set(r.source_concepts);
+    } else if (r.source_id) {
+      const src = this.concepts().find(c => c.id === r.source_id);
+      this.selectedSources.set(src ? [src] : []);
+    } else {
+      this.selectedSources.set([]);
+    }
 
-    const tgt = this.concepts().find(c => c.id === r.target_id);
-    this.targetSearchQuery.set(tgt ? tgt.title : (r.target_id ?? ''));
+    if (r.target_concepts) {
+      this.selectedTargets.set(r.target_concepts);
+    } else if (r.target_id) {
+      const tgt = this.concepts().find(c => c.id === r.target_id);
+      this.selectedTargets.set(tgt ? [tgt] : []);
+    } else {
+      this.selectedTargets.set([]);
+    }
+
+    if (r.concepts) {
+      this.selectedConcepts.set(r.concepts);
+    } else {
+      this.selectedConcepts.set([]);
+    }
+
+    this.sourceOperator.set((r.source_operator as 'AND' | 'OR') || 'OR');
+    this.targetOperator.set((r.target_operator as 'AND' | 'OR') || 'OR');
+
+    this.sourceSearchQuery.set('');
+    this.targetSearchQuery.set('');
+    this.conceptSearchQuery.set('');
 
     const rel = this.concepts().find(c => c.id === r.relation_id);
     this.relationSearchQuery.set(rel ? rel.title : (r.relation_id ?? ''));
@@ -168,6 +278,7 @@ export class RelationManagementComponent implements OnInit {
     this.showSourceDropdown.set(false);
     this.showTargetDropdown.set(false);
     this.showRelationDropdown.set(false);
+    this.showConceptDropdown.set(false);
     this.isEditing.set(true); this.editingId.set(r.id); this.showModal.set(true); this.errorMsg.set('');
   }
 
@@ -180,7 +291,11 @@ export class RelationManagementComponent implements OnInit {
     const body: RelationRequest = {
       description: this.form.description.trim(), regex_pattern: this.form.regex_pattern.trim(),
       err_message: this.form.err_message.trim(), relation_id: this.form.relation_id.trim(),
-      source_id: this.form.source_id.trim() || undefined, target_id: this.form.target_id.trim() || undefined
+      source_ids: this.selectedSources().map(s => s.id),
+      source_operator: this.sourceOperator(),
+      target_ids: this.selectedTargets().map(t => t.id),
+      target_operator: this.targetOperator(),
+      concept_ids: this.selectedConcepts().map(x => x.id)
     };
     this.isSaving.set(true);
     const req = this.isEditing() ? this.api.updateRelation(this.editingId()!, body) : this.api.createRelation(body);

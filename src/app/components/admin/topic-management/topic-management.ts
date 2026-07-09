@@ -43,6 +43,28 @@ export class TopicManagementComponent implements OnInit {
     );
   });
 
+  // Pagination state
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+
+  readonly paginatedTopics = computed(() => {
+    const list = this.filtered();
+    const startIndex = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(startIndex, startIndex + this.pageSize());
+  });
+
+  readonly totalPages = computed(() => {
+    return Math.ceil(this.filtered().length / this.pageSize()) || 1;
+  });
+
+  readonly pageNumbers = computed(() => {
+    return Array.from({ length: this.totalPages() }, (_, i) => i + 1);
+  });
+
+  readonly currentDisplayEndIndex = computed(() => {
+    return Math.min(this.currentPage() * this.pageSize(), this.filtered().length);
+  });
+
   readonly filteredChapters = computed(() => {
     const q = this.chapterSearchQuery().toLowerCase().trim();
     return this.chapters().filter(c =>

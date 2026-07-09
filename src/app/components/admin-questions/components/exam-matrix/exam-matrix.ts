@@ -21,11 +21,13 @@ export class ExamMatrixComponent implements OnInit {
   protected readonly errorMessage = signal<string>('');
   protected readonly isGeneratingExam = signal<boolean>(false);
   protected readonly generatedExam = signal<any>(null);
+  protected readonly editingExam = signal<any>(null);
+  protected readonly showEditExamModal = signal<boolean>(false);
 
   protected readonly savedTemplates = signal<any[]>([]);
   protected selectedTemplateId = '';
   protected readonly matrixMode = signal<'custom' | 'auto'>('custom');
-  
+
   protected readonly savedExams = signal<any[]>([]);
   protected examTitle = 'Đề thi tự luận Cấu trúc dữ liệu';
 
@@ -181,7 +183,7 @@ export class ExamMatrixComponent implements OnInit {
 
   protected get calculatedDifficultyId(): string {
     const acronym = this.calculatedDifficultyAcronym;
-    const diffObj = this.difficulties().find(d => 
+    const diffObj = this.difficulties().find(d =>
       (d.displayName || d.display_name || '').toUpperCase() === acronym
     );
     return diffObj ? diffObj.id : acronym;
@@ -249,8 +251,8 @@ export class ExamMatrixComponent implements OnInit {
       chaps.forEach((c, index) => {
         const name = (c.chapter_name || '').toLowerCase();
         if (name.includes('chương 2') || name.includes('chương 3') || name.includes('chương 4') || name.includes('chương 5') ||
-            name.includes('c2') || name.includes('c3') || name.includes('c4') || name.includes('c5') ||
-            name.includes('chapter 2') || name.includes('chapter 3') || name.includes('chapter 4') || name.includes('chapter 5')) {
+          name.includes('c2') || name.includes('c3') || name.includes('c4') || name.includes('c5') ||
+          name.includes('chapter 2') || name.includes('chapter 3') || name.includes('chapter 4') || name.includes('chapter 5')) {
           this.selectedChapterIds.push(c.id);
         }
       });
@@ -483,7 +485,7 @@ export class ExamMatrixComponent implements OnInit {
   protected updateSavedExamStatus(exam: any, status: string): void {
     this.successMessage.set('');
     this.errorMessage.set('');
-    
+
     const payload = {
       id: exam.id,
       title: exam.title,
@@ -510,8 +512,8 @@ export class ExamMatrixComponent implements OnInit {
     });
   }
 
-  protected onRemoveQuestion(index: number): void {
-    const exam = this.generatedExam();
+  protected onRemoveQuestion(index: number, isEditing: boolean = false): void {
+    const exam = isEditing ? this.editingExam() : this.generatedExam();
     if (exam && exam.customQuestions) {
       exam.customQuestions.splice(index, 1);
       exam.customQuestions.forEach((cq: any, idx: number) => {
@@ -519,13 +521,17 @@ export class ExamMatrixComponent implements OnInit {
         cq.sequence_order = idx + 1;
       });
       const calculated = this.recalculateExamStats(exam);
-      this.generatedExam.set({ ...calculated });
+      if (isEditing) {
+        this.editingExam.set({ ...calculated });
+      } else {
+        this.generatedExam.set({ ...calculated });
+      }
       this.successMessage.set('Đã xóa câu hỏi khỏi đề thi.');
     }
   }
 
-  protected onMaxScoreChange(index: number, newScore: number): void {
-    this.onScoreChange(index, newScore);
+  protected onMaxScoreChange(index: number, newScore: number, isEditing: boolean = false): void {
+    this.onScoreChange(index, newScore, isEditing);
   }
 
   private recalculateExamStats(exam: any): any {
@@ -535,7 +541,7 @@ export class ExamMatrixComponent implements OnInit {
     let totalTime = 0;
     exam.customQuestions.forEach((cq: any) => {
       score += Number(cq.maxScore) || 0;
-      
+
       let qTime = cq.suggestedTime || cq.suggested_time;
       if (qTime == null && cq.question) {
         qTime = cq.question.suggested_time || cq.question.suggestedTime;
@@ -559,23 +565,31 @@ export class ExamMatrixComponent implements OnInit {
     return exam;
   }
 
-  protected onScoreChange(index: number, newScore: number): void {
-    const exam = this.generatedExam();
+  protected onScoreChange(index: number, newScore: number, isEditing: boolean = false): void {
+    const exam = isEditing ? this.editingExam() : this.generatedExam();
     if (exam && exam.customQuestions && exam.customQuestions[index]) {
       exam.customQuestions[index].maxScore = Number(newScore) || 0;
       const calculated = this.recalculateExamStats(exam);
-      this.generatedExam.set({ ...calculated });
+      if (isEditing) {
+        this.editingExam.set({ ...calculated });
+      } else {
+        this.generatedExam.set({ ...calculated });
+      }
     }
   }
 
-  protected onTimeChange(index: number, newTime: number): void {
-    const exam = this.generatedExam();
+  protected onTimeChange(index: number, newTime: number, isEditing: boolean = false): void {
+    const exam = isEditing ? this.editingExam() : this.generatedExam();
     if (exam && exam.customQuestions && exam.customQuestions[index]) {
       const parsedTime = Number(newTime) || 1;
       exam.customQuestions[index].suggestedTime = parsedTime;
       exam.customQuestions[index].suggested_time = parsedTime;
       const calculated = this.recalculateExamStats(exam);
-      this.generatedExam.set({ ...calculated });
+      if (isEditing) {
+        this.editingExam.set({ ...calculated });
+      } else {
+        this.generatedExam.set({ ...calculated });
+      }
     }
   }
 
@@ -608,7 +622,7 @@ export class ExamMatrixComponent implements OnInit {
   protected getModalFilteredQuestions(): Question[] {
     let list = this.getQuestionsList() || [];
 
-    const exam = this.generatedExam();
+    const exam = this.editingExam() || this.generatedExam();
     if (exam && exam.customQuestions) {
       const selectedIds = exam.customQuestions
         .filter((cq: any, idx: number) => idx !== this.modalTargetIndex)
@@ -633,7 +647,8 @@ export class ExamMatrixComponent implements OnInit {
   }
 
   protected selectQuestionFromBank(question: Question): void {
-    const exam = this.generatedExam();
+    const isEditing = !!this.editingExam();
+    const exam = isEditing ? this.editingExam() : this.generatedExam();
     if (!exam) return;
 
     const mappedQ: any = {
@@ -670,13 +685,17 @@ export class ExamMatrixComponent implements OnInit {
     }
 
     const calculated = this.recalculateExamStats(exam);
-    this.generatedExam.set({ ...calculated });
+    if (isEditing) {
+      this.editingExam.set({ ...calculated });
+    } else {
+      this.generatedExam.set({ ...calculated });
+    }
     this.closeQuestionSelector();
     this.successMessage.set(this.modalTargetIndex >= 0 ? 'Thay thế câu hỏi thành công!' : 'Thêm câu hỏi mới vào đề thành công!');
   }
 
-  protected moveQuestionUp(index: number): void {
-    const exam = this.generatedExam();
+  protected moveQuestionUp(index: number, isEditing: boolean = false): void {
+    const exam = isEditing ? this.editingExam() : this.generatedExam();
     if (!exam || !exam.customQuestions || index <= 0) return;
 
     // Swap items
@@ -690,11 +709,15 @@ export class ExamMatrixComponent implements OnInit {
       cq.sequence_order = idx + 1;
     });
 
-    this.generatedExam.set({ ...exam });
+    if (isEditing) {
+      this.editingExam.set({ ...exam });
+    } else {
+      this.generatedExam.set({ ...exam });
+    }
   }
 
-  protected moveQuestionDown(index: number): void {
-    const exam = this.generatedExam();
+  protected moveQuestionDown(index: number, isEditing: boolean = false): void {
+    const exam = isEditing ? this.editingExam() : this.generatedExam();
     if (!exam || !exam.customQuestions || index >= exam.customQuestions.length - 1) return;
 
     // Swap items
@@ -708,6 +731,62 @@ export class ExamMatrixComponent implements OnInit {
       cq.sequence_order = idx + 1;
     });
 
-    this.generatedExam.set({ ...exam });
+    if (isEditing) {
+      this.editingExam.set({ ...exam });
+    } else {
+      this.generatedExam.set({ ...exam });
+    }
+  }
+
+  protected onEditExam(exam: any): void {
+    this.successMessage.set('');
+    this.errorMessage.set('');
+    // Clone target exam completely
+    const cloned = JSON.parse(JSON.stringify(exam));
+    const recalculated = this.recalculateExamStats(cloned);
+    this.editingExam.set(recalculated);
+    this.showEditExamModal.set(true);
+  }
+
+  protected closeEditExamModal(): void {
+    this.showEditExamModal.set(false);
+    this.editingExam.set(null);
+  }
+
+  protected onUpdateExam(): void {
+    const exam = this.editingExam();
+    if (!exam) return;
+
+    if (Math.abs(exam.totalScore - 10.0) > 0.001) {
+      this.errorMessage.set('Không thể lưu đề thi: Tổng điểm của đề thi phải bằng đúng 10.0 điểm.');
+      return;
+    }
+
+    const payload = {
+      id: exam.id,
+      title: exam.title.trim(),
+      difficulty: exam.difficulty || 'MEDIUM',
+      duration: exam.duration || 60,
+      total_time: exam.duration || 60,
+      total_score: exam.totalScore || 10.0,
+      status: exam.status || 'ACTIVE',
+      questions: exam.customQuestions ? exam.customQuestions.map((cq: any) => ({
+        question_id: cq.question.id,
+        max_score: cq.maxScore || 1.0,
+        suggested_time: cq.suggestedTime || cq.suggested_time || 20,
+        sequence_order: cq.sequenceOrder || 1
+      })) : []
+    };
+
+    this.examApi.saveExam(payload).subscribe({
+      next: () => {
+        this.successMessage.set(`Cập nhật đề thi "${exam.title}" thành công!`);
+        this.closeEditExamModal();
+        this.loadSavedExams();
+      },
+      error: (err) => {
+        this.errorMessage.set(err.error?.message || 'Có lỗi xảy ra khi cập nhật đề thi.');
+      }
+    });
   }
 }

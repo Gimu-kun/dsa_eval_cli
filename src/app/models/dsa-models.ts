@@ -23,6 +23,15 @@ export interface Relation {
   relation_concept_id: Concept | null;
   src_concept_id: Concept | null;
   target_concept_id: Concept | null;
+  source_operator?: string;
+  source_concepts?: Concept[];
+  target_operator?: string;
+  target_concepts?: Concept[];
+  concepts?: Concept[];
+}
+
+export interface RulePattern {
+  patterns: string[];
 }
 
 export interface Rule {
@@ -35,6 +44,7 @@ export interface Rule {
   logical_type: 'AND' | 'OR';
   regex_pattern: string;
   weight: number;
+  regex_patterns?: RulePattern[];
 }
 
 export interface EvaluatedFunction {

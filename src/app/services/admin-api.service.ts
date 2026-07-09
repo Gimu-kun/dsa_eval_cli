@@ -14,29 +14,53 @@ export interface ConceptResponse { id: string; title: string; synonyms: string[]
 
 export interface RelationRequest  {
   description: string; regex_pattern: string; err_message: string;
-  source_id?: string; target_id?: string; relation_id: string;
+  source_id?: string; target_id?: string;
+  source_ids?: string[]; source_operator?: string;
+  target_ids?: string[]; target_operator?: string;
+  relation_id: string;
+  concept_ids?: string[];
 }
 export interface RelationResponse {
   id: string; description: string; regex_pattern: string; err_message: string;
   source_id?: string; source_title?: string;
   target_id?: string; target_title?: string;
+  source_operator?: string; source_concepts?: ConceptResponse[];
+  target_operator?: string; target_concepts?: ConceptResponse[];
   relation_id?: string; relation_title?: string;
+  concepts?: ConceptResponse[];
 }
 
 export interface OrderedStep    { step_order: number; description: string; rule_ids: string[]; }
 export interface GenericAstNode { root_type: string; content?: string; children?: GenericAstNode[]; }
+
+export interface RulePattern { patterns: string[]; }
+
+export interface CodRuleStep {
+  u: string;
+  su: string[];
+  w: number;
+  o: string;
+  co: {
+    t: string[];
+    ast: GenericAstNode;
+  };
+}
 
 export interface RuleRequest {
   name: string; err_message: string; type: 'SYN' | 'ORD' | 'COD';
   concept_ids?: string[]; relation_ids?: string[];
   ordered_steps?: OrderedStep[];
   code_ast?: GenericAstNode;
+  regex_patterns?: RulePattern[];
+  cod_steps?: CodRuleStep[];
 }
 export interface RuleResponse {
   id: string; name: string; err_message: string; type: 'SYN' | 'ORD' | 'COD';
   concept_ids?: string[]; relation_ids?: string[];
   ordered_steps?: OrderedStep[];
   code_ast?: GenericAstNode;
+  regex_patterns?: RulePattern[];
+  cod_steps?: CodRuleStep[];
 }
 
 export interface FuncRequest  { name: string; regex_pattern: string; err_message: string; }

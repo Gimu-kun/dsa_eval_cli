@@ -26,10 +26,15 @@
       <div class="flex items-center space-x-1">
         @if (currentUser()) {
         <!-- Dashboard -->
-        <a routerLink="/" routerLinkActive="text-[#FF6C37] bg-orange-50 font-medium"
-          [routerLinkActiveOptions]="{exact: true}"
+        <a routerLink="/dashboard" routerLinkActive="text-[#FF6C37] bg-orange-50 font-medium"
           class="px-3 py-1.5 rounded-md text-sm text-slate-600 hover:text-[#FF6C37] hover:bg-slate-50 transition-colors">
           Dashboard
+        </a>
+
+        <!-- DashBoard(test) -->
+        <a routerLink="/test/dashboard" routerLinkActive="text-[#FF6C37] bg-orange-50 font-medium"
+          class="hidden px-3 py-1.5 rounded-md text-sm text-slate-600 hover:text-[#FF6C37] hover:bg-slate-50 transition-colors">
+          DashBoard(test)
         </a>
 
         <!-- Làm bài -->

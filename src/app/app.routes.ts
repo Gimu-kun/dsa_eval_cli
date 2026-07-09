@@ -5,7 +5,7 @@ import { adminGuard } from './guards/admin.guard';
 export const routes: Routes = [
     {
         path: '',
-        redirectTo: 'test/dashboard',
+        redirectTo: 'dashboard',
         pathMatch: 'full'
       },
     {
@@ -17,6 +17,11 @@ export const routes: Routes = [
     {
         path: 'admin/questions',
         loadComponent: () => import('./components/admin-questions/admin-questions').then(m => m.AdminQuestionsComponent),
+        canActivate: [authGuard, adminGuard]
+    },
+    {
+        path: 'admin/summary',
+        loadComponent: () => import('./components/admin/evaluation-summary/evaluation-summary').then(m => m.EvaluationSummaryComponent),
         canActivate: [authGuard, adminGuard]
     },
     {
@@ -77,12 +82,9 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
-        path: 'test/evaluation',
-        loadComponent: () => import('./components/test-evaluation/test-evaluation').then(m => m.TestEvaluationComponent)
-    },
-    {
-        path: 'test/dashboard',
-        loadComponent: () => import('./components/test-dashboard/test-dashboard').then(m => m.TestDashboardComponent)
+        path: 'dashboard',
+        loadComponent: () => import('./components/dashboard/dashboard').then(m => m.DashboardComponent),
+        canActivate: [authGuard]
     },
     {
         path: '**',

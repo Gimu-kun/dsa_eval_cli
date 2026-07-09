@@ -38,7 +38,7 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
   protected sessionId: string = '';
   protected readonly exam = signal<Exam | undefined>(undefined);
   protected readonly activeQuestionIndex = signal<number>(0);
-  protected readonly answersDraft = signal<{[questionId: string]: string}>({});
+  protected readonly answersDraft = signal<{ [questionId: string]: string }>({});
   protected readonly topics = signal<TopicResponse[]>([]);
   protected readonly difficulties = signal<any[]>([]);
   protected readonly bloomLevels = signal<any[]>([]);
@@ -46,6 +46,7 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
 
   // Workspace Inputs
   protected readonly submittedText = signal<string>(''); // For free text/code editor
+  protected readonly submittedExplanation = signal<string>(''); // For logic explanation text
   protected readonly inputMode = signal<'free' | 'structured'>('free'); // For APPLICATION question mode
   protected readonly steps = signal<StepItem[]>([{ id: '1', text: '' }]); // For procedural step mode
 
@@ -56,10 +57,14 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
 
   // AST Validation
   protected readonly validatingSyntax = signal<boolean>(false);
-  protected readonly astValidationResult = signal<{valid: boolean, message: string} | null>(null);
+  protected readonly astValidationResult = signal<{ valid: boolean, message: string } | null>(null);
 
   // Auto-save
   private autoSaveTimeout?: any;
+
+  // Submission State
+  protected readonly isSubmitting = signal<boolean>(false);
+  protected readonly submittingProgress = signal<number>(0);
 
   protected readonly activeQuestion = computed(() => {
     const ex = this.exam();
@@ -135,7 +140,8 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
     // 2. Fetch active session or create one
     this.examApi.fetchActiveSession(this.userId).subscribe({
       next: (session) => {
-        if (session && session.exam_id === examId) {
+        const activeExamId = session ? (session.exam_id || session.examId) : null;
+        if (session && activeExamId === examId) {
           this.sessionId = session.id;
           this.loadSessionAnswersAndExams(session, examId);
         } else {
@@ -169,21 +175,27 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
   }
 
   private mapExam(ex: any): Exam {
+    console.log('Raw API Response (Exam):', ex);
     if (!ex) return ex;
-    const questionsList = ex.exam_questions || ex.examQuestions;
+    const questionsList = ex.exam_questions || ex.examQuestions || ex.questions;
+    console.log('Extracted questionsList:', questionsList);
+    const mappedCustomQuestions = questionsList ? questionsList.map((eq: any) => ({
+      question: eq.question || eq,
+      maxScore: eq.max_score || eq.maxScore || eq.max_score || 1.0,
+      suggestedTime: eq.suggested_time || eq.suggestedTime || eq.suggested_time || 20,
+      sequenceOrder: eq.sequence_order || eq.sequenceOrder || eq.sequence_order || 1
+    })).sort((a: any, b: any) => (a.sequenceOrder || 1) - (b.sequenceOrder || 1)) : [];
+    
+    console.log('Mapped customQuestions:', mappedCustomQuestions);
+    
     return {
       ...ex,
-      customQuestions: questionsList ? questionsList.map((eq: any) => ({
-        question: eq.question,
-        maxScore: eq.max_score || eq.maxScore || eq.max_score,
-        suggestedTime: eq.suggested_time || eq.suggestedTime || eq.suggested_time,
-        sequenceOrder: eq.sequence_order || eq.sequenceOrder || eq.sequence_order
-      })).sort((a: any, b: any) => (a.sequenceOrder || 1) - (b.sequenceOrder || 1)) : []
+      customQuestions: mappedCustomQuestions
     };
   }
 
   private loadSessionAnswersAndExams(session: any, examId: string): void {
-    let drafts: {[key: string]: string} = {};
+    let drafts: { [key: string]: string } = {};
     if (session.answers_json) {
       try {
         drafts = JSON.parse(session.answers_json);
@@ -275,10 +287,26 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
 
     const drafts = { ...this.answersDraft() };
     const typeId = this.getQuestionTypeId(currentQ.type);
-    if (typeId === 'PROCEDURE' || (typeId === 'APPLICATION' && this.inputMode() === 'structured')) {
+
+    if (typeId === 'APPLICATION') {
+      if (this.inputMode() === 'structured') {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'structured',
+          steps: this.steps().map(s => s.text),
+          explanation: this.submittedExplanation()
+        });
+      } else {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'free',
+          code: this.submittedText(),
+          explanation: this.submittedExplanation(),
+          text: this.submittedText()
+        });
+      }
+    } else if (typeId === 'PROCEDURE') {
       drafts[currentQ.id] = JSON.stringify({
-        mode: 'structured',
-        steps: this.steps().map(s => s.text)
+        mode: 'free',
+        text: this.submittedText()
       });
     } else {
       drafts[currentQ.id] = JSON.stringify({
@@ -296,6 +324,8 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
     this.astValidationResult.set(null);
 
     const typeId = this.getQuestionTypeId(q.type);
+    this.submittedExplanation.set('');
+
     if (!draftStr) {
       this.submittedText.set('');
       this.steps.set([{ id: '1', text: '' }]);
@@ -306,20 +336,29 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
     try {
       const data = JSON.parse(draftStr);
       if (data && typeof data === 'object') {
+        this.submittedExplanation.set(data.explanation || '');
         if (data.mode === 'structured') {
-          this.inputMode.set('structured');
-          if (Array.isArray(data.steps)) {
-            this.steps.set(data.steps.map((text: string, idx: number) => ({
-              id: (idx + 1).toString(),
-              text
-            })));
-          } else {
+          if (typeId === 'PROCEDURE') {
+            this.inputMode.set('free');
+            const stepsList = Array.isArray(data.steps) ? data.steps : [];
+            const formatted = stepsList.map((stepText: string, idx: number) => `- Bước ${idx + 1}: ${stepText}`).join('\n');
+            this.submittedText.set(formatted);
             this.steps.set([{ id: '1', text: '' }]);
+          } else {
+            this.inputMode.set('structured');
+            if (Array.isArray(data.steps)) {
+              this.steps.set(data.steps.map((text: string, idx: number) => ({
+                id: (idx + 1).toString(),
+                text
+              })));
+            } else {
+              this.steps.set([{ id: '1', text: '' }]);
+            }
+            this.submittedText.set('');
           }
-          this.submittedText.set('');
         } else {
           this.inputMode.set('free');
-          this.submittedText.set(data.text || '');
+          this.submittedText.set(data.code || data.text || '');
           this.steps.set([{ id: '1', text: '' }]);
         }
       } else {
@@ -336,15 +375,25 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
 
   protected onTextChange(value: string): void {
     this.submittedText.set(value);
-    
+
     // Save draft local immediately for responsive icon updates
     const currentQ = this.activeQuestion();
     if (currentQ) {
       const drafts = { ...this.answersDraft() };
-      drafts[currentQ.id] = JSON.stringify({
-        mode: 'free',
-        text: value
-      });
+      const typeId = this.getQuestionTypeId(currentQ.type);
+      if (typeId === 'APPLICATION') {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'free',
+          code: value,
+          explanation: this.submittedExplanation(),
+          text: value
+        });
+      } else {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'free',
+          text: value
+        });
+      }
       this.answersDraft.set(drafts);
     }
 
@@ -361,11 +410,54 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
     const currentQ = this.activeQuestion();
     if (currentQ) {
       const drafts = { ...this.answersDraft() };
-      drafts[currentQ.id] = JSON.stringify({
-        mode: 'structured',
-        steps: this.steps().map(s => s.text)
-      });
+      const typeId = this.getQuestionTypeId(currentQ.type);
+      if (typeId === 'APPLICATION') {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'structured',
+          steps: this.steps().map(s => s.text),
+          explanation: this.submittedExplanation()
+        });
+      } else {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'structured',
+          steps: this.steps().map(s => s.text)
+        });
+      }
       this.answersDraft.set(drafts);
+    }
+
+    if (this.autoSaveTimeout) {
+      clearTimeout(this.autoSaveTimeout);
+    }
+    this.autoSaveTimeout = setTimeout(() => {
+      this.saveDraftToBackend();
+    }, 2000);
+  }
+
+  protected onExplanationChange(value: string): void {
+    this.submittedExplanation.set(value);
+
+    const currentQ = this.activeQuestion();
+    if (currentQ) {
+      const drafts = { ...this.answersDraft() };
+      const typeId = this.getQuestionTypeId(currentQ.type);
+      if (typeId === 'APPLICATION') {
+        if (this.inputMode() === 'structured') {
+          drafts[currentQ.id] = JSON.stringify({
+            mode: 'structured',
+            steps: this.steps().map(s => s.text),
+            explanation: value
+          });
+        } else {
+          drafts[currentQ.id] = JSON.stringify({
+            mode: 'free',
+            code: this.submittedText(),
+            explanation: value,
+            text: this.submittedText()
+          });
+        }
+        this.answersDraft.set(drafts);
+      }
     }
 
     if (this.autoSaveTimeout) {
@@ -515,13 +607,32 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
         clearInterval(this.timerInterval);
         this.timerInterval = undefined;
       }
+      
+      this.isSubmitting.set(true);
+      this.submittingProgress.set(0);
+      
+      // Simulate progress while waiting for API
+      const progressInterval = setInterval(() => {
+        this.submittingProgress.update(v => {
+          if (v >= 90) return 90;
+          return v + Math.floor(Math.random() * 15) + 5;
+        });
+      }, 300);
+
       this.examApi.submitExamSession(this.sessionId, this.answersDraft()).subscribe({
         next: (res: any) => {
-          alert('Chúc mừng! Bạn đã hoàn thành và nộp bài thi thành công.');
-          this.router.navigate(['/evaluation', res.id || this.sessionId]);
+          clearInterval(progressInterval);
+          this.submittingProgress.set(100);
+          
+          setTimeout(() => {
+            this.router.navigate(['/evaluation', this.sessionId]);
+          }, 500);
         },
         error: (err) => {
-          alert('Lỗi nộp bài thi: ' + (err.error?.message || err.message));
+          clearInterval(progressInterval);
+          this.isSubmitting.set(false);
+          this.submittingProgress.set(0);
+          alert('Lỗi nộp bài: ' + (err.error?.message || err.message));
         }
       });
     }
@@ -617,7 +728,7 @@ export class ExamSolveComponent implements OnInit, OnDestroy {
     } else {
       val = typeField;
     }
-    
+
     const key = val.toUpperCase();
     if (key === 'D' || key === 'DESCRIPTIVE') {
       return 'DESCRIPTIVE';

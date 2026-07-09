@@ -1,20 +1,70 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ExamApiService } from '../../services/exam-api.service';
+import { TokenService } from '../../services/token.service';
+
+import { AdminMockDataService } from '../../services/admin-mock-data.service';
 
 @Component({
   selector: 'app-evaluation-report',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './evaluation-report.html'
 })
 export class EvaluationReportComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly examApi = inject(ExamApiService);
+  private readonly tokenService = inject(TokenService);
+  private readonly mockDataService = inject(AdminMockDataService);
+
+  protected readonly isAdmin = computed(() => {
+    const user = this.tokenService.currentUser();
+    if (!user) return false;
+    const role = user.role?.toUpperCase() || '';
+    return role === 'ADMIN' || role === 'INSTRUCTOR' || role === 'ROLE_ADMIN' || user.username === 'admin01';
+  });
+  protected manualScore = signal<number | null>(null);
 
   protected readonly examSubmission = signal<any | undefined>(undefined);
   protected readonly activeQuestionIndex = signal<number>(0);
+  protected isMockData = signal<boolean>(false);
+  protected mockExamName = signal<string>('');
+  protected mockStt = signal<number>(0);
+
+  ngOnInit(): void {
+    const submissionId = this.route.snapshot.paramMap.get('submissionId');
+    if (submissionId) {
+      if (submissionId.startsWith('MOCK_')) {
+        // e.g. MOCK_Kiểm tra cuối kì_1
+        this.isMockData.set(true);
+        const parts = submissionId.split('_');
+        if (parts.length >= 3) {
+          const examName = parts.slice(1, parts.length - 1).join('_'); // Handles exam names with _ if any
+          const stt = parseInt(parts[parts.length - 1], 10);
+          this.mockExamName.set(examName);
+          this.mockStt.set(stt);
+
+          const mockReport = this.mockDataService.generateSubmissionReport(examName, stt);
+          if (mockReport) {
+            this.examSubmission.set(mockReport);
+            return;
+          }
+        }
+      }
+
+      this.examApi.fetchExamSubmission(submissionId).subscribe({
+        next: (res) => {
+          this.examSubmission.set(res);
+        },
+        error: (err) => {
+          console.error('Lỗi tải kết quả đánh giá:', err);
+          alert('Không thể tải kết quả đánh giá: ' + (err.error?.message || err.message));
+        }
+      });
+    }
+  }
 
   protected readonly activeExplanation = signal<boolean>(false);
   protected readonly explanationTitle = signal<string>('');
@@ -48,7 +98,7 @@ export class EvaluationReportComponent implements OnInit {
     text += `2. Mối quan hệ ngữ nghĩa (Semantic Relations): Kiểm tra xem các khái niệm có liên kết logic với nhau thông qua các mẫu câu được định nghĩa hay không.\n\n`;
     text += `3. Các quy tắc (Rules): Đánh giá trình tự giải thuật và cấu trúc mã giả bằng đối sánh cây cú pháp trừu tượng (AST). Các cấu trúc điều khiển (if, else, while, for) được dựng thành cây và tính độ tương đồng cấu trúc.\n\n`;
     text += `Điểm số hiện tại phản ánh chính xác cấu trúc bài giải của bạn so với mô hình mong đợi.`;
-    
+
     this.explanationText.set(text);
     this.activeExplanation.set(true);
   }
@@ -59,7 +109,7 @@ export class EvaluationReportComponent implements OnInit {
     text += `- Xem lại tài liệu học tập của bài học liên quan.\n`;
     text += `- Luyện tập viết lại thuật toán và chú ý đầy đủ các bước đặc trưng (ví dụ: các biến con trỏ, điều kiện dừng vòng lặp, cập nhật vị trí).\n`;
     text += `- Thử sức với các câu hỏi ứng dụng có độ khó tương tự trong ngân hàng đề thi.\n`;
-    
+
     this.explanationText.set(text);
     this.activeExplanation.set(true);
   }
@@ -155,18 +205,24 @@ export class EvaluationReportComponent implements OnInit {
     return `${(score * 100).toFixed(0)}%`;
   }
 
-  ngOnInit(): void {
-    const submissionId = this.route.snapshot.paramMap.get('submissionId');
-    if (submissionId) {
-      this.examApi.fetchExamSubmission(submissionId).subscribe({
-        next: (res) => {
-          this.examSubmission.set(res);
-        },
-        error: (err) => {
-          console.error('Lỗi tải kết quả đánh giá:', err);
-          alert('Không thể tải kết quả đánh giá: ' + (err.error?.message || err.message));
+
+
+  protected saveManualScore(): void {
+    const score = this.manualScore();
+    if (score !== null && score >= 0 && score <= 10) {
+      const sub = this.examSubmission();
+      if (sub) {
+        if (this.isMockData()) {
+          this.mockDataService.updateTeacherScore(this.mockExamName(), this.mockStt(), score);
         }
-      });
+        
+        const updatedSub = { ...sub, score: score };
+        this.examSubmission.set(updatedSub);
+        alert(`Đã lưu điểm thủ công thành công: ${score}`);
+        this.manualScore.set(null); 
+      }
+    } else {
+      alert("Vui lòng nhập điểm hợp lệ từ 0 đến 10.");
     }
   }
 

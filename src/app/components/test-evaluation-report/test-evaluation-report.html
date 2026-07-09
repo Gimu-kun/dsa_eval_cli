@@ -17,9 +17,9 @@
     <div class="flex items-center space-x-3 text-xs text-slate-400 font-mono">
       <span>Thí sinh: {{ sub.studentName }}</span>
       <span>•</span>
-      <span>Thời gian làm bài: {{ sub.timeSpent }} phút</span>
+      <span>Thời gian làm bài: {{ sub.timeSpent }} giây</span>
       <span>•</span>
-      <span>Nộp lúc: {{ sub.submittedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+      <span>Nộp lúc: 24/06/2026 20:32</span>
     </div>
   </div>
 
@@ -58,14 +58,14 @@
               fill="transparent" r="34" cx="40" cy="40" class="transition-all duration-1000 ease-out"></circle>
           </svg>
           <div class="absolute flex flex-col items-center justify-center">
-            <span class="text-2xl font-extrabold font-mono text-slate-800 leading-none">{{ sub.score.toFixed(1)
+            <span class="text-2xl font-extrabold font-mono text-slate-800 leading-none">{{ sub.score.toFixed(2)
               }}</span>
             <span class="text-[11px] text-slate-400 mt-0.5">/ {{ sub.maxScore }}</span>
           </div>
         </div>
         <div class="space-y-0.5 relative z-10">
           <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Điểm tổng kết</div>
-          <div class="text-base font-extrabold text-[#FF6C37]">({{ sub.score.toFixed(1) }} / 10)</div>
+          <div class="text-base font-extrabold text-[#FF6C37]">({{ sub.score.toFixed(2) }} / 10)</div>
           <div class="text-xs text-slate-500 mb-2">Hoàn thành: {{ (sub.score / sub.maxScore * 100).toFixed(0) }}%</div>
           
           <div class="mt-3 pt-3 border-t border-slate-100 flex flex-col items-center space-y-2">
@@ -116,9 +116,9 @@
               </div>
               <span class="text-[9.5px] font-mono font-bold text-slate-500 shrink-0 w-[72px] text-right">
                 @if (item.prevScore === 0) {
-                {{ item.currentScore.toFixed(1) }} / 10
+                {{ item.currentScore.toFixed(2) }} / 10
                 } @else {
-                {{ item.prevScore.toFixed(1) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
+                {{ item.prevScore.toFixed(2) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
                 }
               </span>
             </div>
@@ -163,9 +163,9 @@
               </div>
               <span class="text-[9.5px] font-mono font-bold text-slate-500 shrink-0 w-[72px] text-right">
                 @if (item.prevScore === 0) {
-                {{ item.currentScore.toFixed(1) }} / 10
+                {{ item.currentScore.toFixed(2) }} / 10
                 } @else {
-                {{ item.prevScore.toFixed(1) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
+                {{ item.prevScore.toFixed(2) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
                 }
               </span>
             </div>
@@ -210,9 +210,9 @@
               </div>
               <span class="text-[9.5px] font-mono font-bold text-slate-500 shrink-0 w-[72px] text-right">
                 @if (item.prevScore === 0) {
-                {{ item.currentScore.toFixed(1) }} / 10
+                {{ item.currentScore.toFixed(2) }} / 10
                 } @else {
-                {{ item.prevScore.toFixed(1) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
+                {{ item.prevScore.toFixed(2) }}{{ item.increment > 0 ? ' (+' + item.increment.toFixed(2) + ')' : '' }}
                 }
               </span>
             </div>
@@ -328,8 +328,8 @@
           <div class="grid grid-cols-2 gap-2 text-[10.5px] border-t border-slate-100/70 pt-2 font-mono">
             <div>
               <span class="text-slate-400 block">Dạng bài:</span>
-              <span class="text-slate-700 font-bold font-sans">{{ qRes.questionType === 'DESCRIPTIVE' ? 'Tự luận' :
-                qRes.questionType === 'PROCEDURE' ? 'Quy trình' : 'Ứng dụng' }}</span>
+              <span class="text-slate-700 font-bold font-sans">{{ qRes.questionType === 'DESCRIPTIVE' ? 'Mô tả' :
+                qRes.questionType === 'PROCEDURE' ? 'Thủ tục' : 'Ứng dụng' }}</span>
             </div>
             <div>
               <span class="text-slate-400 block">Mức Bloom:</span>
@@ -418,7 +418,7 @@
             <span
               class="font-extrabold text-slate-800 text-[11.5px] font-mono bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 flex items-center space-x-1.5">
               <span>Điểm câu {{ activeQuestionIndex() + 1 }}:</span>
-              <span class="text-[#FF6C37]">{{ qRes.scoreEarned.toFixed(1) }} / 10</span>
+              <span class="text-[#FF6C37]">{{ qRes.scoreEarned.toFixed(2) }} / 10</span>
               <span class="text-slate-400 font-normal">(Trọng số quy đổi: {{ qRes.weightedScore.toFixed(2) }} / {{
                 qRes.maxScoreInExam }}đ)</span>
             </span>
@@ -618,22 +618,17 @@
                     <div class="flex items-center gap-2">
                       <span>{{ rule.rule_name }}</span>
                       @if (rule.matchScore >= 0.8) {
-                      <span
-                        class="text-[9px] font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded uppercase tracking-wider">Đã
-                        khớp luật</span>
+                      <span class="text-[9px] font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded uppercase tracking-wider">Đã khớp luật</span>
                       } @else if (rule.matchScore >= 0.6) {
-                      <span
-                        class="text-[9px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase tracking-wider">Tạm
-                        ổn</span>
+                      <span class="text-[9px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase tracking-wider">Tạm ổn</span>
                       } @else {
-                      <span
-                        class="text-[9px] font-medium bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded uppercase tracking-wider">Không
-                        khớp</span>
+                      <span class="text-[9px] font-medium bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded uppercase tracking-wider">Không khớp</span>
                       }
                     </div>
                     <span class="font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{{ rule.score }}/{{
                       rule.weight }}</span>
                   </div>
+
                   @if (rule.matchScore < 0.6 && rule.error_message) { 
                     <div class="space-y-1.5">
                       <div class="bg-rose-50 border border-rose-100 rounded-lg p-2 flex items-start space-x-2">
@@ -679,183 +674,187 @@
                       }
                     </div>
                   }
+                  <!-- Rule Sub-Metrics -->
+                  <div
+                    class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-100">
+                    <div class="flex justify-between">
+                      <span>Match (Khớp nội dung):</span>
+                      <span class="font-bold text-slate-700">{{ (rule.matchScore * 10).toFixed(2) }}/10</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Synonym (Đồng nghĩa):</span>
+                      <span class="font-bold text-slate-700">{{ (rule.synonymScore * 10).toFixed(2) }}/10</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Order (Thứ tự bước):</span>
+                      <span class="font-bold text-slate-700">{{ (rule.orderScore * 10).toFixed(2) }}/10</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Structure (Cấu trúc mã):</span>
+                      <span class="font-bold text-slate-700">{{ rule.structureScore !== undefined ?
+                        (rule.structureScore * 10).toFixed(2) + '/10' : 'N/A' }}</span>
+                    </div>
+                  </div>
 
-                <!-- Rule Sub-Metrics -->
-                <div
-                  class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-100">
-                  <div class="flex justify-between">
-                    <span>Match (Khớp nội dung):</span>
-                    <span class="font-bold text-slate-700">{{ (rule.matchScore * 10).toFixed(1) }}/10</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span>Synonym (Đồng nghĩa):</span>
-                    <span class="font-bold text-slate-700">{{ (rule.synonymScore * 10).toFixed(1) }}/10</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span>Order (Thứ tự bước):</span>
-                    <span class="font-bold text-slate-700">{{ (rule.orderScore * 10).toFixed(1) }}/10</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span>Structure (Cấu trúc mã):</span>
-                    <span class="font-bold text-slate-700">{{ rule.structureScore !== undefined ?
-                      (rule.structureScore * 10).toFixed(1) + '/10' : 'N/A' }}</span>
-                  </div>
-                </div>
-
-                <!-- Rule strengths, weaknesses, advice -->
-                <div class="bg-slate-50 p-2.5 rounded-lg space-y-1.5 text-[10.5px] border border-slate-100">
-                  @if (rule.strength) {
-                  <div class="flex items-start space-x-1.5">
-                    <span class="text-emerald-600 shrink-0 font-bold">✓ Điểm mạnh:</span>
-                    <span class="text-slate-700 leading-normal">{{ rule.strength }}</span>
+                  <!-- Rule strengths, weaknesses, advice -->
+                  <div class="bg-slate-50 p-2.5 rounded-lg space-y-1.5 text-[10.5px] border border-slate-100">
+                    @if (rule.strength && !(rule.advice || rule.score < rule.weight)) { <div
+                      class="flex items-start space-x-1.5">
+                      <span class="text-emerald-600 shrink-0 font-bold">✓ Khớp luật</span>
                   </div>
                   }
                   @if (rule.weakness) {
                   <div class="flex items-start space-x-1.5">
-                    <span class="text-rose-600 shrink-0 font-bold">✗ Điểm yếu:</span>
-                    <span class="text-slate-700 leading-normal">{{ rule.weakness }}</span>
+                    <span class="text-rose-600 shrink-0 font-bold">✗ Chưa khớp:</span>
                   </div>
                   }
-                  @if (rule.advice) {
-                  <div class="flex items-start space-x-1.5">
-                    <span class="text-amber-600 shrink-0 font-bold">💡 Gợi ý cải thiện:</span>
-                    <span class="text-slate-700 font-semibold leading-normal">{{ rule.advice }}</span>
-                  </div>
-                  }
+                  @if (rule.advice || rule.score < rule.weight) { <div class="flex items-start space-x-1.5">
+                    <span class="text-amber-600 shrink-0 font-bold">💡 Lưu ý:</span>
+                    <span class="text-slate-700 font-semibold leading-normal">
+                      @if (rule.advice) {
+                      {{ rule.advice }}
+                      } @else {
+                      @if (rule.matchScore < 1.0) { Tiêu chí Khớp nội dung (Match: {{ (rule.matchScore * 10).toFixed(2)
+                        }}/10); } @if (rule.synonymScore < 1.0) { Tiêu chí Đồng nghĩa (Synonym: {{ (rule.synonymScore *
+                        10).toFixed(2) }}/10); } @if (rule.orderScore && rule.orderScore < 1.0) { Tiêu chí Thứ tự
+                        (Order: {{ (rule.orderScore * 10).toFixed(2) }}/10); } @if (rule.structureScore &&
+                        rule.structureScore < 1.0) { Tiêu chí Cấu trúc (Structure: {{ (rule.structureScore *
+                        10).toFixed(2) }}/10); } cần xem lại. } </span>
                 </div>
+                }
               </div>
-              }
             </div>
             }
           </div>
           }
+        </div>
+        }
 
-          <!-- 4. Functions evaluated -->
-          @if (qRes.matchedEvidence?.functions_evaluated; as functions) {
-          <div class="space-y-1.5 pt-2 border-t border-slate-100">
-            <button type="button" (click)="toggleFunctions()"
-              class="w-full flex justify-between items-center text-xs font-bold text-slate-700 hover:text-[#FF6C37] transition-colors py-1.5">
-              <div class="flex items-center space-x-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
-                  stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"
-                  [ngClass]="{ 'rotate-90': isFunctionsExpanded() }">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-                <span>Kiểm tra Thành phần / Hàm</span>
-              </div>
-              <span class="text-emerald-600 font-mono">Khớp: 100%</span>
-            </button>
+        <!-- 4. Functions evaluated -->
+        @if (qRes.matchedEvidence?.functions_evaluated; as functions) {
+        <div class="space-y-1.5 pt-2 border-t border-slate-100">
+          <button type="button" (click)="toggleFunctions()"
+            class="w-full flex justify-between items-center text-xs font-bold text-slate-700 hover:text-[#FF6C37] transition-colors py-1.5">
+            <div class="flex items-center space-x-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"
+                [ngClass]="{ 'rotate-90': isFunctionsExpanded() }">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+              <span>Kiểm tra Thành phần / Hàm</span>
+            </div>
+            <span class="text-emerald-600 font-mono">Khớp: 100%</span>
+          </button>
 
-            @if (isFunctionsExpanded()) {
-            <div class="space-y-1.5">
-              @for (fn of functions; track fn.description) {
-              <div class="p-2 rounded-lg border text-xs flex flex-col justify-center space-y-1" [ngClass]="{
+          @if (isFunctionsExpanded()) {
+          <div class="space-y-1.5">
+            @for (fn of functions; track fn.description) {
+            <div class="p-2 rounded-lg border text-xs flex flex-col justify-center space-y-1" [ngClass]="{
                             'bg-emerald-50/50 border-emerald-100 text-emerald-900': fn.status === 'MATCHED',
                             'bg-rose-50/30 border-rose-100 text-rose-900': fn.status === 'MISSED'
                           }">
-                <div class="flex items-center space-x-1.5">
-                  <span class="w-2 h-2 rounded-full shrink-0"
-                    [ngClass]="{'bg-emerald-500': fn.status === 'MATCHED', 'bg-rose-500': fn.status === 'MISSED'}"></span>
-                  <span class="font-semibold text-slate-800 leading-snug">{{ fn.description }}</span>
-                </div>
-                @if (fn.status === 'MATCHED' && fn.lexeme_found) {
-                <span class="pl-3.5 text-[10px] text-slate-500 font-mono truncate leading-none">➔ Tìm thấy: "{{
-                  fn.lexeme_found }}"</span>
-                }
-                @if (fn.status === 'MISSED' && fn.error_message) {
-                <span class="pl-3.5 text-[10px] text-rose-600 font-mono italic leading-none">{{ fn.error_message
-                  }}</span>
-                }
+              <div class="flex items-center space-x-1.5">
+                <span class="w-2 h-2 rounded-full shrink-0"
+                  [ngClass]="{'bg-emerald-500': fn.status === 'MATCHED', 'bg-rose-500': fn.status === 'MISSED'}"></span>
+                <span class="font-semibold text-slate-800 leading-snug">{{ fn.description }}</span>
               </div>
+              @if (fn.status === 'MATCHED' && fn.lexeme_found) {
+              <span class="pl-3.5 text-[10px] text-slate-500 font-mono truncate leading-none">➔ Tìm thấy: "{{
+                fn.lexeme_found }}"</span>
+              }
+              @if (fn.status === 'MISSED' && fn.error_message) {
+              <span class="pl-3.5 text-[10px] text-rose-600 font-mono italic leading-none">{{ fn.error_message
+                }}</span>
               }
             </div>
             }
           </div>
           }
         </div>
-      </div>
-
-      <!-- Actionable Improvement Checklist -->
-      @if (improvementAdvice().length > 0) {
-      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
-        <h4
-          class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-100 pb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
-            stroke="currentColor" class="w-4 h-4 text-amber-500">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>Khuyến nghị cải thiện điểm số (Câu {{ activeQuestionIndex() + 1 }})</span>
-        </h4>
-        <ul class="space-y-2 text-xs text-slate-700 leading-relaxed pl-1.5">
-          @for (advice of improvementAdvice(); track advice) {
-          <li class="flex items-start space-x-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#FF6C37] shrink-0 mt-1.5"></span>
-            <span>{{ advice }}</span>
-          </li>
-          }
-        </ul>
-      </div>
-      }
-
-      <!-- Educational Support Tools Card -->
-      <div
-        class="bg-gradient-to-r from-orange-50/50 to-indigo-50/50 border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
-        <h3
-          class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-100 pb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-            class="w-4 h-4 text-indigo-500">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-          </svg>
-          <span>Công cụ học tập & Giải thích chi tiết</span>
-        </h3>
-        <div class="flex flex-wrap gap-2.5">
-          <button (click)="showDetailedExplanation(qRes)"
-            class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-1">
-            <span>Xem giải thích chi tiết</span>
-          </button>
-          <button (click)="showLearningRecommendations(qRes)"
-            class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-1">
-            <span>Gợi ý học tập</span>
-          </button>
-        </div>
-
-        @if (activeExplanation()) {
-        <div
-          class="bg-white border border-slate-200 rounded-lg p-4 text-xs space-y-2 mt-2 animate-fade-in shadow-inner relative">
-          <div
-            class="font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5">
-            <span>{{ explanationTitle() }}</span>
-            <button (click)="closeInfoBox()"
-              class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
-          </div>
-          <p class="text-slate-600 whitespace-pre-line leading-relaxed">{{ explanationText() }}</p>
-        </div>
         }
       </div>
-
     </div>
 
-    <!-- Fixed Footer with Action Buttons -->
-    <div class="shrink-0 px-4.5 py-3 bg-slate-50/50 border-t border-slate-200 flex justify-end space-x-2 rounded-b-2xl">
-      <a routerLink="/"
-        class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm animate-none">
-        Về Dashboard
-      </a>
-      <a [routerLink]="['/student/solve', sub.examId]"
-        class="px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#FF6C37] hover:bg-orange-600 shadow-sm transition-all flex items-center space-x-1 animate-none">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-          class="w-3.5 h-3.5">
+    <!-- Actionable Improvement Checklist -->
+    @if (improvementAdvice().length > 0) {
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
+      <h4
+        class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-100 pb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
+          class="w-4 h-4 text-amber-500">
           <path stroke-linecap="round" stroke-linejoin="round"
-            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>Làm lại đề</span>
-      </a>
+        <span>Khuyến nghị cải thiện điểm số (Câu {{ activeQuestionIndex() + 1 }})</span>
+      </h4>
+      <ul class="space-y-2 text-xs text-slate-700 leading-relaxed pl-1.5">
+        @for (advice of improvementAdvice(); track advice) {
+        <li class="flex items-start space-x-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#FF6C37] shrink-0 mt-1.5"></span>
+          <span>{{ advice }}</span>
+        </li>
+        }
+      </ul>
+    </div>
+    }
+
+    <!-- Educational Support Tools Card -->
+    <div
+      class="bg-gradient-to-r from-orange-50/50 to-indigo-50/50 border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+      <h3
+        class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-100 pb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+          class="w-4 h-4 text-indigo-500">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        <span>Công cụ học tập & Giải thích chi tiết</span>
+      </h3>
+      <div class="flex flex-wrap gap-2.5">
+        <button (click)="showDetailedExplanation(qRes)"
+          class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-1">
+          <span>Xem giải thích chi tiết</span>
+        </button>
+        <button (click)="showLearningRecommendations(qRes)"
+          class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-1">
+          <span>Gợi ý học tập</span>
+        </button>
+      </div>
+
+      @if (activeExplanation()) {
+      <div
+        class="bg-white border border-slate-200 rounded-lg p-4 text-xs space-y-2 mt-2 animate-fade-in shadow-inner relative">
+        <div class="font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5">
+          <span>{{ explanationTitle() }}</span>
+          <button (click)="closeInfoBox()"
+            class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+        </div>
+        <p class="text-slate-600 whitespace-pre-line leading-relaxed">{{ explanationText() }}</p>
+      </div>
+      }
     </div>
 
   </div>
-  }
+
+  <!-- Fixed Footer with Action Buttons -->
+  <div class="shrink-0 px-4.5 py-3 bg-slate-50/50 border-t border-slate-200 flex justify-end space-x-2 rounded-b-2xl">
+    <a routerLink="/"
+      class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm animate-none">
+      Về Dashboard
+    </a>
+    <a [routerLink]="['/student/solve', sub.examId]"
+      class="px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#FF6C37] hover:bg-orange-600 shadow-sm transition-all flex items-center space-x-1 animate-none">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+        class="w-3.5 h-3.5">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+      <span>Làm lại đề</span>
+    </a>
+  </div>
+
+</div>
+}
 </div>
 </div>
 }

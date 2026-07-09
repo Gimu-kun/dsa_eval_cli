@@ -63,6 +63,7 @@ export class SolveAssignmentComponent implements OnInit {
 
   // Editor Inputs
   protected readonly submittedText = signal<string>(''); // For free text/code editor
+  protected readonly submittedExplanation = signal<string>(''); // For logic explanation text
   protected readonly inputMode = signal<'free' | 'structured'>('free'); // For procedural/application
   protected readonly steps = signal<StepItem[]>([
     { id: '1', text: '' }
@@ -95,7 +96,7 @@ export class SolveAssignmentComponent implements OnInit {
             // Load first question
             if (res.customQuestions.length > 0) {
               const firstQ = res.customQuestions[0].question;
-              this.submittedText.set(drafts[firstQ.id] || '');
+              this.loadQuestionDraft(firstQ);
             }
           }
         },
@@ -109,14 +110,107 @@ export class SolveAssignmentComponent implements OnInit {
     }
   }
 
+  private getQuestionTypeId(typeStr: any): string {
+    if (!typeStr) return 'DESCRIPTIVE';
+    if (typeof typeStr === 'object') {
+      return typeStr.acronym === 'P' ? 'PROCEDURE' : (typeStr.acronym === 'A' ? 'APPLICATION' : 'DESCRIPTIVE');
+    }
+    return typeStr === 'P' || typeStr === 'PROCEDURE' ? 'PROCEDURE' : (typeStr === 'A' || typeStr === 'APPLICATION' ? 'APPLICATION' : 'DESCRIPTIVE');
+  }
+
+  private saveCurrentQuestionDraft(): void {
+    const currentQ = this.activeQuestion();
+    if (!currentQ) return;
+
+    const drafts = { ...this.answersDraft() };
+    const typeId = this.getQuestionTypeId(currentQ.type);
+    
+    if (typeId === 'APPLICATION') {
+      if (this.inputMode() === 'structured') {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'structured',
+          steps: this.steps().map(s => s.text),
+          explanation: this.submittedExplanation()
+        });
+      } else {
+        drafts[currentQ.id] = JSON.stringify({
+          mode: 'free',
+          code: this.submittedText(),
+          explanation: this.submittedExplanation(),
+          text: this.submittedText()
+        });
+      }
+    } else if (typeId === 'PROCEDURE') {
+      drafts[currentQ.id] = JSON.stringify({
+        mode: 'free',
+        text: this.submittedText()
+      });
+    } else {
+      drafts[currentQ.id] = JSON.stringify({
+        mode: 'free',
+        text: this.submittedText()
+      });
+    }
+    this.answersDraft.set(drafts);
+  }
+
+  private loadQuestionDraft(q: any): void {
+    if (!q) return;
+    const draftStr = this.answersDraft()[q.id] || '';
+    const typeId = this.getQuestionTypeId(q.type);
+    
+    this.submittedExplanation.set('');
+    
+    if (!draftStr) {
+      this.submittedText.set('');
+      this.steps.set([{ id: '1', text: '' }]);
+      this.inputMode.set(typeId === 'APPLICATION' ? 'free' : 'free');
+      return;
+    }
+
+    try {
+      const data = JSON.parse(draftStr);
+      if (data && typeof data === 'object') {
+        this.submittedExplanation.set(data.explanation || '');
+        if (data.mode === 'structured') {
+          if (typeId === 'PROCEDURE') {
+            this.inputMode.set('free');
+            const stepsList = Array.isArray(data.steps) ? data.steps : [];
+            const formatted = stepsList.map((stepText: string, idx: number) => `- Bước ${idx + 1}: ${stepText}`).join('\n');
+            this.submittedText.set(formatted);
+            this.steps.set([{ id: '1', text: '' }]);
+          } else {
+            this.inputMode.set('structured');
+            if (Array.isArray(data.steps)) {
+              this.steps.set(data.steps.map((text: string, idx: number) => ({
+                id: (idx + 1).toString(),
+                text
+              })));
+            } else {
+              this.steps.set([{ id: '1', text: '' }]);
+            }
+            this.submittedText.set('');
+          }
+        } else {
+          this.inputMode.set('free');
+          this.submittedText.set(data.code || data.text || '');
+          this.steps.set([{ id: '1', text: '' }]);
+        }
+      } else {
+        this.inputMode.set('free');
+        this.submittedText.set(draftStr);
+        this.steps.set([{ id: '1', text: '' }]);
+      }
+    } catch {
+      this.inputMode.set('free');
+      this.submittedText.set(draftStr);
+      this.steps.set([{ id: '1', text: '' }]);
+    }
+  }
+
   protected selectQuestion(index: number): void {
     // 1. Save current editor text to draft
-    const currentQ = this.activeQuestion();
-    if (currentQ) {
-      const drafts = { ...this.answersDraft() };
-      drafts[currentQ.id] = this.submittedText();
-      this.answersDraft.set(drafts);
-    }
+    this.saveCurrentQuestionDraft();
 
     // 2. Switch index
     this.activeQuestionIndex.set(index);
@@ -124,7 +218,7 @@ export class SolveAssignmentComponent implements OnInit {
     // 3. Load next question's draft into editor
     const nextQ = this.activeQuestion();
     if (nextQ) {
-      this.submittedText.set(this.answersDraft()[nextQ.id] || '');
+      this.loadQuestionDraft(nextQ);
     }
   }
 
@@ -186,12 +280,7 @@ export class SolveAssignmentComponent implements OnInit {
     if (!exam) return;
 
     // Save active question answer draft first
-    const currentQ = this.activeQuestion();
-    if (currentQ) {
-      const drafts = { ...this.answersDraft() };
-      drafts[currentQ.id] = this.submittedText();
-      this.answersDraft.set(drafts);
-    }
+    this.saveCurrentQuestionDraft();
 
     // Verify draft has contents
     const user = this.tokenService.currentUser();

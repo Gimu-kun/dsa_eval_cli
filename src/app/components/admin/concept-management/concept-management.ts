@@ -39,6 +39,28 @@ export class ConceptManagementComponent implements OnInit {
     return this.concepts().filter(c => c.title.toLowerCase().includes(q));
   });
 
+  // Pagination state
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+
+  readonly paginatedConcepts = computed(() => {
+    const list = this.filtered();
+    const startIndex = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(startIndex, startIndex + this.pageSize());
+  });
+
+  readonly totalPages = computed(() => {
+    return Math.ceil(this.filtered().length / this.pageSize()) || 1;
+  });
+
+  readonly pageNumbers = computed(() => {
+    return Array.from({ length: this.totalPages() }, (_, i) => i + 1);
+  });
+
+  readonly currentDisplayEndIndex = computed(() => {
+    return Math.min(this.currentPage() * this.pageSize(), this.filtered().length);
+  });
+
   readonly filteredTopics = computed(() => {
     const q = this.topicSearchQuery().toLowerCase().trim();
     const selected = this.form.topic_ids;

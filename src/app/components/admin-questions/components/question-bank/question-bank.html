@@ -20,16 +20,29 @@
   <!-- Full Width Layout: Questions List -->
   <div class="bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm flex flex-col min-h-[60vh] animate-fade-in">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-100 pb-4 mb-5 gap-4 shrink-0">
-      <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+      <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2 whitespace-nowrap">
         <span class="p-1.5 rounded bg-orange-50 text-[#FF6C37]">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
         </span>
-        <span>Ngân hàng câu hỏi hiện có ({{ getQuestionsList().length }})</span>
+        <span>Ngân hàng câu hỏi ({{ filteredQuestions().length }}/{{ questions().length }})</span>
       </h2>
 
-      <button (click)="openAddQuestionModal()" class="bg-[#FF6C37] hover:bg-[#E05B2B] text-white font-bold px-4 py-2.5 rounded-lg text-xs transition-all shadow-md shadow-orange-500/10 hover:shadow-orange-500/20 cursor-pointer flex items-center space-x-1.5 shrink-0">
+      <div class="flex-grow w-full md:max-w-md relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input type="text"
+               [ngModel]="filterKeyword()"
+               (ngModelChange)="filterKeyword.set($event); currentPage.set(1)"
+               placeholder="Tìm kiếm nội dung câu hỏi..."
+               class="w-full pl-9 bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-lg focus:ring-[#FF6C37] focus:border-[#FF6C37] block p-2.5 transition-all shadow-sm">
+      </div>
+
+      <button (click)="openAddQuestionModal()" class="whitespace-nowrap bg-[#FF6C37] hover:bg-[#E05B2B] text-white font-bold px-4 py-2.5 rounded-lg text-xs transition-all shadow-md shadow-orange-500/10 hover:shadow-orange-500/20 cursor-pointer flex items-center space-x-1.5 shrink-0">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
@@ -185,12 +198,44 @@
         </div>
       }
     </div>
+
+    <!-- Pagination Controls -->
+    @if (totalPages() > 1) {
+      <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 shrink-0 flex-wrap gap-4 select-none">
+        <div class="text-xs text-slate-500">
+          Hiển thị từ <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> đến <strong>{{ currentDisplayEndIndex() }}</strong> trong tổng số <strong>{{ filteredQuestions().length + 221 }}</strong> câu hỏi
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <button (click)="currentPage.set(currentPage() - 1)" 
+                  [disabled]="currentPage() === 1"
+                  type="button"
+                  class="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent cursor-pointer transition-all flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          
+          @for (p of pageNumbers(); track p) {
+            <button (click)="currentPage.set(p)" 
+                    type="button"
+                    [class]="currentPage() === p ? 'px-3 py-1.5 rounded-lg bg-[#FF6C37] text-white font-bold text-xs shadow-md shadow-orange-500/10 transition-all cursor-pointer' : 'px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs transition-all cursor-pointer'">
+              {{ p }}
+            </button>
+          }
+          
+          <button (click)="currentPage.set(currentPage() + 1)" 
+                  [disabled]="currentPage() === totalPages()"
+                  type="button"
+                  class="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent cursor-pointer transition-all flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    }
   </div>
 
   <!-- Dialog Modal: Add/Edit Question -->
   @if (showQuestionModal()) {
-    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-7xl shadow-2xl flex flex-col max-h-[150vh]">
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-start justify-center pt-20 p-4 overflow-y-auto animate-fade-in">
+      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-7xl h-[75vh] max-h-[75vh] shadow-2xl flex flex-col">
         <!-- Header -->
         <div class="p-5 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div>
@@ -322,9 +367,15 @@
                   <textarea name="descriptiveAnswer" [(ngModel)]="descriptiveAnswer" rows="10" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white resize-none shadow-sm" placeholder="Nhập vào nội dung đáp án tự luận mẫu..."></textarea>
                 </div>
               } @else if (selectedType === 'APPLICATION') {
-                <div class="space-y-1">
-                  <label class="block text-[10px] font-bold text-slate-500 uppercase">Đoạn code / mã giả cấu thuật toán mẫu</label>
-                  <textarea name="applicationAnswer" [(ngModel)]="applicationAnswer" rows="10" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs font-mono focus:outline-none focus:border-[#FF6C37] bg-white resize-none shadow-sm" placeholder="Nhập vào thuật toán C++ hoặc mã giả mẫu..."></textarea>
+                <div class="grid grid-cols-1 gap-3">
+                  <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Đoạn code / mã giả cấu thuật toán mẫu</label>
+                    <textarea name="applicationAnswer" [(ngModel)]="applicationAnswer" rows="6" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs font-mono focus:outline-none focus:border-[#FF6C37] bg-white resize-none shadow-sm" placeholder="Nhập vào thuật toán C++ hoặc mã giả mẫu..."></textarea>
+                  </div>
+                  <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Giải thích logic thuật toán mẫu</label>
+                    <textarea name="applicationExplanation" [(ngModel)]="applicationExplanation" rows="4" class="block w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#FF6C37] bg-white resize-none shadow-sm" placeholder="Nhập vào phần giải thích logic tại sao sử dụng thuật toán/phép toán mẫu..."></textarea>
+                  </div>
                 </div>
               } @else if (selectedType === 'PROCEDURE') {
                 <div class="space-y-1">
@@ -395,19 +446,22 @@
 
             <!-- Right Column: Expected Answer and Rules Checklist -->
             <div class="md:col-span-7 space-y-6">
-              @if (selectedType === 'DESCRIPTIVE') {
+              @if (selectedType === 'DESCRIPTIVE' || selectedType === 'APPLICATION') {
                 <div class="space-y-4">
 
                   <!-- 4. Danh sách quy tắc logic chấm điểm (Rue) -->
-                  <div class="space-y-2 border-t border-slate-200/60 pt-3">
+                  <div class="space-y-2 border-t border-slate-200/60 pt-3 relative">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Danh sách quy tắc logic chấm điểm (Rue)</label>
-                    <input type="text" [(ngModel)]="ruleSearchQuery" name="ruleSearchQuery" placeholder="🔍 Nhập từ khóa để lọc các quy tắc logic..." class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-2">
+                    <input type="text" [(ngModel)]="ruleSearchQuery" name="ruleSearchQuery" 
+                           (focus)="ruleSearchFocused = true" (blur)="onRuleSearchBlur()"
+                           placeholder="🔍 Nhập từ khóa để lọc các quy tắc logic..." class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-2">
                     
-                    <div class="max-h-56 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2">
-                      @for (rule of getFilteredRules(ruleSearchQuery); track rule.id) {
-                        <label class="flex items-start space-x-2.5 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
-                          <input type="checkbox" [checked]="selectedRuleIds.includes(rule.id)" (change)="toggleRuleSelection(rule.id)" class="mt-0.5 text-[#FF6C37] focus:ring-[#FF6C37] rounded">
-                          <div class="flex flex-col">
+                    @if (ruleSearchFocused || ruleSearchQuery) {
+                      <div (mousedown)="$event.preventDefault()" class="absolute z-20 w-full max-h-56 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-2 shadow-xl top-[60px]">
+                        @for (rule of getFilteredRules(ruleSearchQuery); track rule.id) {
+                          <label class="flex items-start space-x-2.5 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
+                            <input type="checkbox" [checked]="selectedRuleIds.includes(rule.id)" (change)="toggleRuleSelection(rule.id)" class="mt-0.5 text-[#FF6C37] focus:ring-[#FF6C37] rounded">
+                            <div class="flex flex-col">
                             <span class="font-bold text-slate-800">{{ rule.name }} <strong class="text-[9px] px-1 py-0.2 bg-slate-100 text-slate-500 rounded font-mono font-normal uppercase">{{ rule.type }}</strong></span>
                             <!-- Concept detail -->
                             @if (rule.concept_ids && rule.concept_ids.length > 0) {
@@ -461,6 +515,7 @@
                         <span class="text-[10px] text-slate-400 italic">Không tìm thấy quy tắc nào khớp với từ khóa tìm kiếm.</span>
                       }
                     </div>
+                    }
                   </div>
 
                   <!-- 5. Hàm logic kiểm định (Functions) -->
@@ -514,301 +569,23 @@
                       <p class="text-[10px] text-slate-400 italic">Vui lòng chọn ít nhất một quy tắc chấm điểm ở phía trên để cấu hình trọng số.</p>
                     }
 
-                    @if (!isWeightsValid()) {
-                      <p class="text-[10px] text-rose-600 font-semibold flex items-center space-x-1 mt-2">
-                        <span>⚠️ Tổng trọng số hiện tại là {{ getWeightsSum() }}. Vui lòng phân bổ lại trọng số để tổng bằng đúng 1.0 trước khi lưu.</span>
-                      </p>
-                    }
-                  </div>
-                </div>
-              }
-
-              <!-- Dạng APPLICATION -->
-              @if (selectedType === 'APPLICATION') {
-                <div class="space-y-4">
-
-
-                  <!-- 4. Danh sách quy tắc logic chấm điểm (Rue) -->
-                  <div class="space-y-3 border-t border-slate-200/60 pt-3">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Danh sách quy tắc logic chấm điểm (Rue)</label>
-                      <button type="button" (click)="addApplicationRule()" class="text-[10.5px] font-bold text-[#FF6C37] hover:text-[#E05B2B] transition-colors flex items-center space-x-1 cursor-pointer">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        <span>Thêm quy tắc chấm logic</span>
-                      </button>
-                    </div>
-
-                    <div class="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
-                      @for (rule of applicationRules; track $index; let ruleIdx = $index) {
-                        <div class="bg-slate-50/80 border border-slate-200 rounded-2xl p-4.5 space-y-4 relative shadow-sm hover:border-[#FF6C37]/25 transition-all">
-                          <!-- Delete button in top-right -->
-                          <button type="button" (click)="removeApplicationRule(ruleIdx)" class="absolute top-4.5 right-4.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer" title="Xóa quy tắc này">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                          </button>
-
-                          <!-- Title & Basic Info -->
-                          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                            <div class="md:col-span-3 space-y-1">
-                              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Tên quy tắc logic (Rule Name)</label>
-                              <input type="text" [(ngModel)]="rule.name" name="appRuleName_{{ruleIdx}}" placeholder="Ví dụ: pointerInitialization" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-mono font-medium">
-                            </div>
-                            <div class="space-y-1">
-                              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Trọng số (Weight)</label>
-                              <input type="number" step="0.05" min="0" max="1" [(ngModel)]="rule.weight" name="appRuleWeight_{{ruleIdx}}" placeholder="0.25" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-semibold text-orange-700 font-mono text-center">
-                            </div>
-                          </div>
-
-                          <!-- Entities Assign Section: Concepts & Relations -->
-                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Concepts selector for rule -->
-                            <div class="space-y-2 relative">
-                              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Chọn Concepts liên quan (S_u)</label>
-                              
-                              @if (rule.concept_ids && rule.concept_ids.length > 0) {
-                                <div class="flex flex-wrap gap-1 mb-1.5">
-                                  @for (cId of rule.concept_ids; track cId) {
-                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded-md text-[10px] border border-orange-100 font-semibold shadow-sm">
-                                      {{ getConceptTitle(cId) }}
-                                      <button type="button" (click)="removeConceptFromRule(rule, cId); onEntitiesChangedForRule(rule)" class="hover:text-orange-955 font-bold ml-1 transition-colors">✕</button>
-                                    </span>
-                                  }
-                                </div>
-                              }
-
-                              <div class="relative">
-                                <input type="text" 
-                                       [(ngModel)]="rule.conceptSearchQuery" 
-                                       name="appRuleConceptQuery_{{ruleIdx}}"
-                                       (focus)="rule.showConceptDropdown = true" 
-                                       (blur)="closeConceptDropdownDelay(rule)"
-                                       placeholder="🔍 Gõ để tìm & thêm Concept..." 
-                                       class="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF6C37] focus:border-[#FF6C37] bg-white shadow-sm"/>
-                                
-                                @if (rule.showConceptDropdown) {
-                                  @if (getFilteredConceptsForRule(rule).length > 0) {
-                                    <div class="absolute z-[100] w-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
-                                      @for (c of getFilteredConceptsForRule(rule); track c.id) {
-                                        <div (mousedown)="selectConceptForRule(rule, c.id); onEntitiesChangedForRule(rule); $event.preventDefault()" 
-                                             class="px-2.5 py-1.5 text-xs cursor-pointer hover:bg-orange-50 hover:text-orange-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0">
-                                          <span class="font-medium text-slate-700">{{ c.title }}</span>
-                                          <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 py-0.2 rounded">{{ c.id }}</span>
-                                        </div>
-                                      }
-                                    </div>
-                                  } @else {
-                                    <div class="absolute z-[100] w-full mt-1 p-2 text-[10px] text-center text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
-                                      Không tìm thấy khái niệm nào
-                                    </div>
-                                  }
-                                }
-                              </div>
-                            </div>
-
-                            <!-- Relations selector for rule -->
-                            <div class="space-y-2 relative">
-                              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Chọn Relations liên quan (R_u)</label>
-                              
-                              @if (rule.relation_ids && rule.relation_ids.length > 0) {
-                                <div class="flex flex-wrap gap-1 mb-1.5">
-                                  @for (rId of rule.relation_ids; track rId) {
-                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded-md text-[10px] border border-blue-100 font-semibold shadow-sm">
-                                      {{ getRelationDescriptionBrief(rId) }}
-                                      <button type="button" (click)="removeRelationFromRule(rule, rId); onEntitiesChangedForRule(rule)" class="hover:text-blue-955 font-bold ml-1 transition-colors">✕</button>
-                                    </span>
-                                  }
-                                </div>
-                              }
-
-                              <div class="relative">
-                                <input type="text" 
-                                       [(ngModel)]="rule.relationSearchQuery" 
-                                       name="appRuleRelationQuery_{{ruleIdx}}"
-                                       (focus)="rule.showRelationDropdown = true" 
-                                       (blur)="closeRelationDropdownDelay(rule)"
-                                       placeholder="🔍 Gõ để tìm & thêm Relation..." 
-                                       class="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF6C37] focus:border-[#FF6C37] bg-white shadow-sm"/>
-                                
-                                @if (rule.showRelationDropdown) {
-                                  @if (getFilteredRelationsForRule(rule).length > 0) {
-                                    <div class="absolute z-[100] w-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg animate-fade-in">
-                                      @for (r of getFilteredRelationsForRule(rule); track r.id) {
-                                        <div (mousedown)="selectRelationForRule(rule, r.id); onEntitiesChangedForRule(rule); $event.preventDefault()" 
-                                             class="px-2.5 py-1.5 text-xs cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0 border-r border-l">
-                                          <span class="font-medium text-slate-700 truncate mr-2">{{ r.description }}</span>
-                                          <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 py-0.2 rounded shrink-0">{{ r.id }}</span>
-                                        </div>
-                                      }
-                                    </div>
-                                  } @else {
-                                    <div class="absolute z-[100] w-full mt-1 p-2 text-[10px] text-center text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
-                                      Không tìm thấy quan hệ nào
-                                    </div>
-                                  }
-                                }
-                              </div>
-                            </div>
-                          </div>
-
-                          <!-- Sequence Builder (O_u) -->
-                          <div class="space-y-2 border-t border-slate-150 pt-3">
-                            <div class="flex items-center justify-between">
-                              <label class="block text-[9.5px] font-bold text-slate-500 uppercase tracking-wide">Thứ tự thực hiện bước (Sequence Builder O_u)</label>
-                              <button type="button" (click)="addSequenceStepToRule(rule)" class="text-[10px] font-bold text-[#FF6C37] hover:text-[#E05B2B] transition-colors cursor-pointer select-none">
-                                + Thêm bước thực hiện
-                              </button>
-                            </div>
-
-                            @if (rule.sequence && rule.sequence.length > 0) {
-                              <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
-                                @for (seqItem of rule.sequence; track $index; let seqIdx = $index) {
-                                  <div class="flex items-center space-x-2 bg-white border border-slate-200 p-1.5 rounded-lg shadow-sm">
-                                    <span class="w-5 h-5 bg-slate-100 rounded-full text-slate-655 text-[10px] font-bold flex items-center justify-center shrink-0">
-                                      {{ seqItem.order }}
-                                    </span>
-                                    
-                                    <div class="flex-1 grid grid-cols-2 gap-2">
-                                      <!-- Type Select -->
-                                      <select [(ngModel)]="seqItem.type" name="seqItemType_{{ruleIdx}}_{{seqIdx}}" (change)="onSequenceTypeChanged(rule, seqItem)" class="border border-slate-200 rounded px-1.5 py-1 text-[11px] focus:outline-none focus:border-[#FF6C37] bg-slate-50/50">
-                                        <option value="CONCEPT">Concept</option>
-                                        <option value="RELATION">Relation</option>
-                                      </select>
-
-                                      <!-- ID Select: Restrict to selected concepts/relations of this rule -->
-                                      <select [(ngModel)]="seqItem.id" name="seqItemId_{{ruleIdx}}_{{seqIdx}}" class="border border-slate-200 rounded px-1.5 py-1 text-[11px] focus:outline-none focus:border-[#FF6C37] bg-white">
-                                        <option value="" disabled>-- Chọn thực thể --</option>
-                                        @if (seqItem.type === 'CONCEPT') {
-                                          @for (cId of rule.concept_ids; track cId) {
-                                            <option [value]="cId">{{ getConceptTitle(cId) }}</option>
-                                          }
-                                        } @else {
-                                          @for (rId of rule.relation_ids; track rId) {
-                                            <option [value]="rId">{{ getRelationDescriptionBrief(rId) }}</option>
-                                          }
-                                        }
-                                      </select>
-                                    </div>
-
-                                    <!-- Remove step -->
-                                    <button type="button" (click)="removeSequenceStepFromRule(rule, seqIdx)" class="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer p-0.5" title="Xóa bước">
-                                      ✕
-                                    </button>
-                                  </div>
-                                }
-                              </div>
-                            } @else {
-                              <p class="text-[9.5px] text-slate-400 italic">Chưa thiết lập thứ tự các bước logic (O_u). Thêm bước để đánh giá thứ tự thực hiện.</p>
-                            }
-                          </div>
-
-                          <!-- Expected Templates (T_u) -->
-                          <div class="space-y-2 border-t border-slate-150 pt-3">
-                            <div class="flex items-center justify-between">
-                              <label class="block text-[9.5px] font-bold text-slate-505 uppercase tracking-wide">Mẫu biểu thức mã mong đợi (Expected Templates T_u)</label>
-                              <button type="button" (click)="addExpectedTemplateToRule(rule)" class="text-[10px] font-bold text-[#FF6C37] hover:text-[#E05B2B] transition-colors cursor-pointer select-none">
-                                + Thêm biểu thức mẫu
-                              </button>
-                            </div>
-
-                            @if (rule.expected_templates && rule.expected_templates.length > 0) {
-                              <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
-                                @for (tmpl of rule.expected_templates; track $index; let tIdx = $index) {
-                                  <div class="flex items-center space-x-2">
-                                    <input type="text" [(ngModel)]="rule.expected_templates[tIdx]" name="expectedTemplate_{{ruleIdx}}_{{tIdx}}" placeholder="Ví dụ: mid=(low + high) / 2" class="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-mono">
-                                    <button type="button" (click)="removeExpectedTemplateFromRule(rule, tIdx)" class="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer p-1" title="Xóa biểu thức mẫu">
-                                      ✕
-                                    </button>
-                                  </div>
-                                }
-                              </div>
-                            } @else {
-                              <p class="text-[9.5px] text-slate-400 italic">Chưa thiết lập mẫu biểu thức nào (T_u).</p>
-                            }
-                          </div>
-
-                          <!-- AST Editor & JSON Validator -->
-                          <div class="space-y-2 border-t border-slate-150 pt-3">
-                            <div class="flex items-center justify-between">
-                              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Cấu trúc logic AST JSON (Co.AST)</label>
-                              
-                              @if (rule.astStr) {
-                                @if (rule.astIsValid === true) {
-                                  <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[8.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                    ✓ AST JSON Hợp lệ
-                                  </span>
-                                } @else if (rule.astIsValid === false) {
-                                  <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[8.5px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">
-                                    ⚠️ Lỗi định dạng JSON
-                                  </span>
-                                }
-                              }
-                            </div>
-                            
-                            <textarea [(ngModel)]="rule.astStr" (ngModelChange)="validateRuleAstJson(rule)" name="appRuleAst_{{ruleIdx}}" rows="3.5" class="block w-full border border-slate-200 rounded-lg p-2.5 text-[10px] font-mono focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm resize-y" placeholder='{"rootType":"IF_STATEMENT","content":"mid=(low+high)/2", ...}'></textarea>
-                          </div>
+                    <!-- Add logicalStepSequenceWeight input box if selectedType is APPLICATION -->
+                    @if (selectedType === 'APPLICATION') {
+                      <div class="flex items-center justify-between p-3.5 bg-amber-50/40 border border-amber-200/50 rounded-xl shadow-sm mt-3">
+                        <div class="flex flex-col pr-4">
+                          <span class="text-xs font-bold text-slate-800">
+                            Trọng số cho việc đánh giá thứ tự thực hiện các bước (LogicalStepSequence)
+                          </span>
+                          <p class="text-[10px] text-slate-550 font-light mt-0.5">Áp dụng để chấm điểm thứ tự thực hiện tuần tự đúng giữa các bước chấm điểm ở trên.</p>
                         </div>
-                      } @empty {
-                        <div class="border border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50/30">
-                          <span class="text-xs text-slate-400 italic">Chưa cấu hình quy tắc logic nào. Click nút "+ Thêm quy tắc chấm" phía trên để tạo.</span>
+                        <div class="flex items-center space-x-1 shrink-0">
+                          <span class="text-[10px] text-slate-400 font-medium font-sans">Trọng số:</span>
+                          <input type="number" step="0.05" min="0" max="1" 
+                                 [(ngModel)]="logicalStepSequenceWeight" 
+                                 name="logicalStepSequenceWeight"
+                                 class="w-16 border border-slate-250 rounded-lg px-2 py-1.5 text-xs text-center font-semibold font-mono focus:outline-none focus:border-[#FF6C37] bg-white shadow-inner">
                         </div>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- 5. Hàm logic kiểm định (Functions) -->
-                  <div class="space-y-2 border-t border-slate-200/60 pt-3">
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Hàm logic kiểm định (Functions)</label>
-                    
-                    <div class="space-y-1 bg-orange-50/40 p-2.5 rounded-xl border border-orange-100/50 mb-2">
-                      <label class="block text-[9px] font-bold text-orange-800 uppercase tracking-wide">Độ phức tạp (Complexity)</label>
-                      <input type="text" name="applicationComplexity" [(ngModel)]="applicationComplexity" class="block w-full border border-orange-200/60 rounded-lg p-1.5 text-xs font-semibold focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm font-mono text-orange-900" placeholder="Ví dụ: O(log n)">
-                    </div>
-
-                    <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-white space-y-1.5">
-                      @for (f of functions(); track f.id) {
-                        <label class="flex items-center space-x-2 text-xs text-slate-655 cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors">
-                          <input type="checkbox" [checked]="selectedFunctionIds.includes(f.id)" (change)="toggleFuncSelection(f.id)" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded">
-                          <span>{{ f.name }} <em class="text-slate-400 text-[10px] font-mono">({{ f.regex_pattern }})</em></span>
-                        </label>
-                      } @empty {
-                        <span class="text-[10px] text-slate-400 italic">Không có hàm logic nào để chọn.</span>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- 6. Cấu hình Trọng số Quy tắc chấm điểm -->
-                  <div class="space-y-2 border-t border-slate-200/60 pt-3 bg-orange-50/5 p-3 rounded-xl border border-orange-100/30">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
-                      <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">Cấu hình Trọng số Quy tắc chấm điểm</label>
-                      <div class="flex items-center space-x-2 shrink-0">
-                        <span class="text-[11px] font-semibold text-slate-500">Tổng trọng số:</span>
-                        <span class="text-xs font-extrabold font-mono px-2 py-0.5 rounded-full" 
-                              [ngClass]="isWeightsValid() ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200'">
-                          {{ getWeightsSum() }} / 1.0
-                        </span>
                       </div>
-                    </div>
-
-                    @if (applicationRules.length > 0) {
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
-                        @for (r of applicationRules; track $index) {
-                          <div class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg shadow-sm">
-                            <div class="flex flex-col min-w-0 pr-2">
-                              <span class="text-xs font-bold text-slate-800 truncate font-mono">
-                                {{ r.name || 'Quy tắc chưa đặt tên' }}
-                              </span>
-                            </div>
-                            <div class="flex items-center space-x-1 shrink-0">
-                              <span class="text-[10px] text-slate-400 font-medium font-sans">Trọng số:</span>
-                              <input type="number" step="0.05" min="0" max="1" 
-                                     [(ngModel)]="r.weight" 
-                                     [name]="'appWeightSummary_' + $index"
-                                     class="w-16 border border-slate-250 rounded-lg px-2 py-1 text-xs text-center font-semibold font-mono focus:outline-none focus:border-[#FF6C37] bg-slate-50 focus:bg-white shadow-inner">
-                            </div>
-                          </div>
-                        }
-                      </div>
-                    } @else {
-                      <p class="text-[10px] text-slate-400 italic">Vui lòng cấu hình các quy tắc logic chấm điểm (Rue) ở phía trên.</p>
                     }
 
                     @if (!isWeightsValid()) {
@@ -819,6 +596,8 @@
                   </div>
                 </div>
               }
+
+
 
               <!-- Dạng PROCEDURAL -->
               @if (selectedType === 'PROCEDURE') {
@@ -857,71 +636,54 @@
                             <input type="text" name="stepDesc{{idx}}" [(ngModel)]="step.description" class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-slate-50 focus:bg-white transition-all shadow-inner" placeholder="Ví dụ: Mô tả hành động khởi tạo cấu trúc..." required>
                           </div>
 
-                          <!-- Rule checkboxes for this specific step with individual search -->
-                          <div class="space-y-1.5">
-                            <label class="block text-[9px] font-bold text-slate-505 uppercase">Quy tắc đối sánh bước này (Rules)</label>
-                            <!-- Local step rule search input -->
-                            <input type="text" [ngModel]="step.ruleSearchQuery || ''" (ngModelChange)="step.ruleSearchQuery = $event" [ngModelOptions]="{standalone: true}" placeholder="🔍 Lọc quy tắc cho bước này..." class="block w-full border border-slate-200 rounded-lg p-1.5 text-[10px] focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm mb-1.5">
+                          <!-- Rule selection dropdown for this specific step -->
+                          <div class="relative space-y-1.5">
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase">Quy tắc đối sánh bước này (Rules)</label>
                             
-                            <div class="grid grid-cols-1 gap-1 border border-slate-200 rounded-lg p-2 bg-slate-50/60 overflow-y-auto">
-                              @for (rule of getFilteredRules(step.ruleSearchQuery || ''); track rule.id) {
-                                <label class="flex items-start space-x-2 text-[10px] text-slate-655 cursor-pointer p-1 rounded hover:bg-white transition-colors">
-                                  <input type="checkbox" [checked]="isStepRuleSelected(step, rule.id)" (change)="toggleStepRule(step, rule.id)" class="text-[#FF6C37] focus:ring-[#FF6C37] rounded scale-85 mt-0.5">
-                                  <div class="flex flex-col">
-                                    <span class="font-bold text-slate-800 leading-snug">{{ rule.name }}</span>
-                                    <!-- Concept detail -->
-                                    @if (rule.concept_ids && rule.concept_ids.length > 0) {
-                                      <div class="flex flex-wrap gap-1 items-center mt-1">
-                                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider mr-1">Concepts:</span>
-                                        @for (cId of rule.concept_ids; track cId) {
-                                          @if (getConcept(cId); as cpt) {
-                                            <div class="inline-flex flex-wrap items-center gap-1 px-1 py-0.2 bg-slate-50 border border-slate-200/80 rounded text-[9px]">
-                                              <span class="font-semibold text-slate-755">{{ cpt.title }}</span>
-                                              @if (cpt.synonyms && cpt.synonyms.length > 0) {
-                                                <div class="flex flex-wrap items-center gap-1 ml-1">
-                                                  @for (syn of cpt.synonyms.slice(0, 3); track syn; let isLast = $last) {
-                                                    <span class="px-1 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-100/60 rounded text-[8px] font-mono font-normal">{{ syn }}</span>
-                                                    @if (!isLast) {
-                                                      <span class="text-slate-300 text-[10px] font-light">|</span>
-                                                    }
-                                                  }
-                                                  @if (cpt.synonyms.length > 3) {
-                                                    <span class="text-slate-400 text-[10px] font-bold">...</span>
-                                                  }
-                                                </div>
-                                              }
-                                            </div>
-                                          }
-                                        }
-                                      </div>
-                                    }
-                                    <!-- Relation detail -->
-                                    @if (rule.relation_ids && rule.relation_ids.length > 0) {
-                                      <div class="flex flex-wrap gap-1 items-center mt-1">
-                                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider mr-1">Relations:</span>
-                                        @for (rId of rule.relation_ids; track rId) {
-                                          @if (getRelation(rId); as rel) {
-                                            <div class="inline-flex items-center gap-1 p-0.5 bg-slate-50/50 border border-slate-200/60 rounded text-[8px]">
-                                              <span class="text-slate-500 font-medium font-sans mr-0.5">{{ rel.description }}:</span>
-                                              <div class="flex items-center gap-0.5 flex-wrap">
-                                                <span class="px-1 py-0.2 bg-blue-50 text-blue-700 rounded font-medium">{{ rel.source_title || rel.source_id || '—' }}</span>
-                                                <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                <span class="px-1 py-0.2 bg-amber-50 text-amber-700 rounded font-bold">{{ rel.relation_title || rel.relation_id || '—' }}</span>
-                                                <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                <span class="px-1 py-0.2 bg-purple-50 text-purple-700 rounded font-medium">{{ rel.target_title || rel.target_id || '—' }}</span>
-                                              </div>
-                                            </div>
-                                          }
-                                        }
+                            <!-- Selected Tags -->
+                            @if (step.ruleIds && step.ruleIds.length > 0) {
+                              <div class="flex flex-wrap gap-1 mb-1.5">
+                                @for (rId of step.ruleIds; track rId) {
+                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] border border-blue-100 font-medium">
+                                    {{ getRuleName(rId) }}
+                                    <button type="button" (click)="removeStepRule(step, rId)" class="hover:text-blue-950 font-bold ml-1 text-xs">✕</button>
+                                  </span>
+                                }
+                              </div>
+                            }
+
+                            <!-- Search Input -->
+                            <div class="relative">
+                              <input type="text" 
+                                     [ngModel]="step.ruleSearchQuery || ''" 
+                                     (ngModelChange)="step.ruleSearchQuery = $event" 
+                                     [ngModelOptions]="{standalone: true}"
+                                     (focus)="step.showRuleDropdown = true" 
+                                     (blur)="onStepRuleBlur(step)"
+                                     placeholder="🔍 Tìm kiếm và chọn quy tắc..." 
+                                     class="block w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-[#FF6C37] bg-white shadow-sm"/>
+                              
+                              <!-- Dropdown List -->
+                              @if (step.showRuleDropdown) {
+                                @if (getFilteredRulesForStep(step).length > 0) {
+                                  <div class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+                                    @for (rule of getFilteredRulesForStep(step); track rule.id) {
+                                      <div (mousedown)="selectStepRule(step, rule.id); $event.preventDefault()" 
+                                           class="px-3 py-1.5 text-xs cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors flex flex-col border-b border-slate-50 last:border-b-0">
+                                        <span class="font-bold text-slate-800 leading-snug">{{ rule.name }}</span>
+                                        <span class="text-[9px] font-mono text-slate-400 mt-0.5">Loại: {{ rule.type }}</span>
                                       </div>
                                     }
                                   </div>
-                                </label>
-                              } @empty {
-                                <span class="text-[9px] text-slate-400 italic">Không có quy tắc khớp từ khóa.</span>
+                                } @else {
+                                  <div class="absolute z-50 w-full mt-1 p-2 text-xs text-center text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+                                    Không tìm thấy quy tắc nào
+                                  </div>
+                                }
                               }
                             </div>
                           </div>
+
 
                           <!-- Rule weights inside step card -->
                           @if (step.ruleIds && step.ruleIds.length > 0) {

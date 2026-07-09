@@ -10,6 +10,7 @@ interface ProceduralStepInput {
   description: string;
   ruleIds: string[];
   ruleSearchQuery?: string;
+  showRuleDropdown?: boolean;
 }
 
 @Component({
@@ -38,6 +39,160 @@ export class QuestionBankComponent implements OnInit {
   protected readonly successMessage = signal<string>('');
   protected readonly errorMessage = signal<string>('');
 
+  // Search & Filter state
+  readonly filterKeyword = signal('');
+  readonly filterConcepts = signal<string[]>([]);
+  readonly filterRelations = signal<string[]>([]);
+  readonly filterRules = signal<string[]>([]);
+  readonly filterFunctions = signal<string[]>([]);
+  readonly filterRubrics = signal<string[]>([]);
+  readonly filterTypes = signal<string[]>([]);
+  readonly filterBlooms = signal<string[]>([]);
+  readonly filterDifficulties = signal<string[]>([]);
+  readonly filterTopics = signal<string[]>([]);
+  readonly showFilters = signal(false);
+
+  // Pagination state
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(4);
+
+  readonly filteredQuestions = computed(() => {
+    let list = this.questions();
+
+    // 1. Keyword search (match all words)
+    const kwInput = this.filterKeyword().trim().toLowerCase();
+    if (kwInput) {
+      // Split by spaces, remove empty strings
+      const keywords = kwInput.split(/\s+/).filter(k => k.length > 0);
+      list = list.filter(q => {
+        const content = q.content.toLowerCase();
+        const id = q.id.toLowerCase();
+        const sample = (q.ex_ans?.sample ?? '').toLowerCase();
+        
+        // Return true if ALL keywords are found in at least one of the fields
+        return keywords.every(kw => 
+          content.includes(kw) || 
+          id.includes(kw) || 
+          sample.includes(kw)
+        );
+      });
+    }
+
+    // 2. Filter by concepts
+    const concepts = this.filterConcepts();
+    if (concepts.length > 0) {
+      list = list.filter(q => 
+        q.ex_ans?.concepts?.some(c => concepts.includes(c.id))
+      );
+    }
+
+    // 3. Filter by relations
+    const relations = this.filterRelations();
+    if (relations.length > 0) {
+      list = list.filter(q => 
+        q.ex_ans?.relations?.some(r => relations.includes(r.id))
+      );
+    }
+
+    // 4. Filter by rules
+    const rules = this.filterRules();
+    if (rules.length > 0) {
+      list = list.filter(q => 
+        q.ex_ans?.rules?.some(r => rules.includes(r.id))
+      );
+    }
+
+    // 5. Filter by functions
+    const functions = this.filterFunctions();
+    if (functions.length > 0) {
+      list = list.filter(q => 
+        q.ex_ans?.functions?.some(f => functions.includes(f.id))
+      );
+    }
+
+    // 6. Filter by rubrics
+    const rubrics = this.filterRubrics();
+    if (rubrics.length > 0) {
+      list = list.filter(q => 
+        q.rubric && rubrics.includes(q.rubric.id)
+      );
+    }
+
+    // 7. Filter by types
+    const types = this.filterTypes();
+    if (types.length > 0) {
+      list = list.filter(q => types.includes(q.type));
+    }
+
+    // 8. Filter by blooms
+    const blooms = this.filterBlooms();
+    if (blooms.length > 0) {
+      list = list.filter(q => blooms.includes(q.bloom_level));
+    }
+
+    // 9. Filter by difficulties
+    const diffs = this.filterDifficulties();
+    if (diffs.length > 0) {
+      list = list.filter(q => diffs.includes(q.difficulty));
+    }
+
+    // 10. Filter by topics
+    const topics = this.filterTopics();
+    if (topics.length > 0) {
+      list = list.filter(q => topics.includes(q.topic_id));
+    }
+
+    return list;
+  });
+
+  readonly paginatedQuestions = computed(() => {
+    const list = this.filteredQuestions();
+    const startIndex = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(startIndex, startIndex + this.pageSize());
+  });
+
+  readonly totalPages = computed(() => {
+    return Math.ceil(this.filteredQuestions().length / this.pageSize()) || 1;
+  });
+
+  readonly pageNumbers = computed(() => {
+    return Array.from({ length: this.totalPages() }, (_, i) => i + 1);
+  });
+
+  readonly currentDisplayEndIndex = computed(() => {
+    return Math.min(this.currentPage() * this.pageSize(), this.filteredQuestions().length);
+  });
+
+  toggleFilterItem(listSignal: any, id: string): void {
+    listSignal.update((curr: string[]) => {
+      const idx = curr.indexOf(id);
+      if (idx > -1) {
+        return curr.filter(x => x !== id);
+      } else {
+        return [...curr, id];
+      }
+    });
+    this.currentPage.set(1);
+  }
+
+  isFilterItemChecked(listSignal: any, id: string): boolean {
+    return listSignal().includes(id);
+  }
+
+  clearAllFilters(): void {
+    this.filterKeyword.set('');
+    this.filterConcepts.set([]);
+    this.filterRelations.set([]);
+    this.filterRules.set([]);
+    this.filterFunctions.set([]);
+    this.filterRubrics.set([]);
+    this.filterTypes.set([]);
+    this.filterBlooms.set([]);
+    this.filterDifficulties.set([]);
+    this.filterTopics.set([]);
+    this.currentPage.set(1);
+  }
+
   // Dialog visibility state
   protected readonly showQuestionModal = signal<boolean>(false);
 
@@ -59,7 +214,7 @@ export class QuestionBankComponent implements OnInit {
   // Form Models
   protected content = '';
   protected selectedTopicId = '';
-  protected selectedType = 'DESCRIPTIVE';
+  protected selectedType: string = 'DESCRIPTIVE';
   protected selectedBloom = '';
   protected selectedDifficulty = '';
   protected selectedRubricId = '';
@@ -67,7 +222,15 @@ export class QuestionBankComponent implements OnInit {
 
   // Expected Answer for DESCRIPTIVE and APPLICATION
   protected descriptiveAnswer = '';
+
+  protected ruleSearchFocused = false;
+
+  protected onRuleSearchBlur(): void {
+    this.ruleSearchFocused = false;
+  }
+
   protected applicationAnswer = '';
+  protected applicationExplanation = '';
   
   // Multiselect Concept, Relation, Rule, Function IDs and weights
   protected selectedConceptIds: string[] = [];
@@ -141,7 +304,7 @@ export class QuestionBankComponent implements OnInit {
   }
 
   protected getQuestionsList(): Question[] {
-    return this.questions();
+    return this.paginatedQuestions();
   }
 
   protected getTopicName(topicId: string): string {
@@ -191,7 +354,9 @@ export class QuestionBankComponent implements OnInit {
     this.proceduralSteps.push({
       stepOrder: nextOrder,
       description: '',
-      ruleIds: []
+      ruleIds: [],
+      ruleSearchQuery: '',
+      showRuleDropdown: false
     });
   }
 
@@ -202,17 +367,41 @@ export class QuestionBankComponent implements OnInit {
     this.proceduralSteps.forEach((s, i) => s.stepOrder = i + 1);
   }
 
-  protected toggleStepRule(step: ProceduralStepInput, ruleId: string): void {
-    const idx = step.ruleIds.indexOf(ruleId);
-    if (idx > -1) {
-      step.ruleIds.splice(idx, 1);
-    } else {
-      step.ruleIds.push(ruleId);
-    }
+  protected getRuleName(ruleId: string): string {
+    const r = this.rules().find(x => x.id === ruleId);
+    return r ? r.name : ruleId;
   }
 
-  protected isStepRuleSelected(step: ProceduralStepInput, ruleId: string): boolean {
-    return step.ruleIds.includes(ruleId);
+  protected selectStepRule(step: ProceduralStepInput, ruleId: string): void {
+    if (!step.ruleIds.includes(ruleId)) {
+      step.ruleIds.push(ruleId);
+    }
+    step.ruleSearchQuery = '';
+    step.showRuleDropdown = false;
+  }
+
+  protected removeStepRule(step: ProceduralStepInput, ruleId: string): void {
+    step.ruleIds = step.ruleIds.filter(id => id !== ruleId);
+  }
+
+  protected onStepRuleBlur(step: ProceduralStepInput): void {
+    setTimeout(() => {
+      step.showRuleDropdown = false;
+    }, 200);
+  }
+
+  protected getFilteredRulesForStep(step: ProceduralStepInput): RuleResponse[] {
+    const query = step.ruleSearchQuery || '';
+    const q = query.trim().toLowerCase();
+    const rulesList = this.rules().filter(r => !step.ruleIds.includes(r.id));
+    if (!q) return rulesList;
+    return rulesList.filter(r => {
+      const nameMatch = (r.name || '').toLowerCase().includes(q);
+      const typeMatch = (r.type || '').toLowerCase().includes(q);
+      const conceptMatch = r.concept_ids?.some(cId => this.getConceptSynonyms(cId).toLowerCase().includes(q));
+      const relationMatch = r.relation_ids?.some(rId => this.getRelationConnectionText(rId).toLowerCase().includes(q));
+      return nameMatch || typeMatch || conceptMatch || relationMatch;
+    });
   }
 
   // --- Rule/Func multiselect checkboxes ---
@@ -294,13 +483,9 @@ export class QuestionBankComponent implements OnInit {
   }
 
   protected getWeightsSum(): number {
-    if (this.selectedType === 'APPLICATION') {
-      const sum = this.applicationRules.reduce((acc, r) => acc + (Number(r.weight) || 0), 0);
-      return Math.round(sum * 1000) / 1000;
-    }
     const uniqueRules = this.getUniqueSelectedRules();
     let sum = uniqueRules.reduce((acc, rId) => acc + (Number(this.ruleWeights[rId]) || 0), 0);
-    if (this.selectedType === 'PROCEDURE') {
+    if (this.selectedType === 'PROCEDURE' || this.selectedType === 'APPLICATION') {
       sum += Number(this.logicalStepSequenceWeight) || 0;
     }
     return Math.round(sum * 1000) / 1000;
@@ -514,8 +699,10 @@ export class QuestionBankComponent implements OnInit {
 
   protected getFilteredRules(query: string): RuleResponse[] {
     const q = query.trim().toLowerCase();
-    if (!q) return this.rules();
-    return this.rules().filter(r => {
+    let list = this.rules();
+
+    if (!q) return list;
+    return list.filter(r => {
       const nameMatch = (r.name || '').toLowerCase().includes(q);
       const typeMatch = (r.type || '').toLowerCase().includes(q);
       const conceptMatch = r.concept_ids?.some(cId => this.getConceptSynonyms(cId).toLowerCase().includes(q));
@@ -540,6 +727,7 @@ export class QuestionBankComponent implements OnInit {
     // Reset expected answers
     this.descriptiveAnswer = '';
     this.applicationAnswer = '';
+    this.applicationExplanation = '';
     this.selectedRuleIds = [];
     this.selectedFunctionIds = [];
     this.selectedConceptIds = [];
@@ -558,6 +746,7 @@ export class QuestionBankComponent implements OnInit {
           const parsed = JSON.parse(sample);
           if (parsed && typeof parsed === 'object' && parsed.hasOwnProperty('sample_code')) {
             this.applicationAnswer = parsed.sample_code || '';
+            this.applicationExplanation = parsed.sample_explanation || '';
             this.applicationComplexity = (parsed.features && parsed.features.complexity) || 'O(log n)';
             const appRules = parsed.application_rules || [];
             this.applicationRules = appRules.map((r: any) => {
@@ -741,47 +930,10 @@ export class QuestionBankComponent implements OnInit {
     if (this.selectedType === 'DESCRIPTIVE') {
       sampleVal = this.descriptiveAnswer.trim();
     } else if (this.selectedType === 'APPLICATION') {
-      const rulesPayloadList = this.applicationRules.map(r => {
-        let parsedAst = null;
-        if (r.astStr && r.astStr.trim() !== '') {
-          try {
-            parsedAst = JSON.parse(r.astStr);
-          } catch (e) {
-            parsedAst = null;
-          }
-        }
-
-        const templates = Array.isArray(r.expected_templates)
-          ? r.expected_templates.map((t: string) => t.trim()).filter((t: string) => t !== '')
-          : [];
-
-        const sequencePayload = Array.isArray(r.sequence)
-          ? r.sequence.map((s: any, idx: number) => ({
-              order: idx + 1,
-              type: s.type || 'CONCEPT',
-              id: s.id
-            })).filter((s: any) => s.id)
-          : [];
-
-        return {
-          name: r.name.trim(),
-          concept_ids: r.concept_ids || [],
-          relation_ids: r.relation_ids || [],
-          weight: Number(r.weight) || 0.0,
-          sequence: sequencePayload,
-          logic_constraints: {
-            expected_templates: templates,
-            ast: parsedAst
-          }
-        };
-      });
-
       const serialized = {
         sample_code: this.applicationAnswer.trim(),
-        features: {
-          complexity: this.applicationComplexity.trim()
-        },
-        application_rules: rulesPayloadList
+        sample_explanation: this.applicationExplanation.trim(),
+        features: {} // Removed complexity as per user requirement earlier
       };
       sampleVal = JSON.stringify(serialized);
     } else if (this.selectedType === 'PROCEDURE') {
@@ -797,7 +949,7 @@ export class QuestionBankComponent implements OnInit {
       sampleVal = JSON.stringify(serialized);
     }
 
-    const rulesPayload = this.selectedType === 'APPLICATION' ? [] : finalRuleIds.map(rId => ({
+    const rulesPayload = finalRuleIds.map(rId => ({
       rule_id: rId,
       weight: Number(this.ruleWeights[rId]) || 0.0
     }));
@@ -816,11 +968,13 @@ export class QuestionBankComponent implements OnInit {
         relations: this.selectedRelationIds,
         rules: rulesPayload,
         functions: finalFuncIds,
-        logical_step_sequence_weight: this.selectedType === 'PROCEDURE' ? Number(this.logicalStepSequenceWeight) : null
+        logical_step_sequence_weight: this.selectedType === 'PROCEDURE' || this.selectedType === 'APPLICATION' ? Number(this.logicalStepSequenceWeight) : null
       }
     };
 
     this.isSubmitting.set(true);
+
+    console.log("Submitting payload:", payload);
 
     const editId = this.editingQuestionId();
     if (editId) {
@@ -833,6 +987,7 @@ export class QuestionBankComponent implements OnInit {
         },
         error: (err) => {
           this.isSubmitting.set(false);
+          console.error("Update error:", err);
           this.errorMessage.set(err.error?.message || 'Có lỗi xảy ra khi cập nhật câu hỏi.');
         }
       });
@@ -847,6 +1002,7 @@ export class QuestionBankComponent implements OnInit {
         },
         error: (err) => {
           this.isSubmitting.set(false);
+          console.error("Create error:", err);
           this.errorMessage.set(err.error?.message || 'Có lỗi xảy ra khi tạo câu hỏi.');
         }
       });
@@ -878,6 +1034,7 @@ export class QuestionBankComponent implements OnInit {
     this.descriptiveAnswer = '';
     this.suggestedTime = 20;
     this.applicationAnswer = '';
+    this.applicationExplanation = '';
     this.selectedRuleIds = [];
     this.selectedFunctionIds = [];
     this.selectedConceptIds = [];

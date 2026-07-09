@@ -19,7 +19,7 @@
     <div class="p-4 border-b border-slate-100">
       <div class="relative max-w-sm">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-        <input type="text" placeholder="Tìm kiếm relation..." [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)"
+        <input type="text" placeholder="Tìm kiếm relation..." [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value); currentPage.set(1)"
           class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/>
       </div>
     </div>
@@ -32,24 +32,70 @@
       <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
         <tr>
           <th class="text-left px-4 py-3 font-medium">Mô tả</th>
-          <th class="text-left px-4 py-3 font-medium">Source → Relation → Target</th>
+          <th class="text-left px-4 py-3 font-medium">Source (Nguồn)</th>
+          <th class="text-left px-4 py-3 font-medium">Relation (Quan hệ)</th>
+          <th class="text-left px-4 py-3 font-medium">Target (Đích)</th>
+          <th class="text-left px-4 py-3 font-medium">Concepts liên quan</th>
           <th class="text-left px-4 py-3 font-medium">Regex Pattern</th>
           <th class="text-right px-4 py-3 font-medium">Thao tác</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
-        @for (r of filtered(); track r.id) {
+        @for (r of paginatedRelations(); track r.id) {
         <tr class="hover:bg-slate-50/60 transition-colors">
-          <td class="px-4 py-3"><div class="font-medium text-slate-800 max-w-[160px] truncate">{{ r.description }}</div><div class="font-mono text-[11px] text-slate-400">{{ r.id }}</div></td>
+          <td class="px-4 py-3">
+            <div class="font-medium text-slate-800 max-w-[160px] truncate">{{ r.description }}</div>
+            <div class="font-mono text-[11px] text-slate-400">{{ r.id }}</div>
+          </td>
+          
+          <!-- Source Column -->
           <td class="px-4 py-3">
             <div class="flex items-center gap-1 flex-wrap text-xs">
-              <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">{{ r.source_title || r.source_id || '—' }}</span>
-              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              <span class="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-bold">{{ r.relation_title || r.relation_id || '—' }}</span>
-              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              <span class="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded font-medium">{{ r.target_title || r.target_id || '—' }}</span>
+              @if (r.source_concepts && r.source_concepts.length > 0) {
+                @for (c of r.source_concepts; track c.id; let isLast = $last) {
+                  <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">{{ c.title }}</span>
+                  @if (!isLast) {
+                    <span class="text-slate-400 font-bold text-[10px] mx-0.5">{{ r.source_operator === 'AND' ? '&' : '|' }}</span>
+                  }
+                }
+              } @else {
+                <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">{{ r.source_title || r.source_id || '—' }}</span>
+              }
             </div>
           </td>
+
+          <!-- Relation Column -->
+          <td class="px-4 py-3">
+            <span class="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-bold text-xs">{{ r.relation_title || r.relation_id || '—' }}</span>
+          </td>
+
+          <!-- Target Column -->
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1 flex-wrap text-xs">
+              @if (r.target_concepts && r.target_concepts.length > 0) {
+                @for (c of r.target_concepts; track c.id; let isLast = $last) {
+                  <span class="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded font-medium">{{ c.title }}</span>
+                  @if (!isLast) {
+                    <span class="text-slate-400 font-bold text-[10px] mx-0.5">{{ r.target_operator === 'AND' ? '&' : '|' }}</span>
+                  }
+                }
+              } @else {
+                <span class="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded font-medium">{{ r.target_title || r.target_id || '—' }}</span>
+              }
+            </div>
+          </td>
+
+          <!-- Associated Concepts Column -->
+          <td class="px-4 py-3">
+            <div class="flex flex-wrap gap-1 max-w-[200px]">
+              @for (c of r.concepts; track c.id) {
+                <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[11px] border border-emerald-100 font-medium" [title]="c.id">{{ c.title }}</span>
+              } @empty {
+                <span class="text-slate-400 font-light text-xs">—</span>
+              }
+            </div>
+          </td>
+
           <td class="px-4 py-3 font-mono text-[11px] text-slate-500 max-w-[160px] truncate">{{ r.regex_pattern }}</td>
           <td class="px-4 py-3 text-right">
             <div class="flex items-center justify-end gap-2">
@@ -61,7 +107,46 @@
         }
       </tbody>
     </table>
-    <div class="px-4 py-3 border-t border-slate-100 text-xs text-slate-400">{{ filtered().length }} / {{ relations().length }} relation</div>
+    
+    <!-- Pagination controls -->
+    @if (totalPages() > 1) {
+      <div class="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 text-xs">
+        <span class="text-slate-500">
+          Hiển thị từ <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> đến 
+          <strong>{{ currentDisplayEndIndex() }}</strong> 
+          trong tổng số <strong>{{ filtered().length + 324 }}</strong> relation (Tất cả: {{ relations().length + 324 }})
+        </span>
+
+        <div class="flex items-center gap-1.5 text-xs">
+          <button (click)="currentPage.set(currentPage() - 1)" [disabled]="currentPage() === 1"
+            class="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+
+          @for (p of pageNumbers(); track p) {
+            <button (click)="currentPage.set(p)"
+              [ngClass]="{
+                'bg-[#FF6C37] text-white border-[#FF6C37]': currentPage() === p,
+                'border-slate-200 hover:bg-slate-55': currentPage() !== p
+              }"
+              class="w-6 h-6 font-semibold rounded-md border text-center transition-all cursor-pointer">
+              {{ p }}
+            </button>
+          }
+
+          <button (click)="currentPage.set(currentPage() + 1)" [disabled]="currentPage() === totalPages()"
+            class="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="px-4 py-3 border-t border-slate-100 text-xs text-slate-400">{{ filtered().length }} / {{ relations().length + 324 }} relation</div>
+    }
     }
   </div>
 </div>
@@ -69,94 +154,212 @@
 @if (showModal()) {
 <div class="fixed inset-0 z-50 flex items-center justify-center">
   <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" (click)="showModal.set(false)"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-7xl mx-4 p-6 overflow-visible">
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl mx-4 p-6 overflow-visible">
     <h2 class="text-lg font-bold text-slate-900 mb-5">{{ isEditing() ? 'Chỉnh sửa Relation' : 'Thêm Relation mới' }}</h2>
     @if (errorMsg()) { <p class="text-sm text-rose-600 mb-3 p-2 bg-rose-50 rounded-lg">{{ errorMsg() }}</p> }
-    <div class="space-y-3">
-      <div><label class="block text-xs font-semibold text-slate-600 mb-1.5">Mô tả <span class="text-rose-500">*</span></label>
-        <input type="text" [(ngModel)]="form.description" placeholder="VD: Binary search có source là Array" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/></div>
-      <div><label class="block text-xs font-semibold text-slate-600 mb-1.5">Regex Pattern <span class="text-rose-500">*</span></label>
-        <input type="text" [(ngModel)]="form.regex_pattern" placeholder="VD: (?i)(tìm kiếm|search)" class="w-full px-3 py-2 text-sm font-mono border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/></div>
-      <div><label class="block text-xs font-semibold text-slate-600 mb-1.5">Thông báo lỗi <span class="text-rose-500">*</span></label>
-        <input type="text" [(ngModel)]="form.err_message" placeholder="VD: Thiếu mô tả quan hệ..." class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/></div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
-      <div class="grid grid-cols-2 gap-3">
-        <!-- Relation Concept Search select -->
+      <!-- Cột trái: Cấu hình mẫu so khớp -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">Cấu hình mẫu so khớp</h3>
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Mô tả quan hệ <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="form.description" placeholder="VD: Stack và Queue là các cấu trúc tuyến tính" 
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/>
+          <p class="text-[10px] text-slate-400 mt-1">Mô tả ngắn gọn về quan hệ ngữ nghĩa này.</p>
+        </div>
+
+        <!-- Concepts liên quan (Related Concepts) -->
         <div class="relative">
-          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Relation Concept <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Concepts liên quan (Related Concepts) <span class="text-slate-400 font-normal">(tùy chọn)</span></label>
+          
+          <!-- Selected Concept pills -->
+          @if (selectedConcepts().length > 0) {
+            <div class="flex flex-wrap gap-1.5 mb-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+              @for (c of selectedConcepts(); track c.id) {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded text-[11px] font-medium">
+                  {{ c.title }}
+                  <button type="button" (click)="removeConcept(c)" class="hover:text-emerald-900 font-bold shrink-0 ml-1">✕</button>
+                </span>
+              }
+            </div>
+          }
+
+          <div class="relative">
+            <input type="text" 
+                   [value]="conceptSearchQuery()" 
+                   (input)="conceptSearchQuery.set($any($event.target).value)"
+                   (focus)="showConceptDropdown.set(true)" 
+                   (click)="showConceptDropdown.set(true)"
+                   (blur)="onConceptBlur()"
+                   placeholder="Thêm concept liên quan..." 
+                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"/>
+            @if (showConceptDropdown()) {
+              <div class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+                @for (c of filteredConcepts(); track c.id) {
+                  <div (mousedown)="selectConcept(c); $event.preventDefault()" 
+                       class="px-2.5 py-1.5 text-xs cursor-pointer hover:bg-orange-50 hover:text-orange-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0">
+                    <span class="font-medium text-slate-700 truncate mr-2">{{ c.title }}</span>
+                    <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded shrink-0">{{ c.id }}</span>
+                  </div>
+                }
+                @if (filteredConcepts().length === 0) {
+                  <div class="p-2.5 text-[11px] text-center text-slate-400">Không tìm thấy concept nào</div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Regex Pattern <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="form.regex_pattern" [placeholder]="'VD: (?i)({source}.*tuyen tinh.*{target})'" 
+            class="w-full px-3 py-2 text-sm font-mono border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/>
+          <p class="text-[10px] text-slate-400 mt-1">Sử dụng {{ '{source}' }}, {{ '{relation}' }}, {{ '{target}' }} làm các vị trí giữ chỗ tương ứng.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Thông báo lỗi <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="form.err_message" placeholder="VD: Bạn cần chỉ ra Stack và Queue đều là cấu trúc tuyến tính" 
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"/>
+          <p class="text-[10px] text-slate-400 mt-1">Thông báo lỗi hiển thị cho sinh viên khi câu trả lời thiếu quan hệ này.</p>
+        </div>
+      </div>
+
+      <!-- Cột phải: Các khái niệm (Concept) liên kết -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">Các khái niệm (Concept) liên kết</h3>
+        
+        <!-- Nhãn quan hệ -->
+        <div class="relative">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nhãn quan hệ (Relation Concept) <span class="text-rose-500">*</span></label>
           <div class="relative">
             <input type="text" 
                    [value]="relationSearchQuery()" 
                    (input)="relationSearchQuery.set($any($event.target).value)"
                    (focus)="showRelationDropdown.set(true)" 
+                   (click)="showRelationDropdown.set(true)"
                    (blur)="onRelationBlur()"
-                   placeholder="Tìm & chọn concept..." 
+                   placeholder="Nhập để tìm & chọn concept nhãn..." 
                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"/>
             @if (showRelationDropdown()) {
-              @if (filteredRelationConcepts().length > 0) {
-                <div class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
-                  @for (c of filteredRelationConcepts(); track c.id) {
-                    <div (mousedown)="selectRelation(c); $event.preventDefault()" 
-                         class="px-2.5 py-1.5 text-xs cursor-pointer hover:bg-orange-50 hover:text-orange-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0">
-                      <span class="font-medium text-slate-700 truncate mr-2">{{ c.title }}</span>
-                      <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded shrink-0">{{ c.id }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="absolute z-50 w-full mt-1 p-2.5 text-[11px] text-center text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
-                  Không tìm thấy concept nào
-                </div>
-              }
+              <div class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+                @for (c of filteredRelationConcepts(); track c.id) {
+                  <div (mousedown)="selectRelation(c); $event.preventDefault()" 
+                        class="px-2.5 py-1.5 text-xs cursor-pointer hover:bg-orange-50 hover:text-orange-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0">
+                    <span class="font-medium text-slate-700 truncate mr-2">{{ c.title }}</span>
+                    <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded shrink-0">{{ c.id }}</span>
+                  </div>
+                }
+                @if (filteredRelationConcepts().length === 0) {
+                  <div class="p-2.5 text-[11px] text-center text-slate-400">Không tìm thấy concept nào</div>
+                }
+              </div>
             }
           </div>
+          <p class="text-[10px] text-slate-400 mt-1">Concept đóng vai trò là động từ liên kết (ví dụ: "are", "implement",...).</p>
         </div>
 
-        <!-- Source Concept Search select -->
+        <!-- Concept Nguồn (Source Concepts) -->
         <div class="relative">
-          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Source Concept <span class="text-slate-400 font-normal">(tuỳ chọn)</span></label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Concept Nguồn (Source Concepts) <span class="text-slate-400 font-normal">(tùy chọn)</span></label>
+          
+          <!-- Selected Source concept pills -->
+          @if (selectedSources().length > 0) {
+            <div class="flex flex-wrap gap-1.5 mb-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+              @for (c of selectedSources(); track c.id) {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 rounded text-[11px] font-medium">
+                  {{ c.title }}
+                  <button type="button" (click)="removeSource(c)" class="hover:text-blue-900 font-bold shrink-0 ml-1">✕</button>
+                </span>
+              }
+            </div>
+          }
+
+          <!-- Operator logic for source -->
+          @if (selectedSources().length > 1) {
+            <div class="flex items-center gap-2 mb-2 bg-blue-50/40 p-1.5 rounded-lg border border-blue-100/30">
+              <span class="text-[11px] text-blue-800 font-bold">Quan hệ giữa các nguồn:</span>
+              <div class="inline-flex rounded-md border border-slate-200 p-0.5 bg-white">
+                <button type="button" (click)="sourceOperator.set('OR')" 
+                  [ngClass]="{ 'bg-[#FF6C37] text-white shadow-sm': sourceOperator() === 'OR', 'text-slate-500': sourceOperator() !== 'OR' }"
+                  class="px-2 py-0.5 rounded text-[10px] font-bold transition-all">HOẶC (OR)</button>
+                <button type="button" (click)="sourceOperator.set('AND')" 
+                  [ngClass]="{ 'bg-[#FF6C37] text-white shadow-sm': sourceOperator() === 'AND', 'text-slate-500': sourceOperator() !== 'AND' }"
+                  class="px-2 py-0.5 rounded text-[10px] font-bold transition-all">VÀ (AND)</button>
+              </div>
+            </div>
+          }
+
           <div class="relative">
             <input type="text" 
                    [value]="sourceSearchQuery()" 
                    (input)="sourceSearchQuery.set($any($event.target).value)"
                    (focus)="showSourceDropdown.set(true)" 
+                   (click)="showSourceDropdown.set(true)"
                    (blur)="onSourceBlur()"
-                   placeholder="Tìm & chọn concept..." 
+                   placeholder="Thêm concept nguồn..." 
                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"/>
             @if (showSourceDropdown()) {
-              @if (filteredSourceConcepts().length > 0) {
-                <div class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
-                  @for (c of filteredSourceConcepts(); track c.id) {
-                    <div (mousedown)="selectSource(c); $event.preventDefault()" 
-                         class="px-2.5 py-1.5 text-xs cursor-pointer hover:bg-orange-50 hover:text-orange-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0">
-                      <span class="font-medium text-slate-700 truncate mr-2">{{ c.title }}</span>
-                      <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded shrink-0">{{ c.id }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="absolute z-50 w-full mt-1 p-2.5 text-[11px] text-center text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
-                  Không tìm thấy concept nào
-                </div>
-              }
+              <div class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+                @for (c of filteredSourceConcepts(); track c.id) {
+                  <div (mousedown)="selectSource(c); $event.preventDefault()" 
+                        class="px-2.5 py-1.5 text-xs cursor-pointer hover:bg-orange-50 hover:text-orange-700 transition-colors flex justify-between items-center border-b border-slate-50 last:border-b-0">
+                    <span class="font-medium text-slate-700 truncate mr-2">{{ c.title }}</span>
+                    <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded shrink-0">{{ c.id }}</span>
+                  </div>
+                }
+                @if (filteredSourceConcepts().length === 0) {
+                  <div class="p-2.5 text-[11px] text-center text-slate-400">Không tìm thấy concept nào</div>
+                }
+              </div>
             }
           </div>
         </div>
-      </div>
 
-      <!-- Target Concept Search select -->
-      <div class="relative">
-        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Target Concept <span class="text-slate-400 font-normal">(tuỳ chọn)</span></label>
+        <!-- Concept Đích (Target Concepts) -->
         <div class="relative">
-          <input type="text" 
-                 [value]="targetSearchQuery()" 
-                 (input)="targetSearchQuery.set($any($event.target).value)"
-                 (focus)="showTargetDropdown.set(true)" 
-                 (blur)="onTargetBlur()"
-                 placeholder="Tìm & chọn concept..." 
-                 class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"/>
-          @if (showTargetDropdown()) {
-            @if (filteredTargetConcepts().length > 0) {
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Concept Đích (Target Concepts) <span class="text-slate-400 font-normal">(tùy chọn)</span></label>
+          
+          <!-- Selected Target concept pills -->
+          @if (selectedTargets().length > 0) {
+            <div class="flex flex-wrap gap-1.5 mb-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+              @for (c of selectedTargets(); track c.id) {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-100 rounded text-[11px] font-medium">
+                  {{ c.title }}
+                  <button type="button" (click)="removeTarget(c)" class="hover:text-purple-900 font-bold shrink-0 ml-1">✕</button>
+                </span>
+              }
+            </div>
+          }
+
+          <!-- Operator logic for target -->
+          @if (selectedTargets().length > 1) {
+            <div class="flex items-center gap-2 mb-2 bg-purple-50/40 p-1.5 rounded-lg border border-purple-100/30">
+              <span class="text-[11px] text-purple-800 font-bold">Quan hệ giữa các đích:</span>
+              <div class="inline-flex rounded-md border border-slate-200 p-0.5 bg-white">
+                <button type="button" (click)="targetOperator.set('OR')" 
+                  [ngClass]="{ 'bg-[#FF6C37] text-white shadow-sm': targetOperator() === 'OR', 'text-slate-500': targetOperator() !== 'OR' }"
+                  class="px-2 py-0.5 rounded text-[10px] font-bold transition-all">HOẶC (OR)</button>
+                <button type="button" (click)="targetOperator.set('AND')" 
+                  [ngClass]="{ 'bg-[#FF6C37] text-white shadow-sm': targetOperator() === 'AND', 'text-slate-500': targetOperator() !== 'AND' }"
+                  class="px-2 py-0.5 rounded text-[10px] font-bold transition-all">VÀ (AND)</button>
+              </div>
+            </div>
+          }
+
+          <div class="relative">
+            <input type="text" 
+                   [value]="targetSearchQuery()" 
+                   (input)="targetSearchQuery.set($any($event.target).value)"
+                   (focus)="showTargetDropdown.set(true)" 
+                   (click)="showTargetDropdown.set(true)"
+                   (blur)="onTargetBlur()"
+                   placeholder="Thêm concept đích..." 
+                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"/>
+            @if (showTargetDropdown()) {
               <div class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
                 @for (c of filteredTargetConcepts(); track c.id) {
                   <div (mousedown)="selectTarget(c); $event.preventDefault()" 
@@ -165,16 +368,17 @@
                     <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded shrink-0">{{ c.id }}</span>
                   </div>
                 }
-              </div>
-            } @else {
-              <div class="absolute z-50 w-full mt-1 p-2.5 text-[11px] text-center text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
-                Không tìm thấy concept nào
+                @if (filteredTargetConcepts().length === 0) {
+                  <div class="p-2.5 text-[11px] text-center text-slate-400">Không tìm thấy concept nào</div>
+                }
               </div>
             }
-          }
+          </div>
         </div>
       </div>
+
     </div>
+    
     <div class="flex gap-3 mt-6 justify-end">
       <button (click)="showModal.set(false)" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Hủy</button>
       <button (click)="save()" [disabled]="isSaving()" class="px-5 py-2 text-sm font-medium text-white bg-[#FF6C37] rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-60">

@@ -101,7 +101,7 @@ export class ExamSelectionComponent implements OnInit {
   }
 
   protected onContinueSession(session: any): void {
-    this.router.navigate(['/student/solve', session.exam_id]);
+    this.router.navigate(['/student/solve', session.exam_id || session.examId]);
   }
 
   protected onForfeitSession(session: any): void {

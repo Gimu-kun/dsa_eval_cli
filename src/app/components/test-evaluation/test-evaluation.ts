@@ -11,27 +11,6 @@ export class TestEvaluationComponent implements OnInit {
   protected readonly examSubmission = signal<any | undefined>(undefined);
   protected readonly activeQuestionIndex = signal<number>(0);
 
-  // Structured statistics for Kiểm tra 3 (with previous score and accumulation increment)
-  protected readonly cloStats = [
-    { name: 'CLO 2: Phân tích bài toán tìm kiếm, xác định ràng buộc và đánh giá các giải pháp thuật toán phù hợp', prevScore: 6.70, increment: 0.97, currentScore: 7.67, status: 'Đạt' },
-    { name: 'CLO 3: Phân tích bài toán sắp xếp, xác định ràng buộc và đánh giá giải pháp sắp xếp hiệu quả', prevScore: 6.60, increment: 1.12, currentScore: 7.72, status: 'Đạt' },
-    { name: 'CLO 4: Mô tả và phân tích các cấu trúc dữ liệu cơ bản', prevScore: 0.00, increment: 7.65, currentScore: 7.65, status: 'Đạt' },
-    { name: 'CLO 5: Thiết kế và mô tả giải pháp sử dụng cấu trúc dữ liệu và thuật toán để giải quyết các bài toán đơn giản', prevScore: 0.00, increment: 8.15, currentScore: 8.15, status: 'Đạt' }
-  ];
-
-  protected readonly chapterStats = [
-    { name: 'Chương 2: Tìm kiếm và sắp xếp', prevScore: 6.80, increment: 1.20, currentScore: 8.00, status: 'Khá' },
-    { name: 'Chương 4: Ngăn xếp, hàng đợi', prevScore: 0.00, increment: 4.50, currentScore: 4.50, status: 'Khá' },
-    { name: 'Chương 5: Cây nhị phân tìm kiếm', prevScore: 0.00, increment: 3.55, currentScore: 3.55, status: 'Tốt' }
-  ];
-
-  protected readonly conceptStats = [
-    { name: 'Cây BST', prevScore: 0.00, increment: 5.25, currentScore: 5.25, status: 'Khá' },
-    { name: 'Bubble Sort', prevScore: 7.10, increment: 1.10, currentScore: 8.20, status: 'Khá tốt' },
-    { name: 'Tìm kiếm nhị phân', prevScore: 7.00, increment: 1.00, currentScore: 8.00, status: 'Khá tốt' },
-    { name: 'Hàng đợi (Queue)', prevScore: 0.00, increment: 7.50, currentScore: 7.50, status: 'Khá' }
-  ];
-
   protected readonly activeExplanation = signal<boolean>(false);
   protected readonly explanationTitle = signal<string>('');
   protected readonly explanationText = signal<string>('');
@@ -191,10 +170,32 @@ export class TestEvaluationComponent implements OnInit {
       studentName: "Nguyễn Văn B",
       submittedAt: new Date().toISOString(),
       timeLimit: "60:00",
-      timeSpent: "48:52",
-      accScore: 8.35,
-      compScore: 8.00,
-      logScore: 10,
+      timeSpent: 48,
+      accScore: 0.835,
+      compScore: 0.800,
+      logScore: 1.0,
+      cloStats: [
+        { name: 'CLO 2: Phân tích bài toán tìm kiếm, xác định ràng buộc và đánh giá các giải pháp thuật toán phù hợp', prevScore: 6.70, increment: 0.97, currentScore: 7.67, status: 'Đạt' },
+        { name: 'CLO 3: Phân tích bài toán sắp xếp, xác định ràng buộc và đánh giá giải pháp sắp xếp hiệu quả', prevScore: 6.60, increment: 1.12, currentScore: 7.72, status: 'Đạt' },
+        { name: 'CLO 4: Mô tả và phân tích các cấu trúc dữ liệu cơ bản', prevScore: 0.00, increment: 7.65, currentScore: 7.65, status: 'Đạt' },
+        { name: 'CLO 5: Thiết kế và mô tả giải pháp sử dụng cấu trúc dữ liệu và thuật toán để giải quyết các bài toán đơn giản', prevScore: 0.00, increment: 8.15, currentScore: 8.15, status: 'Đạt' }
+      ],
+      chapterStats: [
+        { name: 'Chương 2: Tìm kiếm và sắp xếp', prevScore: 6.80, increment: 1.20, currentScore: 8.00, status: 'Khá' },
+        { name: 'Chương 4: Ngăn xếp, hàng đợi', prevScore: 0.00, increment: 4.50, currentScore: 4.50, status: 'Khá' },
+        { name: 'Chương 5: Cây nhị phân tìm kiếm', prevScore: 0.00, increment: 3.55, currentScore: 3.55, status: 'Tốt' }
+      ],
+      conceptStats: [
+        { name: 'Cây BST', prevScore: 0.00, increment: 5.25, currentScore: 5.25, status: 'Khá' },
+        { name: 'Bubble Sort', prevScore: 7.10, increment: 1.10, currentScore: 8.20, status: 'Khá tốt' },
+        { name: 'Tìm kiếm nhị phân', prevScore: 7.00, increment: 1.00, currentScore: 8.00, status: 'Khá tốt' },
+        { name: 'Hàng đợi (Queue)', prevScore: 0.00, increment: 7.50, currentScore: 7.50, status: 'Khá' }
+      ],
+      progressReport: {
+        overallSlope: 0.75,
+        overallTrendVN: 'Tốt',
+        advice: 'Sinh viên có tiến bộ rõ rệt qua các bài thi gần đây. Cần tập trung hơn vào phần lập luận logic thứ tự các bước trong mô tả giải thuật để đạt điểm số tối đa.'
+      },
       feedback: `- **{CLO 1}** (Tỉ lệ: 81%): {Đạt} - Vận dụng tốt các cấu trúc dữ liệu và giải thuật.\n` +
         `- **{CLO 2}** (Tỉ lệ: 86%): {Đạt} - Khả năng cài đặt thuật toán tương đối tốt.\n` +
         `- **Chương {Cây}** (Tỉ lệ: 84%): {Tốt} - Nắm được cấu trúc cây nhị phân tìm kiếm (BST).\n` +

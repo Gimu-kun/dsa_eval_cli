@@ -1,0 +1,229 @@
+<div class="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+  <!-- Top Header Banner -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 text-white p-6 rounded-xl border border-slate-800 shadow-md relative overflow-hidden shrink-0">
+    <div class="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-[#FF6C37] opacity-10 blur-xl"></div>
+    
+    <div class="space-y-1.5 relative z-10">
+      <div class="flex items-center space-x-2 text-xs text-slate-400">
+        <span class="px-2 py-0.5 rounded bg-slate-850 text-slate-300 font-mono uppercase font-bold text-[10px] border border-slate-700">Đề thi</span>
+        <span>•</span>
+        <span class="font-mono">Phiên: {{ examSessionCode() }}</span>
+      </div>
+      <h1 class="text-xl font-bold tracking-tight text-white">{{ examTitle() }}</h1>
+      <div class="flex flex-wrap gap-3 text-xs text-slate-400 items-center">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200">
+          Độ khó: {{ difficulty() }}
+        </span>
+        <span class="flex items-center space-x-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12" />
+          </svg>
+          <span>Tổng số: <strong>{{ questions().length }} câu hỏi</strong></span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Timer & Actions -->
+    <div class="mt-6 md:mt-0 flex flex-wrap items-center gap-4 relative z-10 shrink-0">
+      <!-- Countdown Timer -->
+      <div class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 backdrop-blur-md flex items-center space-x-3">
+        <div class="text-right">
+          <div class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Thời gian còn lại</div>
+          <div class="text-lg font-black font-mono tracking-wider text-orange-400">
+            {{ formattedTime() }}
+          </div>
+        </div>
+        <div class="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 text-orange-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Submit and Forfeit Actions -->
+      <div class="flex items-center gap-2">
+        <button (click)="onForfeit()"
+          class="px-3 py-2 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/20 text-slate-300 hover:text-rose-400 text-xs font-bold rounded-lg transition-all cursor-pointer">
+          Bỏ cuộc
+        </button>
+        <button (click)="onSubmit()"
+          class="px-4 py-2 bg-[#FF6C37] hover:bg-[#E05B2B] text-white text-xs font-bold rounded-lg shadow-md hover:shadow transition-all cursor-pointer flex items-center space-x-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Nộp bài</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Workspace Split -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+    <!-- Left: Navigation Sidebar -->
+    <div class="lg:col-span-1 space-y-4 max-h-175 overflow-y-auto">
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Danh mục câu hỏi</h3>
+        
+        <div class="flex flex-col space-y-2">
+          @for (cq of questions(); track cq.id; let idx = $index) {
+            <button 
+              (click)="selectQuestion(idx)"
+              [class]="activeQuestionIndex() === idx 
+                ? 'w-full text-left p-4 rounded-xl border-2 border-[#FF6C37] bg-orange-50/10 transition-all cursor-pointer flex items-start justify-between gap-3 shadow-sm' 
+                : 'w-full text-left p-4 rounded-xl border border-slate-200 hover:border-orange-300 bg-white hover:bg-slate-50/30 transition-all cursor-pointer flex items-start justify-between gap-3'"
+            >
+              <div class="space-y-1.5 flex-grow">
+                <span class="block text-xs font-bold" [class]="activeQuestionIndex() === idx ? 'text-[#FF6C37]' : 'text-slate-500'">Câu hỏi {{ idx + 1 }}</span>
+                <span class="block text-xs text-slate-800 line-clamp-1 font-semibold leading-snug">{{ cq.content }}</span>
+                <div class="flex flex-wrap gap-1.5 text-[9px] font-bold font-mono">
+                  <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase border border-slate-200">{{ getQuestionTypeDisplayName(cq.type) }}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">{{ cq.maxScore }}đ</span>
+                  <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100">{{ cq.suggestedTime }} phút</span>
+                </div>
+              </div>
+
+              <!-- Status Checkmark -->
+              <div class="shrink-0 pt-0.5">
+                @if (isQuestionAnswered(cq.id)) {
+                  <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                } @else {
+                  <div class="w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center text-slate-300">
+                    <span class="text-[9px] font-black font-mono">{{ idx + 1 }}</span>
+                  </div>
+                }
+              </div>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Active Question Prompt & Workspace -->
+    @if (activeQuestion(); as q) {
+      <div class="lg:col-span-3 space-y-6">
+        <!-- Question Description Card -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4 animate-fade-in">
+          <div class="flex flex-wrap gap-2">
+            <span [class]="getBloomClass(q.bloomLevel)" class="text-[9px] font-extrabold px-2.5 py-1 rounded border uppercase tracking-wider">
+              {{ getBloomDisplayName(q.bloomLevel) }}
+            </span>
+            <span [class]="getDifficultyClass(q.difficulty)" class="text-[9px] font-extrabold px-2.5 py-1 rounded border uppercase tracking-wider">
+              Độ khó: {{ getDifficultyDisplayName(q.difficulty) }}
+            </span>
+            <span class="text-[9px] font-extrabold px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-150 font-mono">
+              Điểm: {{ q.maxScore }}đ
+            </span>
+            <span class="text-[9px] font-extrabold px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-150 font-mono">
+              Thời lượng gợi ý: {{ q.suggestedTime }} phút
+            </span>
+          </div>
+
+          <div class="space-y-1.5 border-t border-slate-100 pt-4">
+            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Chủ đề: Cấu trúc dữ liệu & Thuật toán</div>
+            <h2 class="text-base font-bold text-slate-900 leading-snug">
+              Câu {{ activeQuestionIndex() + 1 }}: {{ q.content }}
+            </h2>
+          </div>
+        </div>
+
+        <!-- Workspace Card -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <!-- Workspace Header -->
+          <div class="bg-slate-50 border-b border-slate-200 px-5 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#FF6C37] animate-pulse"></span>
+              <span class="font-extrabold text-slate-900 text-xs tracking-wider uppercase">Không gian bài làm (Workspace)</span>
+            </div>
+          </div>
+
+          <!-- Workspace Inputs -->
+          <div class="p-5">
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Lời giải chi tiết</label>
+              <textarea
+                [ngModel]="submittedText()"
+                (ngModelChange)="onTextChange($event)"
+                rows="12"
+                placeholder="Nhập câu trả lời tự luận của bạn tại đây..."
+                class="w-full text-sm border border-slate-200 rounded-lg p-4 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-orange-500/30 focus:border-[#FF6C37] transition-all leading-relaxed"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Footer Question Navigation Actions -->
+          <div class="bg-slate-50 border-t border-slate-200 px-5 py-4 flex justify-between items-center">
+            <button 
+              [disabled]="activeQuestionIndex() === 0" 
+              (click)="selectQuestion(activeQuestionIndex() - 1)" 
+              class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30 transition-colors cursor-pointer flex items-center space-x-1.5"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Câu trước</span>
+            </button>
+
+            <span class="text-xs font-bold text-slate-400">Câu {{ activeQuestionIndex() + 1 }} / {{ questions().length }}</span>
+
+            @if (activeQuestionIndex() < questions().length - 1) {
+              <button 
+                (click)="selectQuestion(activeQuestionIndex() + 1)" 
+                class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer flex items-center space-x-1.5"
+              >
+                <span>Câu tiếp theo</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            } @else {
+              <button 
+                (click)="onSubmit()" 
+                class="px-5 py-2.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors cursor-pointer flex items-center space-x-1.5"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Nộp bài thi</span>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Submission Loading Overlay -->
+  @if (isSubmitting()) {
+    <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-all duration-300">
+      <div class="bg-white border border-slate-200 rounded-2xl p-8 max-w-md w-full shadow-2xl space-y-6 text-center relative overflow-hidden mx-4">
+        <!-- Accent Glow background elements -->
+        <div class="absolute -right-20 -top-20 w-44 h-44 rounded-full bg-orange-500 opacity-5 blur-2xl"></div>
+        <div class="absolute -left-20 -bottom-20 w-44 h-44 rounded-full bg-indigo-500 opacity-5 blur-2xl"></div>
+        
+        <!-- Rotating AI Shield Core Icon -->
+        <div class="flex justify-center relative">
+          <div class="relative w-20 h-20 flex items-center justify-center bg-orange-50 rounded-2xl border border-orange-100 animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-10 h-10 text-[#FF6C37] animate-spin slow-spin">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+            </svg>
+          </div>
+          <!-- Tiny floating dots -->
+          <div class="absolute w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping top-0 right-10"></div>
+          <div class="absolute w-2 h-2 rounded-full bg-orange-500 animate-ping bottom-2 left-8"></div>
+        </div>
+
+        <!-- Evaluation Text Header -->
+        <div class="space-y-2">
+          <h2 class="text-lg font-bold text-slate-800 tracking-tight">Đang Đánh Giá Bài Làm...</h2>
+          <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+            Hệ thống đang tiến hành đối sánh ngữ nghĩa, kiểm tra các ontology, luật chấm điểm và lập báo cáo cải thiện...
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>
